@@ -12,23 +12,46 @@ public class Neuron {
         this.activationFunction = activationFunction;
     }
 
+    /**
+     * Returns the bias value of the neuron.
+     *
+     * @return the bias value of the neuron
+     */
     public double bias() {
         return bias;
     }
 
+    /**
+     * Sets the bias value of the neuron.
+     *
+     * @param  bias  the new bias value
+     */
     public void setBias(double bias) {
         this.bias = bias;
     }
 
+    /**
+     * Returns the value of the neuron.
+     *
+     * @return the value of the neuron
+     */
     public double value() {
         return value;
     }
 
+    /**
+     * Sets the value of the neuron.
+     *
+     * @param  value  the new value of the neuron
+     */
     public void setValue(double value) {
         this.value = value;
     }
 
+    /**
+     * Applies the activation function to the value of the neuron, subtracting the bias, and assigns the result to the value field.
+     */
     public void applyFunction() {
-        this.value = activationFunction.activationFunction().apply(value - bias);
+        this.value = activationFunction.function().apply(value - bias);
     }
 }

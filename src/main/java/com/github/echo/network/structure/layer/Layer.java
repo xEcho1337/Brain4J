@@ -18,6 +18,11 @@ public class Layer {
         }
     }
 
+    /**
+     * Creates synapses between neurons in this layer and neurons in the given next layer.
+     *
+     * @param  nextLayer  the layer to create synapses with, must not be null
+     */
     public void createSynapses(Layer nextLayer) {
         if (nextLayer == null) return;
 
@@ -28,14 +33,30 @@ public class Layer {
         }
     }
 
+    /**
+     * Returns a list of Neuron objects representing the neurons in this layer.
+     *
+     * @return a list of Neuron objects
+     */
     public List<Neuron> neurons() {
         return neurons;
     }
 
+    /**
+     * Returns the list of synapses in this layer.
+     *
+     * @return a list of synapses
+     */
     public List<Synapse> synapses() {
         return synapses;
     }
 
+    /**
+     * Retrieves the neuron at the specified index in the list of neurons.
+     *
+     * @param index the index of the neuron to retrieve
+     * @return the neuron at the specified index
+     */
     public Neuron getNeuronAt(int index) {
         return neurons.get(index);
     }

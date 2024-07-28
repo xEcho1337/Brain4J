@@ -9,15 +9,15 @@ public enum Activations {
     TANH(Math::tanh),
     LINEAR(x -> x);
 
-    private final Function<Double, Double> activationFunction;
+    private final Function<Double, Double> function;
 
     /**
      * Defines the activation function that can be used in the neural network.
      *
-     * @param activationFunction the activation function
+     * @param function the activation function
      */
-    Activations(Function<Double, Double> activationFunction) {
-        this.activationFunction = activationFunction;
+    Activations(Function<Double, Double> function) {
+        this.function = function;
     }
 
     /**
@@ -25,7 +25,7 @@ public enum Activations {
      *
      * @return a function that takes a double as input and returns a double as output
      */
-    public Function<Double, Double> activationFunction() {
-        return activationFunction;
+    public Function<Double, Double> function() {
+        return function;
     }
 }
