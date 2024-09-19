@@ -27,8 +27,8 @@ public class Main {
 
         DataRow sampleA = new DataRow(new double[]{0, 0}, 0);
         DataRow sampleB = new DataRow(new double[]{0, 1}, 1);
-        DataRow sampleC = new DataRow(new double[]{1, 0}, 0);
-        DataRow sampleD = new DataRow(new double[]{1, 1}, 1);
+        DataRow sampleC = new DataRow(new double[]{1, 0}, 1);
+        DataRow sampleD = new DataRow(new double[]{1, 1}, 0);
 
         DataSet dataSet = new DataSet(sampleA, sampleB, sampleC, sampleD);
         Backpropagation method = new Backpropagation(network);
