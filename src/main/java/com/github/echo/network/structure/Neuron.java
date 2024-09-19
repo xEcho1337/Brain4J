@@ -5,7 +5,7 @@ import com.github.echo.types.Activations;
 public class Neuron {
 
     private final Activations activationFunction;
-    private double bias = (2 * Math.random()) - 1;
+    private double bias = 2 * Math.random() - 1;
     private double value;
     private double delta;
 
