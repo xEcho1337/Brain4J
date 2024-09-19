@@ -7,7 +7,7 @@ import com.github.echo.network.NeuralNetwork;
 import com.github.echo.network.structure.layer.DenseLayer;
 import com.github.echo.training.DataRow;
 import com.github.echo.training.DataSet;
-import com.github.echo.training.impl.Backpropagation;
+import com.github.echo.training.impl.BackPropagation;
 import com.github.echo.types.loss.LossFunctions;
 
 import java.util.Arrays;
@@ -31,7 +31,7 @@ public class Main {
         DataRow sampleD = new DataRow(new double[]{1, 1}, 0);
 
         DataSet dataSet = new DataSet(sampleA, sampleB, sampleC, sampleD);
-        Backpropagation method = new Backpropagation(network);
+        BackPropagation method = new BackPropagation(network);
 
         double value = 0.01;
 

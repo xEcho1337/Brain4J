@@ -11,11 +11,11 @@ import com.github.echo.types.loss.LossFunction;
 
 import java.util.List;
 
-public class Backpropagation extends AbstractModel {
+public class BackPropagation extends AbstractModel {
 
     private final LossFunction function;
 
-    public Backpropagation(NeuralNetwork neuralNetwork) {
+    public BackPropagation(NeuralNetwork neuralNetwork) {
         super(neuralNetwork);
 
         this.function = neuralNetwork.getOutputLayer().getLossFunction().getFunction();
