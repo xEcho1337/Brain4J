@@ -1,4 +1,4 @@
-package com.github.echo.activations;
+package com.github.echo.types;
 
 import java.util.function.Function;
 
@@ -27,5 +27,17 @@ public enum Activations {
      */
     public Function<Double, Double> function() {
         return function;
+    }
+
+    /**
+     * Returns the derivative of the activation function.
+     *
+     * @return a function that takes a double as input and returns a double as output
+     */
+    public Function<Double, Double> derivative() {
+        return x -> {
+            double result = function.apply(x);
+            return result * (1 - result);
+        };
     }
 }

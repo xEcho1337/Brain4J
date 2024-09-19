@@ -1,34 +1,42 @@
 package com.github.echo;
 
-import com.github.echo.activations.Activations;
+import com.github.echo.network.structure.layer.OutputLayer;
+import com.github.echo.types.Activations;
 import com.github.echo.network.NeuralNetwork;
-import com.github.echo.network.structure.layer.Layer;
-import com.github.echo.network.structure.layer.impl.InputLayer;
+import com.github.echo.network.structure.layer.DenseLayer;
+import com.github.echo.training.DataRow;
+import com.github.echo.training.DataSet;
+import com.github.echo.training.models.Backpropagation;
+import com.github.echo.types.lost.LossFunctions;
 
 import java.util.Arrays;
 
 public class Main {
     public static void main(String[] args) {
         NeuralNetwork network = new NeuralNetwork()
-                .addLayer(new InputLayer(2))
-                .addLayer(new Layer(300, Activations.RELU))
-                .addLayer(new Layer(300, Activations.RELU))
-                .addLayer(new Layer(3, Activations.RELU))
-                .addLayer(new Layer(3, Activations.RELU))
-                .addLayer(new Layer(10, Activations.SIGMOID))
+                .addLayer(new DenseLayer(2, Activations.LINEAR))
+                .addLayer(new DenseLayer(16, Activations.RELU))
+                .addLayer(new DenseLayer(16, Activations.RELU))
+                .addLayer(new DenseLayer(16, Activations.RELU))
+                .addLayer(new OutputLayer(1, Activations.SIGMOID, LossFunctions.BCE))
                 .build();
 
-        double[] input = new double[]{0.1, 0.2};
+        double[] input = new double[]{0, 1};
 
-        long start = System.nanoTime();
-        for (int i = 0; i < 500; i++) {
-            double[] output = network.calculateOutput(input);
+        DataRow sampleA = new DataRow(new double[]{0, 0}, 0);
+        DataRow sampleB = new DataRow(new double[]{0, 1}, 1);
+        DataRow sampleC = new DataRow(new double[]{1, 0}, 0);
+        DataRow sampleD = new DataRow(new double[]{1, 1}, 1);
 
-            System.out.println(Arrays.toString(output));
-            network.resetSynapses();
-        }
-        long end = System.nanoTime();
+        DataSet dataSet = new DataSet(sampleA, sampleB, sampleC, sampleD);
+        Backpropagation method = new Backpropagation(network);
 
-        System.out.println("TOOK " + (end - start) + " nano seconds or approximately " + (end - start) / 1e6 + " milli seconds");
+        double value = 0.01;
+
+        method.setLearningRate(value);
+        method.setBatches(1);
+        method.train(dataSet, value);
+
+        System.out.println(Arrays.toString(network.calculateOutput(input)));
     }
 }

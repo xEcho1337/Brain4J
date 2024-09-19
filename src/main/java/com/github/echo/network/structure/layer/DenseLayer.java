@@ -1,18 +1,18 @@
 package com.github.echo.network.structure.layer;
 
-import com.github.echo.activations.Activations;
+import com.github.echo.types.Activations;
 import com.github.echo.network.structure.Neuron;
 import com.github.echo.network.structure.Synapse;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class Layer {
+public class DenseLayer {
 
     private final List<Neuron> neurons = new ArrayList<>();
     private final List<Synapse> synapses = new ArrayList<>();
 
-    public Layer(int neuronsCount, Activations activationFunction) {
+    public DenseLayer(int neuronsCount, Activations activationFunction) {
         for (int i = 0; i < neuronsCount; i++) {
             neurons.add(new Neuron(activationFunction));
         }
@@ -23,7 +23,7 @@ public class Layer {
      *
      * @param  nextLayer  the layer to create synapses with, must not be null
      */
-    public void createSynapses(Layer nextLayer) {
+    public void createSynapses(DenseLayer nextLayer) {
         if (nextLayer == null) return;
 
         for (Neuron neuron : neurons) {
