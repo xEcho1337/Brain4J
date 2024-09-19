@@ -1,6 +1,6 @@
-package com.github.echo.types.lost.impl;
+package com.github.echo.types.loss.impl;
 
-import com.github.echo.types.lost.LossFunction;
+import com.github.echo.types.loss.LossFunction;
 
 public class BinaryCrossEntropy implements LossFunction {
 

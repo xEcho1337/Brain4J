@@ -1,7 +1,7 @@
-package com.github.echo.types.lost;
+package com.github.echo.types.loss;
 
-import com.github.echo.types.lost.impl.BinaryCrossEntropy;
-import com.github.echo.types.lost.impl.MeanSquaredError;
+import com.github.echo.types.loss.impl.BinaryCrossEntropy;
+import com.github.echo.types.loss.impl.MeanSquaredError;
 
 public enum LossFunctions {
 

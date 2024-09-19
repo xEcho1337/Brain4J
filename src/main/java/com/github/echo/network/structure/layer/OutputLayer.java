@@ -1,7 +1,7 @@
 package com.github.echo.network.structure.layer;
 
 import com.github.echo.types.Activations;
-import com.github.echo.types.lost.LossFunctions;
+import com.github.echo.types.loss.LossFunctions;
 
 public class OutputLayer extends DenseLayer {
 

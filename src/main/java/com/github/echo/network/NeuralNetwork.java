@@ -4,7 +4,6 @@ import com.github.echo.network.structure.layer.DenseLayer;
 import com.github.echo.network.structure.Neuron;
 import com.github.echo.network.structure.Synapse;
 import com.github.echo.network.structure.layer.OutputLayer;
-import com.github.echo.types.lost.LossFunction;
 
 import java.util.ArrayList;
 import java.util.List;

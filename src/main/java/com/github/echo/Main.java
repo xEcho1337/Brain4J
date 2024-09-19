@@ -7,7 +7,7 @@ import com.github.echo.network.structure.layer.DenseLayer;
 import com.github.echo.training.DataRow;
 import com.github.echo.training.DataSet;
 import com.github.echo.training.models.Backpropagation;
-import com.github.echo.types.lost.LossFunctions;
+import com.github.echo.types.loss.LossFunctions;
 
 import java.util.Arrays;
 

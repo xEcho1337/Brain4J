@@ -6,7 +6,7 @@ import com.github.echo.network.structure.Neuron;
 import com.github.echo.network.structure.Synapse;
 import com.github.echo.training.DataRow;
 import com.github.echo.training.DataSet;
-import com.github.echo.types.lost.LossFunction;
+import com.github.echo.types.loss.LossFunction;
 
 import java.util.List;
 

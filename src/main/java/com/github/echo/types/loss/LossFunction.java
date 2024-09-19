@@ -1,4 +1,4 @@
-package com.github.echo.types.lost;
+package com.github.echo.types.loss;
 
 public interface LossFunction {
 
