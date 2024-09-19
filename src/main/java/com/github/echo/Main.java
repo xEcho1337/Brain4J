@@ -36,7 +36,7 @@ public class Main {
         double value = 0.01;
 
         method.setLearningRate(value);
-        method.setBatches(1);
+        method.setBatches(2);
         method.train(dataSet, value);
 
         System.out.println(Arrays.toString(network.calculateOutput(input)));

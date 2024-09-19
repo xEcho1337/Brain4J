@@ -2,6 +2,9 @@ package com.github.echo.training;
 
 import com.github.echo.network.NeuralNetwork;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public abstract class AbstractModel {
 
     protected final NeuralNetwork network;
@@ -80,5 +83,16 @@ public abstract class AbstractModel {
      */
     public double getTotalError() {
         return totalError;
+    }
+
+    protected static <T> List<List<T>> partition(List<T> list, int batchSize) {
+        List<List<T>> batches = new ArrayList<>();
+        int totalSize = list.size();
+
+        for (int i = 0; i < totalSize; i += batchSize) {
+            batches.add(list.subList(i, Math.min(i + batchSize, totalSize)));
+        }
+
+        return batches;
     }
 }

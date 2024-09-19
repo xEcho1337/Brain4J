@@ -34,33 +34,40 @@ public class Backpropagation extends AbstractModel {
     public void iterate(DataSet dataSet) {
         totalError = 0.0;
 
-        for (DataRow row : dataSet.getRows()) {
-            double[] inputs = row.inputs();
-            double[] targets = row.outputs();
+        List<List<DataRow>> miniBatches = partition(dataSet.getRows(), batches);
 
-            double[] outputs = network().calculateOutput(inputs);
-            totalError += function.compute(targets, outputs);
+        for (List<DataRow> batch : miniBatches) {
+            double batchError = 0.0;
 
-            backpropagate(targets, outputs);
+            for (DataRow row : batch) {
+                double[] inputs = row.inputs();
+                double[] targets = row.outputs();
+
+                double[] outputs = network().calculateOutput(inputs);
+
+                batchError += function.compute(targets, outputs);
+
+                backpropagate(targets, outputs);
+            }
+
+            totalError += batchError / batch.size();
         }
 
-        totalError /= dataSet.getRows().size();
+        totalError /= miniBatches.size();
     }
 
     private void backpropagate(double[] targets, double[] outputs) {
         List<DenseLayer> layers = network().getLayers();
-
-        // Output layer error and delta
         DenseLayer outputLayer = layers.get(layers.size() - 1);
 
+        // Output layer error and delta
         for (int i = 0; i < outputLayer.getNeurons().size(); i++) {
             Neuron neuron = outputLayer.getNeuronAt(i);
+
             double output = outputs[i];
-
-            // Calculate the error
             double error = targets[i] - output;
-            double delta = error * neuron.getActivationFunction().derivative().apply(output);
 
+            double delta = error * neuron.getActivationFunction().derivative().apply(output);
             neuron.setDelta(delta);
         }
 
@@ -74,11 +81,9 @@ public class Backpropagation extends AbstractModel {
                 double error = 0.0;
 
                 for (Synapse synapse : nextLayer.getSynapses()) {
-                    for (Neuron nextNeuron : nextLayer.getNeurons()) {
-                        if (!synapse.getInputNeuron().equals(neuron)) continue;
+                    if (!synapse.getInputNeuron().equals(neuron)) continue;
 
-                        error += synapse.getWeight() * nextNeuron.delta();
-                    }
+                    error += synapse.getWeight() * synapse.getOutputNeuron().delta();
                 }
 
                 double delta = error * neuron.getActivationFunction().derivative().apply(output);
