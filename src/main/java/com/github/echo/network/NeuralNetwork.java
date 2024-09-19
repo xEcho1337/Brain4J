@@ -1,9 +1,10 @@
 package com.github.echo.network;
 
-import com.github.echo.network.structure.layer.DenseLayer;
+import com.github.echo.network.structure.layer.Layer;
+import com.github.echo.network.structure.layer.impl.DenseLayer;
 import com.github.echo.network.structure.Neuron;
 import com.github.echo.network.structure.Synapse;
-import com.github.echo.network.structure.layer.OutputLayer;
+import com.github.echo.network.structure.layer.impl.OutputLayer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,7 +12,7 @@ import java.util.List;
 public class NeuralNetwork {
 
     private final NeuralConfiguration configuration;
-    private final List<DenseLayer> layers = new ArrayList<>();
+    private final List<Layer> layers = new ArrayList<>();
 
     public NeuralNetwork(NeuralConfiguration configuration) {
         this.configuration = configuration;
@@ -22,7 +23,7 @@ public class NeuralNetwork {
     public NeuralNetwork(NeuralNetwork parent) {
         this.configuration = parent.getConfiguration();
 
-        for (DenseLayer layer : parent.getLayers()) {
+        for (Layer layer : parent.getLayers()) {
             configuration.layer(layer);
         }
     }
@@ -43,21 +44,21 @@ public class NeuralNetwork {
             throw new IllegalStateException("The neural network doesn't have enough layers! THe minimum is 2.");
         }
 
-        DenseLayer lastLayer = layers.get(layers.size() - 1);
+        Layer lastLayer = layers.get(layers.size() - 1);
 
         if (!(lastLayer instanceof OutputLayer)) {
             throw new IllegalArgumentException("The last layer should be an instance of OutputLayer!");
         }
 
         for (int l = 0; l < layers.size(); l++) {
-            DenseLayer layer = layers.get(l);
+            Layer layer = layers.get(l);
 
             // Reset all the synapses
             layer.getSynapses().clear();
 
             if (l == layers.size() - 1) break;
 
-            DenseLayer nextLayer = layers.get(l + 1);
+            Layer nextLayer = layers.get(l + 1);
 
             layer.createSynapses(nextLayer);
         }
@@ -75,14 +76,14 @@ public class NeuralNetwork {
             throw new IllegalArgumentException("No layers defined");
         }
 
-        DenseLayer inputLayer = layers.get(0);
+        Layer inputLayer = layers.get(0);
 
         if (inputLayer.getNeurons().size() != input.length) {
             throw new IllegalArgumentException("Input layer size does not match input size");
         }
 
         // Reset every neuron value
-        for (DenseLayer layer : layers) {
+        for (Layer layer : layers) {
             for (Neuron neuron : layer.getNeurons()) {
                 neuron.setValue(0);
             }
@@ -94,12 +95,12 @@ public class NeuralNetwork {
         }
 
         for (int l = 0; l < layers.size(); l++) {
-            DenseLayer layer = layers.get(l);
+            Layer layer = layers.get(l);
 
             // We reached the output layer, which already has everything calculated
             if (l + 1 == layers.size()) break;
 
-            DenseLayer nextLayer = layers.get(l + 1);
+            Layer nextLayer = layers.get(l + 1);
 
             for (Synapse synapse : layer.getSynapses()) {
                 Neuron inputNeuron = synapse.getInputNeuron();
@@ -115,7 +116,7 @@ public class NeuralNetwork {
             }
         }
 
-        DenseLayer outputLayer = layers.get(layers.size() - 1);
+        Layer outputLayer = layers.get(layers.size() - 1);
         double[] output = new double[outputLayer.getNeurons().size()];
 
         for (int i = 0; i < output.length; i++) {
@@ -137,8 +138,8 @@ public class NeuralNetwork {
     public double[] forward(double[] inputs, int index) {
         NeuralNetwork clone = new NeuralNetwork(this);
 
-        DenseLayer layer = clone.getLayers().get(index);
-        DenseLayer previous = clone.getLayers().get(index - 1);
+        Layer layer = clone.getLayers().get(index);
+        Layer previous = clone.getLayers().get(index - 1);
 
         if (previous.getNeurons().size() != inputs.length) {
             throw new IllegalArgumentException("Input layer size does not match input size");
@@ -175,7 +176,7 @@ public class NeuralNetwork {
      *
      * @return a list of Layer objects representing the layers in the neural network
      */
-    public List<DenseLayer> getLayers() {
+    public List<Layer> getLayers() {
         return configuration.getLayers();
     }
 
@@ -187,7 +188,7 @@ public class NeuralNetwork {
      * @throws IndexOutOfBoundsException if the index is out of range
      *                                   (index < 0 || index >= size())
      */
-    public DenseLayer getLayerAt(int index) {
+    public Layer getLayerAt(int index) {
         return getLayers().get(index);
     }
 
@@ -197,7 +198,7 @@ public class NeuralNetwork {
      * @return the output and last layer of the neural network.
      */
     public OutputLayer getOutputLayer() {
-        DenseLayer layer = getLayers().get(getLayers().size() - 1);
+        Layer layer = getLayers().get(getLayers().size() - 1);
 
         if (!(layer instanceof OutputLayer outputLayer)) {
             throw new IllegalArgumentException("The last layer should be an instance of OutputLayer!");

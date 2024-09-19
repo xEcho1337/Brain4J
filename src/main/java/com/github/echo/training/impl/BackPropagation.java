@@ -1,7 +1,7 @@
 package com.github.echo.training.impl;
 
 import com.github.echo.network.NeuralNetwork;
-import com.github.echo.network.structure.layer.DenseLayer;
+import com.github.echo.network.structure.layer.Layer;
 import com.github.echo.network.structure.Neuron;
 import com.github.echo.network.structure.Synapse;
 import com.github.echo.training.DataRow;
@@ -57,8 +57,8 @@ public class BackPropagation extends AbstractModel {
     }
 
     private void backpropagate(double[] targets, double[] outputs) {
-        List<DenseLayer> layers = network().getLayers();
-        DenseLayer outputLayer = layers.get(layers.size() - 1);
+        List<Layer> layers = network().getLayers();
+        Layer outputLayer = layers.get(layers.size() - 1);
 
         // Output layer error and delta
         for (int i = 0; i < outputLayer.getNeurons().size(); i++) {
@@ -73,8 +73,8 @@ public class BackPropagation extends AbstractModel {
 
         // Hidden layers error and delta
         for (int l = layers.size() - 2; l > 0; l--) {
-            DenseLayer layer = layers.get(l);
-            DenseLayer nextLayer = layers.get(l + 1);
+            Layer layer = layers.get(l);
+            Layer nextLayer = layers.get(l + 1);
 
             for (Neuron neuron : layer.getNeurons()) {
                 double output = neuron.getValue();
@@ -93,7 +93,7 @@ public class BackPropagation extends AbstractModel {
 
         // Update weights and biases
         for (int l = 0; l < layers.size() - 1; l++) {
-            DenseLayer nextLayer = layers.get(l + 1);
+            Layer nextLayer = layers.get(l + 1);
 
             for (Synapse synapse : nextLayer.getSynapses()) {
                 double deltaWeight = learningRate * synapse.getOutputNeuron().delta() * synapse.getInputNeuron().getValue();

@@ -1,10 +1,10 @@
 package com.github.echo;
 
 import com.github.echo.network.NeuralConfiguration;
-import com.github.echo.network.structure.layer.OutputLayer;
+import com.github.echo.network.structure.layer.impl.OutputLayer;
 import com.github.echo.types.Activations;
 import com.github.echo.network.NeuralNetwork;
-import com.github.echo.network.structure.layer.DenseLayer;
+import com.github.echo.network.structure.layer.impl.DenseLayer;
 import com.github.echo.training.DataRow;
 import com.github.echo.training.DataSet;
 import com.github.echo.training.impl.BackPropagation;
@@ -37,7 +37,12 @@ public class Main {
 
         method.setLearningRate(value);
         method.setBatches(2);
+
+        long start = System.nanoTime();
         method.train(dataSet, value);
+        long diff = System.nanoTime() - start;
+
+        System.out.println(diff / 1e6);
 
         System.out.println(Arrays.toString(network.calculateOutput(input)));
     }

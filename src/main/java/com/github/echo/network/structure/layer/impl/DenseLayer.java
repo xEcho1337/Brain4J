@@ -1,5 +1,6 @@
-package com.github.echo.network.structure.layer;
+package com.github.echo.network.structure.layer.impl;
 
+import com.github.echo.network.structure.layer.Layer;
 import com.github.echo.types.Activations;
 import com.github.echo.network.structure.Neuron;
 import com.github.echo.network.structure.Synapse;
@@ -7,7 +8,7 @@ import com.github.echo.network.structure.Synapse;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DenseLayer {
+public class DenseLayer implements Layer {
 
     private final List<Neuron> neurons = new ArrayList<>();
     private final List<Synapse> synapses = new ArrayList<>();
@@ -23,7 +24,8 @@ public class DenseLayer {
      *
      * @param  nextLayer  the layer to create synapses with, must not be null
      */
-    public void createSynapses(DenseLayer nextLayer) {
+    @Override
+    public void createSynapses(Layer nextLayer) {
         if (nextLayer == null) return;
 
         for (Neuron neuron : neurons) {
@@ -38,6 +40,7 @@ public class DenseLayer {
      *
      * @return a list of Neuron objects
      */
+    @Override
     public List<Neuron> getNeurons() {
         return neurons;
     }
@@ -47,6 +50,7 @@ public class DenseLayer {
      *
      * @return a list of synapses
      */
+    @Override
     public List<Synapse> getSynapses() {
         return synapses;
     }
@@ -57,6 +61,7 @@ public class DenseLayer {
      * @param index the index of the neuron to retrieve
      * @return the neuron at the specified index
      */
+    @Override
     public Neuron getNeuronAt(int index) {
         return neurons.get(index);
     }
