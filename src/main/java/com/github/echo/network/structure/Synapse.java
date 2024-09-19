@@ -16,7 +16,7 @@ public class Synapse {
      *
      * @return the input neuron of the synapse
      */
-    public Neuron inputNeuron() {
+    public Neuron getInputNeuron() {
         return inputNeuron;
     }
 
@@ -25,7 +25,7 @@ public class Synapse {
      *
      * @return the output neuron of this synapse
      */
-    public Neuron outputNeuron() {
+    public Neuron getOutputNeuron() {
         return outputNeuron;
     }
 
@@ -34,7 +34,7 @@ public class Synapse {
      *
      * @return the weight of the synapse
      */
-    public double weight() {
+    public double getWeight() {
         return weight;
     }
 

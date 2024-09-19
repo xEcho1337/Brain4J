@@ -1,4 +1,4 @@
-package com.github.echo.training.models;
+package com.github.echo.training.impl;
 
 import com.github.echo.network.NeuralNetwork;
 import com.github.echo.network.structure.layer.DenseLayer;
@@ -6,6 +6,7 @@ import com.github.echo.network.structure.Neuron;
 import com.github.echo.network.structure.Synapse;
 import com.github.echo.training.DataRow;
 import com.github.echo.training.DataSet;
+import com.github.echo.training.AbstractModel;
 import com.github.echo.types.loss.LossFunction;
 
 import java.util.List;
@@ -33,7 +34,7 @@ public class Backpropagation extends AbstractModel {
     public void iterate(DataSet dataSet) {
         totalError = 0.0;
 
-        for (DataRow row : dataSet.rows()) {
+        for (DataRow row : dataSet.getRows()) {
             double[] inputs = row.inputs();
             double[] targets = row.outputs();
 
@@ -43,7 +44,7 @@ public class Backpropagation extends AbstractModel {
             backpropagate(targets, outputs);
         }
 
-        totalError /= dataSet.rows().size();
+        totalError /= dataSet.getRows().size();
     }
 
     private void backpropagate(double[] targets, double[] outputs) {
@@ -52,13 +53,13 @@ public class Backpropagation extends AbstractModel {
         // Output layer error and delta
         DenseLayer outputLayer = layers.get(layers.size() - 1);
 
-        for (int i = 0; i < outputLayer.neurons().size(); i++) {
+        for (int i = 0; i < outputLayer.getNeurons().size(); i++) {
             Neuron neuron = outputLayer.getNeuronAt(i);
             double output = outputs[i];
 
             // Calculate the error
             double error = targets[i] - output;
-            double delta = error * neuron.activationFunction().derivative().apply(output);
+            double delta = error * neuron.getActivationFunction().derivative().apply(output);
 
             neuron.setDelta(delta);
         }
@@ -68,19 +69,19 @@ public class Backpropagation extends AbstractModel {
             DenseLayer layer = layers.get(l);
             DenseLayer nextLayer = layers.get(l + 1);
 
-            for (Neuron neuron : layer.neurons()) {
-                double output = neuron.value();
+            for (Neuron neuron : layer.getNeurons()) {
+                double output = neuron.getValue();
                 double error = 0.0;
 
-                for (Synapse synapse : nextLayer.synapses()) {
-                    for (Neuron nextNeuron : nextLayer.neurons()) {
-                        if (!synapse.inputNeuron().equals(neuron)) continue;
+                for (Synapse synapse : nextLayer.getSynapses()) {
+                    for (Neuron nextNeuron : nextLayer.getNeurons()) {
+                        if (!synapse.getInputNeuron().equals(neuron)) continue;
 
-                        error += synapse.weight() * nextNeuron.delta();
+                        error += synapse.getWeight() * nextNeuron.delta();
                     }
                 }
 
-                double delta = error * neuron.activationFunction().derivative().apply(output);
+                double delta = error * neuron.getActivationFunction().derivative().apply(output);
                 neuron.setDelta(delta);
             }
         }
@@ -89,14 +90,14 @@ public class Backpropagation extends AbstractModel {
         for (int l = 0; l < layers.size() - 1; l++) {
             DenseLayer nextLayer = layers.get(l + 1);
 
-            for (Synapse synapse : nextLayer.synapses()) {
-                double deltaWeight = learningRate * synapse.outputNeuron().delta() * synapse.inputNeuron().value();
-                synapse.setWeight(synapse.weight() + deltaWeight);
+            for (Synapse synapse : nextLayer.getSynapses()) {
+                double deltaWeight = learningRate * synapse.getOutputNeuron().delta() * synapse.getInputNeuron().getValue();
+                synapse.setWeight(synapse.getWeight() + deltaWeight);
             }
 
-            for (Neuron neuron : nextLayer.neurons()) {
+            for (Neuron neuron : nextLayer.getNeurons()) {
                 double deltaBias = learningRate * neuron.delta();
-                neuron.setBias(neuron.bias() + deltaBias);
+                neuron.setBias(neuron.getBias() + deltaBias);
             }
         }
     }

@@ -18,7 +18,7 @@ public class Neuron {
      *
      * @return the activation function for this neuron
      */
-    public Activations activationFunction() {
+    public Activations getActivationFunction() {
         return activationFunction;
     }
 
@@ -27,7 +27,7 @@ public class Neuron {
      *
      * @return the bias value of the neuron
      */
-    public double bias() {
+    public double getBias() {
         return bias;
     }
 
@@ -45,7 +45,7 @@ public class Neuron {
      *
      * @return the value of the neuron
      */
-    public double value() {
+    public double getValue() {
         return value;
     }
 

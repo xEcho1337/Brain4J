@@ -27,7 +27,7 @@ public class DenseLayer {
         if (nextLayer == null) return;
 
         for (Neuron neuron : neurons) {
-            for (Neuron nextNeuron : nextLayer.neurons()) {
+            for (Neuron nextNeuron : nextLayer.getNeurons()) {
                 synapses.add(new Synapse(neuron, nextNeuron));
             }
         }
@@ -38,7 +38,7 @@ public class DenseLayer {
      *
      * @return a list of Neuron objects
      */
-    public List<Neuron> neurons() {
+    public List<Neuron> getNeurons() {
         return neurons;
     }
 
@@ -47,7 +47,7 @@ public class DenseLayer {
      *
      * @return a list of synapses
      */
-    public List<Synapse> synapses() {
+    public List<Synapse> getSynapses() {
         return synapses;
     }
 

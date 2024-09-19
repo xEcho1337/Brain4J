@@ -53,7 +53,7 @@ public class NeuralNetwork {
             DenseLayer layer = layers.get(l);
 
             // Reset all the synapses
-            layer.synapses().clear();
+            layer.getSynapses().clear();
 
             if (l == layers.size() - 1) break;
 
@@ -77,13 +77,13 @@ public class NeuralNetwork {
 
         DenseLayer inputLayer = layers.get(0);
 
-        if (inputLayer.neurons().size() != input.length) {
+        if (inputLayer.getNeurons().size() != input.length) {
             throw new IllegalArgumentException("Input layer size does not match input size");
         }
 
         // Reset every neuron value
         for (DenseLayer layer : layers) {
-            for (Neuron neuron : layer.neurons()) {
+            for (Neuron neuron : layer.getNeurons()) {
                 neuron.setValue(0);
             }
         }
@@ -101,25 +101,25 @@ public class NeuralNetwork {
 
             DenseLayer nextLayer = layers.get(l + 1);
 
-            for (Synapse synapse : layer.synapses()) {
-                Neuron inputNeuron = synapse.inputNeuron();
-                Neuron outputNeuron = synapse.outputNeuron();
+            for (Synapse synapse : layer.getSynapses()) {
+                Neuron inputNeuron = synapse.getInputNeuron();
+                Neuron outputNeuron = synapse.getOutputNeuron();
 
                 // Weighted sum
-                outputNeuron.setValue(outputNeuron.value() + inputNeuron.value() * synapse.weight());
+                outputNeuron.setValue(outputNeuron.getValue() + inputNeuron.getValue() * synapse.getWeight());
             }
 
             // Apply the activation function
-            for (Neuron neuron : nextLayer.neurons()) {
+            for (Neuron neuron : nextLayer.getNeurons()) {
                 neuron.applyFunction();
             }
         }
 
         DenseLayer outputLayer = layers.get(layers.size() - 1);
-        double[] output = new double[outputLayer.neurons().size()];
+        double[] output = new double[outputLayer.getNeurons().size()];
 
         for (int i = 0; i < output.length; i++) {
-            output[i] = outputLayer.getNeuronAt(i).value();
+            output[i] = outputLayer.getNeuronAt(i).getValue();
         }
 
         return output;
@@ -140,31 +140,31 @@ public class NeuralNetwork {
         DenseLayer layer = clone.getLayers().get(index);
         DenseLayer previous = clone.getLayers().get(index - 1);
 
-        if (previous.neurons().size() != inputs.length) {
+        if (previous.getNeurons().size() != inputs.length) {
             throw new IllegalArgumentException("Input layer size does not match input size");
         }
 
-        double[] outputs = new double[layer.neurons().size()];
+        double[] outputs = new double[layer.getNeurons().size()];
 
-        for (int i = 0; i < previous.neurons().size(); i++) {
+        for (int i = 0; i < previous.getNeurons().size(); i++) {
             Neuron neuron = previous.getNeuronAt(i);
             neuron.setValue(inputs[i]);
         }
 
-        for (int i = 0; i < layer.neurons().size(); i++) {
+        for (int i = 0; i < layer.getNeurons().size(); i++) {
             Neuron outputNeuron = layer.getNeuronAt(i);
 
-            for (Synapse synapse : layer.synapses()) {
-                Neuron inputNeuron = synapse.inputNeuron();
-                Neuron neuron = synapse.outputNeuron();
+            for (Synapse synapse : layer.getSynapses()) {
+                Neuron inputNeuron = synapse.getInputNeuron();
+                Neuron neuron = synapse.getOutputNeuron();
 
                 if (neuron.equals(outputNeuron)) {
-                    outputNeuron.setValue(outputNeuron.value() + inputNeuron.value() * synapse.weight());
+                    outputNeuron.setValue(outputNeuron.getValue() + inputNeuron.getValue() * synapse.getWeight());
                 }
             }
 
             outputNeuron.applyFunction();
-            outputs[i] = outputNeuron.value();
+            outputs[i] = outputNeuron.getValue();
         }
 
         return outputs;

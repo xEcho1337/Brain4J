@@ -1,7 +1,6 @@
-package com.github.echo.training.models;
+package com.github.echo.training;
 
 import com.github.echo.network.NeuralNetwork;
-import com.github.echo.training.DataSet;
 
 public abstract class AbstractModel {
 
@@ -43,7 +42,7 @@ public abstract class AbstractModel {
      *
      * @return the number of batches
      */
-    public int batches() {
+    public int getBatches() {
         return batches;
     }
 
@@ -61,7 +60,7 @@ public abstract class AbstractModel {
      *
      * @return the learning rate value
      */
-    public double learningRate() {
+    public double getLearningRate() {
         return learningRate;
     }
 

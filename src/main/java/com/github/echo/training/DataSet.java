@@ -16,7 +16,7 @@ public class DataSet {
         return this;
     }
 
-    public List<DataRow> rows() {
+    public List<DataRow> getRows() {
         return rows;
     }
 }
