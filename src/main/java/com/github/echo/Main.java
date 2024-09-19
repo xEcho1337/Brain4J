@@ -1,5 +1,6 @@
 package com.github.echo;
 
+import com.github.echo.network.NeuralConfiguration;
 import com.github.echo.network.structure.layer.OutputLayer;
 import com.github.echo.types.Activations;
 import com.github.echo.network.NeuralNetwork;
@@ -13,13 +14,14 @@ import java.util.Arrays;
 
 public class Main {
     public static void main(String[] args) {
-        NeuralNetwork network = new NeuralNetwork()
-                .addLayer(new DenseLayer(2, Activations.LINEAR))
-                .addLayer(new DenseLayer(16, Activations.RELU))
-                .addLayer(new DenseLayer(16, Activations.RELU))
-                .addLayer(new DenseLayer(16, Activations.RELU))
-                .addLayer(new OutputLayer(1, Activations.SIGMOID, LossFunctions.BCE))
-                .build();
+        NeuralConfiguration configuration = new NeuralConfiguration()
+                .layer(new DenseLayer(2, Activations.LINEAR))
+                .layer(new DenseLayer(16, Activations.RELU))
+                .layer(new DenseLayer(16, Activations.RELU))
+                .layer(new DenseLayer(16, Activations.RELU))
+                .layer(new OutputLayer(1, Activations.SIGMOID, LossFunctions.BCE));
+
+        NeuralNetwork network = new NeuralNetwork(configuration);
 
         double[] input = new double[]{0, 1};
 

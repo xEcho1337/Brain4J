@@ -10,37 +10,29 @@ import java.util.List;
 
 public class NeuralNetwork {
 
+    private final NeuralConfiguration configuration;
     private final List<DenseLayer> layers = new ArrayList<>();
 
-    public NeuralNetwork() {
+    public NeuralNetwork(NeuralConfiguration configuration) {
+        this.configuration = configuration;
+        this.layers.addAll(configuration.getLayers());
+        this.resetSynapses();
     }
 
     public NeuralNetwork(NeuralNetwork parent) {
-        for (DenseLayer layer : parent.layers()) {
-            addLayer(layer);
+        this.configuration = parent.getConfiguration();
+
+        for (DenseLayer layer : parent.getLayers()) {
+            configuration.layer(layer);
         }
     }
 
     /**
-     * Adds a layer to the neural network and returns the updated NeuralNetwork object.
-     *
-     * @param  layer  the layer to be added to the neural network
-     * @return        the updated NeuralNetwork object with the added layer
+     * Gets the configuration of this neural network.
+     * @return the neural configuration
      */
-    public NeuralNetwork addLayer(DenseLayer layer) {
-        layers.add(layer);
-        return this;
-    }
-
-    /**
-     * Builds the neural network by creating synapses between each pair of adjacent layers.
-     *
-     * @return the built neural network
-     */
-    public NeuralNetwork build() {
-        resetSynapses();
-
-        return this;
+    public NeuralConfiguration getConfiguration() {
+        return configuration;
     }
 
     /**
@@ -145,8 +137,8 @@ public class NeuralNetwork {
     public double[] forward(double[] inputs, int index) {
         NeuralNetwork clone = new NeuralNetwork(this);
 
-        DenseLayer layer = clone.layers().get(index);
-        DenseLayer previous = clone.layers().get(index - 1);
+        DenseLayer layer = clone.getLayers().get(index);
+        DenseLayer previous = clone.getLayers().get(index - 1);
 
         if (previous.neurons().size() != inputs.length) {
             throw new IllegalArgumentException("Input layer size does not match input size");
@@ -183,8 +175,8 @@ public class NeuralNetwork {
      *
      * @return a list of Layer objects representing the layers in the neural network
      */
-    public List<DenseLayer> layers() {
-        return layers;
+    public List<DenseLayer> getLayers() {
+        return configuration.getLayers();
     }
 
     /**
@@ -196,12 +188,16 @@ public class NeuralNetwork {
      *                                   (index < 0 || index >= size())
      */
     public DenseLayer getLayerAt(int index) {
-        return layers.get(index);
+        return getLayers().get(index);
     }
 
-
+    /**
+     * Returns the last layer in the neural network.
+     *
+     * @return the output and last layer of the neural network.
+     */
     public OutputLayer getOutputLayer() {
-        DenseLayer layer = layers.get(layers.size() - 1);
+        DenseLayer layer = getLayers().get(getLayers().size() - 1);
 
         if (!(layer instanceof OutputLayer outputLayer)) {
             throw new IllegalArgumentException("The last layer should be an instance of OutputLayer!");

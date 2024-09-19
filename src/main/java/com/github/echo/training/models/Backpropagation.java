@@ -47,7 +47,7 @@ public class Backpropagation extends AbstractModel {
     }
 
     private void backpropagate(double[] targets, double[] outputs) {
-        List<DenseLayer> layers = network().layers();
+        List<DenseLayer> layers = network().getLayers();
 
         // Output layer error and delta
         DenseLayer outputLayer = layers.get(layers.size() - 1);
