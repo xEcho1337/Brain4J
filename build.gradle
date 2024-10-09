@@ -1,0 +1,13 @@
+plugins {
+    id 'java'
+}
+
+group = 'net.echo'
+version = '2.0.0'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+}
