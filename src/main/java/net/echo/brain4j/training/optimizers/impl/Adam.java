@@ -34,11 +34,17 @@ public class Adam extends Optimizer {
     public void update(Synapse synapse, int timestep) {
         double gradient = synapse.getOutputNeuron().getDelta() * synapse.getInputNeuron().getValue();
 
-        firstMomentum.put(synapse, beta1 * firstMomentum.getOrDefault(synapse, 0.0) + (1 - beta1) * gradient);
-        secondMomentum.put(synapse, beta2 * secondMomentum.getOrDefault(synapse, 0.0) + (1 - beta2) * gradient * gradient);
+        double currentFirstMomentum = firstMomentum.getOrDefault(synapse, 0.0);
+        double currentSecondMomentum = secondMomentum.getOrDefault(synapse, 0.0);
 
-        double mHat = firstMomentum.get(synapse) / (1 - Math.pow(beta1, timestep));
-        double vHat = secondMomentum.get(synapse) / (1 - Math.pow(beta2, timestep));
+        double m = beta1 * currentFirstMomentum + (1 - beta1) * gradient;
+        double v = beta2 * currentSecondMomentum + (1 - beta2) * gradient * gradient;
+
+        firstMomentum.put(synapse, m);
+        secondMomentum.put(synapse, v);
+
+        double mHat = m / (1 - Math.pow(beta1, timestep));
+        double vHat = v / (1 - Math.pow(beta2, timestep));
 
         double deltaWeight = (learningRate * mHat) / (Math.sqrt(vHat) + epsilon);
         synapse.setWeight(synapse.getWeight() + deltaWeight);

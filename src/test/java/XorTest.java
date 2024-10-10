@@ -7,7 +7,6 @@ import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.impl.FeedForwardModel;
 import net.echo.brain4j.training.optimizers.impl.Adam;
-import net.echo.brain4j.training.optimizers.impl.SGD;
 
 import java.util.Arrays;
 
@@ -16,9 +15,9 @@ public class XorTest {
     public static void main(String[] args) {
         Model network = new FeedForwardModel(
                 new DenseLayer(2, Activations.LINEAR),
-                new DenseLayer(256, Activations.RELU),
-                new DenseLayer(256, Activations.RELU),
-                new DenseLayer(256, Activations.RELU),
+                new DenseLayer(32, Activations.RELU),
+                new DenseLayer(32, Activations.RELU),
+                new DenseLayer(32, Activations.RELU),
                 new DenseLayer(1, Activations.SIGMOID)
         );
 
