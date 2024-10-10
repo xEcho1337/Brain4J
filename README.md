@@ -39,7 +39,7 @@ DataRow fourth = new DataRow(new double[]{1.0, 1.0}, 0.0);
 DataSet training = new DataSet(first, second, third, fourth);
 ```
 
-At this point we have everything setup, we can call the fit method inside a loop and wait for the network to finish.
+We have everything setup, we can call the fit method inside a loop and wait for the network to finish.
 
 ```java
 double error;
