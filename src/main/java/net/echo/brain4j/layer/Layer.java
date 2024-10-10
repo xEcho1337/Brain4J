@@ -25,7 +25,11 @@ public class Layer {
     public void connectAll(Layer nextLayer, double bound) {
         for (Neuron neuron : neurons) {
             for (Neuron nextNeuron : nextLayer.neurons) {
-                synapses.add(new Synapse(neuron, nextNeuron, bound));
+                Synapse synapse = new Synapse(neuron, nextNeuron, bound);
+
+                neuron.setSynapse(synapse);
+
+                synapses.add(synapse);
             }
         }
     }

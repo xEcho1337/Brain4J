@@ -44,17 +44,13 @@ public class BackPropagation {
         // Hidden layers error and delta
         for (int l = layers.size() - 2; l > 0; l--) {
             Layer layer = layers.get(l);
-            Layer nextLayer = layers.get(l + 1);
 
             for (Neuron neuron : layer.getNeurons()) {
                 double output = neuron.getValue();
                 double error = 0.0;
 
-                for (Synapse synapse : nextLayer.getSynapses()) {
-                    if (!synapse.getInputNeuron().equals(neuron)) continue;
-
-                    error += synapse.getWeight() * synapse.getOutputNeuron().getDelta();
-                }
+                Synapse synapse = neuron.getSynapse();
+                error += synapse.getWeight() * synapse.getOutputNeuron().getDelta();
 
                 double delta = error * layer.getActivation().getFunction().getDerivative(output);
                 neuron.setDelta(delta);

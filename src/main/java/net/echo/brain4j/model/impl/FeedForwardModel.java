@@ -66,11 +66,8 @@ public class FeedForwardModel implements Model {
             inputLayer.getNeuronAt(i).setValue(input[i]);
         }
 
-        for (int l = 0; l < layers.size(); l++) {
+        for (int l = 0; l < layers.size() - 1; l++) {
             Layer layer = layers.get(l);
-
-            // We reached the output layer, which already has everything calculated
-            if (l + 1 == layers.size()) break;
 
             Layer nextLayer = layers.get(l + 1);
 
@@ -117,8 +114,9 @@ public class FeedForwardModel implements Model {
         for (int i = 0; i < layers.size(); i++) {
             Layer layer = layers.get(i);
             String layerType = layer.getClass().getSimpleName();
-            int nIn = (i == 0) ? layer.getNeurons().size() : layers.get(i - 1).getNeurons().size();
-            int nOut = layer.getNeurons().size();
+
+            int nIn = layer.getNeurons().size();
+            int nOut = i == layers.size() - 1 ? 0 : layers.get(i + 1).getNeurons().size();
 
             int totalParams = layer.getTotalParams();
 

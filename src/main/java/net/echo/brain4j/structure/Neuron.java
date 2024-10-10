@@ -2,9 +2,18 @@ package net.echo.brain4j.structure;
 
 public class Neuron {
 
+    private Synapse synapse;
     private double delta;
     private double value;
-    private double bias = Math.random();
+    private double bias = 2 * Math.random() - 1;
+
+    public Synapse getSynapse() {
+        return synapse;
+    }
+
+    public void setSynapse(Synapse synapse) {
+        this.synapse = synapse;
+    }
 
     public double getDelta() {
         return delta;
