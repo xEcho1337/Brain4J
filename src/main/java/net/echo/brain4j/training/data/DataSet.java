@@ -1,4 +1,4 @@
-package net.echo.brain4j.data;
+package net.echo.brain4j.training.data;
 
 import java.util.ArrayList;
 import java.util.Arrays;

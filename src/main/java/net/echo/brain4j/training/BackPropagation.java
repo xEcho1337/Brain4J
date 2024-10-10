@@ -1,12 +1,13 @@
 package net.echo.brain4j.training;
 
-import net.echo.brain4j.data.DataRow;
-import net.echo.brain4j.data.DataSet;
+import net.echo.brain4j.training.data.DataRow;
+import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
+import net.echo.brain4j.training.optimizers.Optimizer;
 
 import java.util.List;
 
@@ -14,11 +15,16 @@ public class BackPropagation {
 
     private final Model model;
     private final LossFunction lossFunction;
+    private final Optimizer optimizer;
 
-    public BackPropagation(Model model) {
+    private int timestep = 0;
+
+    public BackPropagation(Model model, Optimizer optimizer) {
         this.model = model;
         this.lossFunction = model.getLossFunction();
+        this.optimizer = optimizer;
     }
+
     public double iterate(DataSet dataSet, double learningRate) {
         double totalError = 0.0;
 
@@ -35,10 +41,9 @@ public class BackPropagation {
 
         return totalError / dataSet.getDataRows().size();
     }
-    
+
     private void backpropagate(double[] targets, double[] outputs, double learningRate) {
         List<Layer> layers = model.getLayers();
-
         initialDelta(layers, targets, outputs);
 
         // Hidden layers error and delta
@@ -63,10 +68,8 @@ public class BackPropagation {
     private void initialDelta(List<Layer> layers, double[] targets, double[] outputs) {
         Layer outputLayer = layers.getLast();
 
-        // Output layer error and delta
         for (int i = 0; i < outputLayer.getNeurons().size(); i++) {
             Neuron neuron = outputLayer.getNeuronAt(i);
-
             double output = outputs[i];
             double error = targets[i] - output;
 
@@ -76,12 +79,13 @@ public class BackPropagation {
     }
 
     private void updateWeightsAndBiases(List<Layer> layers, double learningRate) {
+        timestep++;
+
         for (int l = 0; l < layers.size() - 1; l++) {
             Layer nextLayer = layers.get(l + 1);
 
             for (Synapse synapse : nextLayer.getSynapses()) {
-                double deltaWeight = learningRate * synapse.getOutputNeuron().getDelta() * synapse.getInputNeuron().getValue();
-                synapse.setWeight(synapse.getWeight() + deltaWeight);
+                optimizer.update(synapse, timestep);
             }
 
             for (Neuron neuron : nextLayer.getNeurons()) {

@@ -25,8 +25,11 @@ At this point, we need to define the weight initialization method and the loss f
 We can achieve this by calling the compile method like below:
 
 ```java
-network.compile(InitializationType.XAVIER, LossFunctions.MEAN_SQUARED_ERROR);
+network.compile(InitializationType.XAVIER, LossFunctions.BINARY_CROSS_ENTROPY, new Adam(0.001));
 ```
+
+For networks with only one output neuron (where the output is between 0 and 1) we use Binary Cross Entropy,
+with Adaptive Moment Estimation (Adam).
 
 Now we need to define our training data by using `DataSet` and `DataRow`.
 
@@ -45,7 +48,7 @@ We have everything setup, we can call the fit method inside a loop and wait for 
 double error;
         
 do {
-    error = network.fit(training, 0.01);
+    error = network.fit(training);
 } while (error > 0.01);
 ```
 

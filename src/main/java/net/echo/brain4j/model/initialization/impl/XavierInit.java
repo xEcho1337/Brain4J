@@ -1,6 +1,6 @@
-package net.echo.brain4j.initialization.impl;
+package net.echo.brain4j.model.initialization.impl;
 
-import net.echo.brain4j.initialization.WeightInitializer;
+import net.echo.brain4j.model.initialization.WeightInitializer;
 
 public class XavierInit implements WeightInitializer {
 

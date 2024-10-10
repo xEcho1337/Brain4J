@@ -1,8 +1,8 @@
-package net.echo.brain4j.initialization;
+package net.echo.brain4j.model.initialization;
 
-import net.echo.brain4j.initialization.impl.HeInit;
-import net.echo.brain4j.initialization.impl.NormalInit;
-import net.echo.brain4j.initialization.impl.XavierInit;
+import net.echo.brain4j.model.initialization.impl.HeInit;
+import net.echo.brain4j.model.initialization.impl.NormalInit;
+import net.echo.brain4j.model.initialization.impl.XavierInit;
 
 public enum InitializationType {
 

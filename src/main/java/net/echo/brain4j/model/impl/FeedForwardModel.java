@@ -1,7 +1,7 @@
 package net.echo.brain4j.model.impl;
 
-import net.echo.brain4j.data.DataSet;
-import net.echo.brain4j.initialization.InitializationType;
+import net.echo.brain4j.training.data.DataSet;
+import net.echo.brain4j.model.initialization.InitializationType;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.loss.LossFunctions;
@@ -9,6 +9,7 @@ import net.echo.brain4j.model.Model;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.training.BackPropagation;
+import net.echo.brain4j.training.optimizers.Optimizer;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,15 +20,17 @@ public class FeedForwardModel implements Model {
     private final List<Layer> layers;
     private BackPropagation propagation;
     private LossFunction function;
+    private Optimizer optimizer;
 
     public FeedForwardModel(Layer... layers) {
         this.layers = new ArrayList<>(Arrays.asList(layers));
     }
 
     @Override
-    public void compile(InitializationType type, LossFunctions function) {
+    public void compile(InitializationType type, LossFunctions function, Optimizer optimizer) {
         this.function = function.getFunction();
-        this.propagation = new BackPropagation(this);
+        this.optimizer = optimizer;
+        this.propagation = new BackPropagation(this, optimizer);
 
         // Ignore the output layer
         for (int i = 0; i < layers.size() - 1; i++) {
@@ -44,8 +47,8 @@ public class FeedForwardModel implements Model {
     }
 
     @Override
-    public double fit(DataSet set, double learningRate) {;
-        return propagation.iterate(set, learningRate);
+    public double fit(DataSet set) {
+        return propagation.iterate(set, optimizer.getLearningRate());
     }
 
     @Override
