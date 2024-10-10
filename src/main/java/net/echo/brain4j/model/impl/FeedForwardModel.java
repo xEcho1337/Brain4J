@@ -1,14 +1,14 @@
 package net.echo.brain4j.model.impl;
 
-import net.echo.brain4j.training.data.DataSet;
-import net.echo.brain4j.model.initialization.InitializationType;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.Model;
+import net.echo.brain4j.model.initialization.InitializationType;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.training.BackPropagation;
+import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.Optimizer;
 
 import java.util.ArrayList;
