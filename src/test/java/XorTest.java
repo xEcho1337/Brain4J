@@ -1,4 +1,5 @@
 import net.echo.brain4j.activation.Activations;
+import net.echo.brain4j.layer.impl.DropoutLayer;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.model.initialization.InitializationType;
@@ -15,9 +16,13 @@ public class XorTest {
     public static void main(String[] args) {
         Model network = new FeedForwardModel(
                 new DenseLayer(2, Activations.LINEAR),
+                new DropoutLayer(0.5),
                 new DenseLayer(32, Activations.RELU),
+                new DropoutLayer(0.5),
                 new DenseLayer(32, Activations.RELU),
+                new DropoutLayer(0.5),
                 new DenseLayer(32, Activations.RELU),
+                new DropoutLayer(0.5),
                 new DenseLayer(1, Activations.SIGMOID)
         );
 
@@ -49,7 +54,7 @@ public class XorTest {
 
         double took = (System.nanoTime() - start) / 1e6;
 
-        System.out.println("Took " + took + " ms with an average of " + (took / epoches) + " ms per epoch");
+        System.out.println("Took " + took + " ms with an average of " + (took / epoches) + " ms per epoch and error " + error);
 
         System.out.println("Evaluation time!");
 

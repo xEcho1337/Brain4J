@@ -1,6 +1,7 @@
 package net.echo.brain4j.training;
 
 import net.echo.brain4j.layer.Layer;
+import net.echo.brain4j.layer.impl.DropoutLayer;
 import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.structure.Neuron;
@@ -49,6 +50,12 @@ public class BackPropagation {
         // Hidden layers error and delta
         for (int l = layers.size() - 2; l > 0; l--) {
             Layer layer = layers.get(l);
+
+            if (layer instanceof DropoutLayer dropoutLayer) {
+                Layer previous = layers.get(l - 1);
+                dropoutLayer.backward(previous.getNeurons());
+                continue;
+            }
 
             for (Neuron neuron : layer.getNeurons()) {
                 double output = neuron.getValue();

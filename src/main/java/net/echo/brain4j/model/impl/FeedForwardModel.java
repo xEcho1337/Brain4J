@@ -1,6 +1,7 @@
 package net.echo.brain4j.model.impl;
 
 import net.echo.brain4j.layer.Layer;
+import net.echo.brain4j.layer.impl.DropoutLayer;
 import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.Model;
@@ -35,7 +36,14 @@ public class FeedForwardModel implements Model {
         // Ignore the output layer
         for (int i = 0; i < layers.size() - 1; i++) {
             Layer layer = layers.get(i);
+
+            if (layer instanceof DropoutLayer) continue;
+
             Layer nextLayer = layers.get(i + 1);
+
+            if (nextLayer instanceof DropoutLayer) {
+                nextLayer = layers.get(i + 2);
+            }
 
             int nIn = layer.getNeurons().size();
             int nOut = nextLayer.getNeurons().size();
@@ -72,7 +80,14 @@ public class FeedForwardModel implements Model {
         for (int l = 0; l < layers.size() - 1; l++) {
             Layer layer = layers.get(l);
 
+            if (layer instanceof DropoutLayer) continue;
+
             Layer nextLayer = layers.get(l + 1);
+
+            if (nextLayer instanceof DropoutLayer dropoutLayer) {
+                // dropoutLayer.process(layer.getNeurons());
+                nextLayer = layers.get(l + 2);
+            }
 
             for (Synapse synapse : layer.getSynapses()) {
                 Neuron inputNeuron = synapse.getInputNeuron();
