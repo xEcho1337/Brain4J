@@ -131,15 +131,24 @@ public class FeedForwardModel implements Model {
 
         for (int i = 0; i < layers.size(); i++) {
             Layer layer = layers.get(i);
+            Layer next = layers.get(Math.min(i, layers.size() - 1));
+
+            if (next instanceof DropoutLayer) {
+                next = layers.get(Math.min(i + 1, layers.size() - 1));
+            }
+
             String layerType = layer.getClass().getSimpleName();
 
             int nIn = layer.getNeurons().size();
-            int nOut = i == layers.size() - 1 ? 0 : layers.get(i + 1).getNeurons().size();
+            int nOut = i == layers.size() - 1 ? 0 : next.getNeurons().size();
 
             int totalParams = layer.getTotalParams();
 
+            String formatNin = layer instanceof DropoutLayer ? "-" : String.valueOf(nIn);
+            String formatNout = layer instanceof DropoutLayer ? "-" : String.valueOf(nOut);
+
             stats.append(String.format("%-7d %-15s %-10s %-12d\n",
-                    i, layerType, nIn + ", " + nOut, totalParams));
+                    i, layerType, formatNin + ", " + formatNout, totalParams));
 
             params += totalParams;
         }
