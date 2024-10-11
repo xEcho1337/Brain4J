@@ -19,9 +19,9 @@ import java.util.List;
 public class FeedForwardModel implements Model {
 
     private final List<Layer> layers;
-    private BackPropagation propagation;
-    private LossFunction function;
+    private LossFunctions function;
     private Optimizer optimizer;
+    private BackPropagation propagation;
 
     public FeedForwardModel(Layer... layers) {
         this.layers = new ArrayList<>(Arrays.asList(layers));
@@ -29,7 +29,7 @@ public class FeedForwardModel implements Model {
 
     @Override
     public void compile(InitializationType type, LossFunctions function, Optimizer optimizer) {
-        this.function = function.getFunction();
+        this.function = function;
         this.optimizer = optimizer;
         this.propagation = new BackPropagation(this, optimizer);
 
@@ -113,7 +113,7 @@ public class FeedForwardModel implements Model {
 
     @Override
     public LossFunction getLossFunction() {
-        return function;
+        return function.getFunction();
     }
 
     @Override

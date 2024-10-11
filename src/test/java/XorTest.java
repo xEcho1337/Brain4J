@@ -50,7 +50,7 @@ public class XorTest {
             if (epoches % 100 == 0) {
                 System.out.println("Epoch #" + epoches + " has error " + error);
             }
-        } while (error > 0.01);
+        } while (error > 0.001);
 
         double took = (System.nanoTime() - start) / 1e6;
 
