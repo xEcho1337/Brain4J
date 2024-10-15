@@ -54,7 +54,7 @@ public class AntiCheatClassifier {
             }
         } while (error > 0.01);
 
-        network.save("skibidi.json");
+        network.save("anticheat.json");
 
         double took = (System.nanoTime() - start) / 1e6;
 
@@ -66,7 +66,7 @@ public class AntiCheatClassifier {
             System.out.println("Output: " + Arrays.toString(output));
         }
 
-        network.load("skibidi.json");
+        network.load("anticheat.json");
 
         for (DataRow row : training.getDataRows()) {
             double[] output = network.predict(row.inputs());

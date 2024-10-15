@@ -9,21 +9,68 @@ import net.echo.brain4j.training.optimizers.Optimizer;
 
 import java.util.List;
 
+/**
+ * Interface for a neural network model, defining methods for compilation, training, and prediction.
+ */
 public interface Model {
 
+    /**
+     * Initializes the model and layers.
+     *
+     * @param type      initialization method
+     * @param function  loss function for error assessment
+     * @param optimizer optimization algorithm
+     */
     void compile(InitializationType type, LossFunctions function, Optimizer optimizer);
 
+    /**
+     * Trains the model for one epoch.
+     *
+     * @param set dataset for training
+     * @return model error
+     */
     double fit(DataSet set);
 
-    double[] predict(double ... input);
+    /**
+     * Predicts output for given input.
+     *
+     * @param input input data
+     * @return predicted outputs
+     */
+    double[] predict(double... input);
 
+    /**
+     * Gets the model's loss function.
+     *
+     * @return loss function
+     */
     LossFunction getLossFunction();
 
+    /**
+     * Retrieves layers of the network.
+     *
+     * @return list of layers
+     */
     List<Layer> getLayers();
 
+    /**
+     * Generates model statistics.
+     *
+     * @return model stats
+     */
     String getStats();
 
+    /**
+     * Loads a model from a file.
+     *
+     * @param path path to model file
+     */
     void load(String path);
 
+    /**
+     * Saves the model to a file.
+     *
+     * @param path path to save model
+     */
     void save(String path);
 }
