@@ -61,5 +61,15 @@ public class XorTest {
         double[] output = network.predict(second.inputs()); // should be 1.0
 
         System.out.println("Output: " + Arrays.toString(output));
+
+        network.save("xor-test.json");
+
+        Model loadedModel = new FeedForwardModel();
+
+        loadedModel.load("xor-test.json");
+
+        output = network.predict(second.inputs()); // should be 1.0
+
+        System.out.println("Output after load: " + Arrays.toString(output));
     }
 }

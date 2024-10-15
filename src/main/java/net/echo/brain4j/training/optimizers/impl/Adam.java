@@ -12,9 +12,9 @@ public class Adam extends Optimizer {
     private final Map<Synapse, Double> firstMomentum = new HashMap<>();
     private final Map<Synapse, Double> secondMomentum = new HashMap<>();
 
-    private final double beta1;
-    private final double beta2;
-    private final double epsilon;
+    private double beta1;
+    private double beta2;
+    private double epsilon;
 
     public Adam(double learningRate) {
         super(learningRate);
@@ -48,5 +48,29 @@ public class Adam extends Optimizer {
 
         double deltaWeight = (learningRate * mHat) / (Math.sqrt(vHat) + epsilon);
         synapse.setWeight(synapse.getWeight() + deltaWeight);
+    }
+
+    public double getBeta1() {
+        return beta1;
+    }
+
+    public void setBeta1(double beta1) {
+        this.beta1 = beta1;
+    }
+
+    public double getBeta2() {
+        return beta2;
+    }
+
+    public void setBeta2(double beta2) {
+        this.beta2 = beta2;
+    }
+
+    public double getEpsilon() {
+        return epsilon;
+    }
+
+    public void setEpsilon(double epsilon) {
+        this.epsilon = epsilon;
     }
 }

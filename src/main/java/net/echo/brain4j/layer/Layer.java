@@ -1,13 +1,16 @@
 package net.echo.brain4j.layer;
 
+import com.google.gson.annotations.JsonAdapter;
 import net.echo.brain4j.activation.Activation;
 import net.echo.brain4j.activation.Activations;
+import net.echo.brain4j.adapters.LayerAdapter;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@JsonAdapter(LayerAdapter.class)
 public class Layer {
 
     private final List<Neuron> neurons = new ArrayList<>();

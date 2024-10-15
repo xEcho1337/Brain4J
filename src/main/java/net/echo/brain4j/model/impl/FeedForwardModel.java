@@ -1,6 +1,13 @@
 package net.echo.brain4j.model.impl;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.reflect.TypeToken;
+import net.echo.brain4j.adapters.LayerAdapter;
+import net.echo.brain4j.adapters.OptimizerAdapter;
 import net.echo.brain4j.layer.Layer;
+import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.layer.impl.DropoutLayer;
 import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.loss.LossFunctions;
@@ -11,14 +18,33 @@ import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.training.BackPropagation;
 import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.Optimizer;
+import net.echo.brain4j.training.optimizers.impl.Adam;
+import net.echo.brain4j.training.optimizers.impl.SGD;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class FeedForwardModel implements Model {
 
-    private final List<Layer> layers;
+    private static final OptimizerAdapter OPTIMIZER_ADAPTER = new OptimizerAdapter();
+    private static final LayerAdapter LAYER_ADAPTER = new LayerAdapter();
+    private static final Gson GSON = new Gson()
+            .newBuilder()
+            .setPrettyPrinting()
+            .excludeFieldsWithoutExposeAnnotation()
+            .registerTypeAdapter(DenseLayer.class, LAYER_ADAPTER)
+            .registerTypeAdapter(DropoutLayer.class, LAYER_ADAPTER)
+            .registerTypeAdapter(Adam.class, OPTIMIZER_ADAPTER)
+            .registerTypeAdapter(SGD.class, OPTIMIZER_ADAPTER)
+            .create();
+
+    private List<Layer> layers;
     private LossFunctions function;
     private Optimizer optimizer;
     private BackPropagation propagation;
@@ -27,13 +53,7 @@ public class FeedForwardModel implements Model {
         this.layers = new ArrayList<>(Arrays.asList(layers));
     }
 
-    @Override
-    public void compile(InitializationType type, LossFunctions function, Optimizer optimizer) {
-        this.function = function;
-        this.optimizer = optimizer;
-        this.propagation = new BackPropagation(this, optimizer);
-
-        // Ignore the output layer
+    private void connect(InitializationType type) {
         for (int i = 0; i < layers.size() - 1; i++) {
             Layer layer = layers.get(i);
 
@@ -52,6 +72,15 @@ public class FeedForwardModel implements Model {
 
             layer.connectAll(nextLayer, bound);
         }
+    }
+
+    @Override
+    public void compile(InitializationType type, LossFunctions function, Optimizer optimizer) {
+        this.function = function;
+        this.optimizer = optimizer;
+        this.propagation = new BackPropagation(this, optimizer);
+
+        connect(type);
     }
 
     @Override
@@ -84,8 +113,7 @@ public class FeedForwardModel implements Model {
 
             Layer nextLayer = layers.get(l + 1);
 
-            if (nextLayer instanceof DropoutLayer dropoutLayer) {
-                // dropoutLayer.process(layer.getNeurons());
+            if (nextLayer instanceof DropoutLayer) {
                 nextLayer = layers.get(l + 2);
             }
 
@@ -157,5 +185,80 @@ public class FeedForwardModel implements Model {
         stats.append("Total parameters: ").append(params).append("\n");
         stats.append("================================================\n");
         return stats.toString();
+    }
+
+    @Override
+    public void load(String path) {
+        File file = new File(path);
+
+        if (!file.exists()) {
+            throw new IllegalArgumentException("File does not exist: " + path);
+        }
+
+        try {
+            JsonObject parent = JsonParser.parseReader(new FileReader(file)).getAsJsonObject();
+
+            this.optimizer = GSON.fromJson(parent.get("optimizer"), Optimizer.class);
+            this.function = LossFunctions.valueOf(parent.get("lossFunction").getAsString());
+
+            Type listType = new TypeToken<ArrayList<Layer>>(){}.getType();
+
+            this.layers = GSON.fromJson(parent.get("layers"), listType);
+
+            connect(InitializationType.NORMAL);
+
+            double[][] weights = GSON.fromJson(parent.get("weights"), double[][].class);
+
+            for (int i = 0; i < weights.length; i++) {
+                double[] layerWeights = weights[i];
+                Layer layer = layers.get(i);
+
+                for (int j = 0; j < layerWeights.length; j++) {
+                    layer.getSynapses().get(j).setWeight(layerWeights[j]);
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void save(String path) {
+        File file = new File(path);
+
+        JsonObject parent = new JsonObject();
+        JsonObject optimizerObject = GSON.toJsonTree(optimizer).getAsJsonObject();
+
+        parent.addProperty("lossFunction", function.name());
+        parent.add("optimizer", optimizerObject);
+
+        List<JsonObject> layerObjects = new ArrayList<>();
+
+        for (Layer layer : layers) {
+            layerObjects.add(GSON.toJsonTree(layer).getAsJsonObject());
+        }
+
+        parent.add("layers", GSON.toJsonTree(layerObjects).getAsJsonArray());
+
+        double[][] weights = new double[layers.size()][];
+
+        for (int i = 0; i < layers.size(); i++) {
+            Layer layer = layers.get(i);
+            weights[i] = new double[layer.getSynapses().size()];
+
+            for (int j = 0; j < layer.getSynapses().size(); j++) {
+                Synapse synapse = layer.getSynapses().get(j);
+
+                weights[i][j] = synapse.getWeight();
+            }
+        }
+
+        parent.add("weights", GSON.toJsonTree(weights));
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+            GSON.toJson(parent, writer);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

@@ -22,4 +22,8 @@ public interface Model {
     List<Layer> getLayers();
 
     String getStats();
+
+    void load(String path);
+
+    void save(String path);
 }
