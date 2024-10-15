@@ -73,7 +73,7 @@ public class BackPropagation {
     }
 
     private void initialDelta(List<Layer> layers, double[] targets, double[] outputs) {
-        Layer outputLayer = layers.getLast();
+        Layer outputLayer = layers.get(layers.size() - 1);
 
         for (int i = 0; i < outputLayer.getNeurons().size(); i++) {
             Neuron neuron = outputLayer.getNeuronAt(i);

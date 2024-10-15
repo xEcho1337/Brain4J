@@ -90,7 +90,7 @@ public class FeedForwardModel implements Model {
 
     @Override
     public double[] predict(double ... input) {
-        Layer inputLayer = layers.getFirst();
+        Layer inputLayer = layers.get(0);
 
         if (input.length != inputLayer.getNeurons().size()) {
             throw new IllegalArgumentException("Input size does not match model's input dimension!");
@@ -129,7 +129,7 @@ public class FeedForwardModel implements Model {
             nextLayer.applyFunction();
         }
 
-        Layer outputLayer = layers.getLast();
+        Layer outputLayer = layers.get(layers.size() - 1);
         double[] output = new double[outputLayer.getNeurons().size()];
 
         for (int i = 0; i < output.length; i++) {
