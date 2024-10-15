@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'net.echo'
-version = '2.0.1'
+version = '2.0.11'
 
 repositories {
     mavenCentral()
@@ -12,4 +12,13 @@ repositories {
 
 dependencies {
     implementation 'com.google.code.gson:gson:2.10.1'
+}
+
+sourceCompatibility = '17'
+targetCompatibility = '17'
+
+shadowJar {
+    archiveBaseName.set('Brain4J')
+    archiveClassifier.set('')
+    archiveVersion.set(version)
 }
