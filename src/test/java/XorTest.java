@@ -16,13 +16,9 @@ public class XorTest {
     public static void main(String[] args) {
         Model network = new FeedForwardModel(
                 new DenseLayer(2, Activations.LINEAR),
-                new DropoutLayer(0.5),
-                new DenseLayer(32, Activations.RELU),
-                new DropoutLayer(0.5),
-                new DenseLayer(32, Activations.RELU),
-                new DropoutLayer(0.5),
-                new DenseLayer(32, Activations.RELU),
-                new DropoutLayer(0.5),
+                new DenseLayer(128, Activations.RELU),
+                new DenseLayer(128, Activations.RELU),
+                new DenseLayer(128, Activations.RELU),
                 new DenseLayer(1, Activations.SIGMOID)
         );
 
@@ -50,7 +46,7 @@ public class XorTest {
             if (epoches % 100 == 0) {
                 System.out.println("Epoch #" + epoches + " has error " + error);
             }
-        } while (error > 0.001);
+        } while (error > 0.01);
 
         double took = (System.nanoTime() - start) / 1e6;
 
@@ -58,7 +54,10 @@ public class XorTest {
 
         System.out.println("Evaluation time!");
 
+        start = System.nanoTime();
         double[] output = network.predict(second.inputs()); // should be 1.0
+        long end = System.nanoTime();
+        System.out.println("Took " + (end - start) / 1e6 + " ms");
 
         System.out.println("Output: " + Arrays.toString(output));
 

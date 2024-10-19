@@ -17,10 +17,7 @@ public class Adam extends Optimizer {
     private double epsilon;
 
     public Adam(double learningRate) {
-        super(learningRate);
-        this.beta1 = 0.9;
-        this.beta2 = 0.999;
-        this.epsilon = 1e-8;
+        this(learningRate, 0.9, 0.999, 1e-8);
     }
 
     public Adam(double learningRate, double beta1, double beta2, double epsilon) {
