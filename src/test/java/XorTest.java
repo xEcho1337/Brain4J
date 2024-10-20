@@ -1,5 +1,4 @@
 import net.echo.brain4j.activation.Activations;
-import net.echo.brain4j.layer.impl.DropoutLayer;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.model.initialization.InitializationType;
@@ -16,9 +15,9 @@ public class XorTest {
     public static void main(String[] args) {
         Model network = new FeedForwardModel(
                 new DenseLayer(2, Activations.LINEAR),
-                new DenseLayer(128, Activations.RELU),
-                new DenseLayer(128, Activations.RELU),
-                new DenseLayer(128, Activations.RELU),
+                new DenseLayer(32, Activations.RELU),
+                new DenseLayer(32, Activations.RELU),
+                new DenseLayer(32, Activations.RELU),
                 new DenseLayer(1, Activations.SIGMOID)
         );
 
@@ -34,14 +33,15 @@ public class XorTest {
         DataSet training = new DataSet(first, second, third, fourth);
 
         double error;
-        long start = System.nanoTime();
 
+        long start = System.nanoTime();
         int epoches = 0;
 
         do {
             epoches++;
 
-            error = network.fit(training);
+            network.fit(training);
+            error = network.evaluate(training);
 
             if (epoches % 100 == 0) {
                 System.out.println("Epoch #" + epoches + " has error " + error);
@@ -52,23 +52,12 @@ public class XorTest {
 
         System.out.println("Took " + took + " ms with an average of " + (took / epoches) + " ms per epoch and error " + error);
 
-        System.out.println("Evaluation time!");
+        for (DataRow row : training.getDataRows()) {
+            double[] output = network.predict(row.inputs());
 
-        start = System.nanoTime();
-        double[] output = network.predict(second.inputs()); // should be 1.0
-        long end = System.nanoTime();
-        System.out.println("Took " + (end - start) / 1e6 + " ms");
-
-        System.out.println("Output: " + Arrays.toString(output));
+            System.out.println("Input: " + Arrays.toString(row.inputs()) + " Output: " + output[0]);
+        }
 
         network.save("xor-test.json");
-
-        Model loadedModel = new FeedForwardModel();
-
-        loadedModel.load("xor-test.json");
-
-        output = network.predict(second.inputs()); // should be 1.0
-
-        System.out.println("Output after load: " + Arrays.toString(output));
     }
 }
