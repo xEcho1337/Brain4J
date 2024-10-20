@@ -16,6 +16,7 @@ import net.echo.brain4j.model.initialization.InitializationType;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.training.BackPropagation;
+import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.optimizers.impl.Adam;
@@ -84,8 +85,24 @@ public class FeedForwardModel implements Model {
     }
 
     @Override
-    public double fit(DataSet set) {
-        return propagation.iterate(set, optimizer.getLearningRate());
+    public void fit(DataSet set) {
+        propagation.iterate(set, optimizer.getLearningRate());
+    }
+
+    @Override
+    public double evaluate(DataSet set) {
+        double totalError = 0.0;
+
+        for (DataRow row : set.getDataRows()) {
+            double[] inputs = row.inputs();
+            double[] targets = row.outputs();
+
+            double[] outputs = predict(inputs);
+
+            totalError += function.getFunction().calculate(targets, outputs);
+        }
+
+        return totalError;
     }
 
     @Override

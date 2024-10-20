@@ -15,32 +15,24 @@ import java.util.List;
 public class BackPropagation {
 
     private final Model model;
-    private final LossFunction lossFunction;
     private final Optimizer optimizer;
 
     private int timestep = 0;
 
     public BackPropagation(Model model, Optimizer optimizer) {
         this.model = model;
-        this.lossFunction = model.getLossFunction();
         this.optimizer = optimizer;
     }
 
-    public double iterate(DataSet dataSet, double learningRate) {
-        double totalError = 0.0;
-
+    public void iterate(DataSet dataSet, double learningRate) {
         for (DataRow row : dataSet.getDataRows()) {
             double[] inputs = row.inputs();
             double[] targets = row.outputs();
 
             double[] outputs = model.predict(inputs);
 
-            totalError += lossFunction.calculate(targets, outputs);
-
             backpropagate(targets, outputs, learningRate);
         }
-
-        return totalError / dataSet.getDataRows().size();
     }
 
     private void backpropagate(double[] targets, double[] outputs, double learningRate) {

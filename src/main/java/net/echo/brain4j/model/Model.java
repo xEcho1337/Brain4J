@@ -27,9 +27,16 @@ public interface Model {
      * Trains the model for one epoch.
      *
      * @param set dataset for training
-     * @return model error
      */
-    double fit(DataSet set);
+    void fit(DataSet set);
+
+    /**
+     * Evaluates the model on the given dataset.
+     *
+     * @param set dataset for testing
+     * @return the error of the model
+     */
+    double evaluate(DataSet set);
 
     /**
      * Predicts output for given input.

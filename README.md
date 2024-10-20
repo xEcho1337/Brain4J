@@ -44,11 +44,14 @@ DataSet training = new DataSet(first, second, third, fourth);
 
 We have everything setup, we can call the fit method inside a loop and wait for the network to finish.
 
+Tip: When training always split the data in two, one set for training and one for testing/evaluation.
+
 ```java
 double error;
         
 do {
-    error = network.fit(training);
+    network.fit(training);
+    error = network.evaluate(training);
 } while (error > 0.01);
 ```
 
