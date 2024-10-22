@@ -7,8 +7,7 @@ public class Neuron {
     private Synapse synapse;
     private double delta;
     private double value;
-    @Expose
-    private double bias = 2 * Math.random() - 1;
+    @Expose private double bias = 2 * Math.random() - 1;
 
     public Synapse getSynapse() {
         return synapse;

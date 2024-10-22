@@ -13,13 +13,13 @@ import java.util.Arrays;
 public class XorTest {
 
     public static void main(String[] args) {
-        Model network = new FeedForwardModel(
-                new DenseLayer(2, Activations.LINEAR),
-                new DenseLayer(32, Activations.RELU),
-                new DenseLayer(32, Activations.RELU),
-                new DenseLayer(32, Activations.RELU),
-                new DenseLayer(1, Activations.SIGMOID)
-        );
+        Model network = new FeedForwardModel();
+
+        network.add(new DenseLayer(2, Activations.LINEAR));
+        network.add(new DenseLayer(32, Activations.RELU));
+        network.add(new DenseLayer(32, Activations.RELU));
+        network.add(new DenseLayer(32, Activations.RELU));
+        network.add(new DenseLayer(1, Activations.SIGMOID));
 
         network.compile(InitializationType.XAVIER, LossFunctions.BINARY_CROSS_ENTROPY, new Adam(0.001));
 
@@ -41,12 +41,17 @@ public class XorTest {
             epoches++;
 
             network.fit(training);
+
+            double evalStart = System.nanoTime();
             error = network.evaluate(training);
+            double evalTook = System.nanoTime() - evalStart;
 
             if (epoches % 100 == 0) {
+
                 System.out.println("Epoch #" + epoches + " has error " + error);
+                System.out.println("Eval took " + (evalTook / 1e6) + "ms");
             }
-        } while (error > 0.01);
+        } while (error > 1.0E-4);
 
         double took = (System.nanoTime() - start) / 1e6;
 
