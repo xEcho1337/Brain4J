@@ -9,7 +9,7 @@ import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.Optimizer;
 
-import java.util.*;
+import java.util.List;
 
 public class BackPropagation {
 
