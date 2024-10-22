@@ -80,4 +80,11 @@ public interface Model {
      * @param path path to save model
      */
     void save(String path);
+
+    /**
+     * Adds a layer to the network.
+     *
+     * @param layer the layer to add
+     */
+    void add(Layer layer);
 }

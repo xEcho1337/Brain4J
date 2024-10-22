@@ -30,6 +30,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class FeedForwardModel implements Model {
 
@@ -110,7 +111,8 @@ public class FeedForwardModel implements Model {
         Layer inputLayer = layers.get(0);
 
         if (input.length != inputLayer.getNeurons().size()) {
-            throw new IllegalArgumentException("Input size does not match model's input dimension!");
+            throw new IllegalArgumentException("Input size does not match model's input dimension! " +
+                    input.length + " != " + inputLayer.getNeurons().size());
         }
 
         for (Layer layer : layers) {
@@ -277,5 +279,10 @@ public class FeedForwardModel implements Model {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public void add(Layer layer) {
+        layers.add(layer);
     }
 }
