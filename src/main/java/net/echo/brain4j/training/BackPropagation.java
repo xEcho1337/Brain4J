@@ -59,11 +59,6 @@ public class BackPropagation {
 
                     synapse.setWeight(synapse.getWeight() + delta * synapse.getInputNeuron().getValue());
                 }
-                /*Synapse synapse = neuron.getSynapse();
-                error += synapse.getWeight() * synapse.getOutputNeuron().getDelta();
-
-                double delta = error * layer.getActivation().getFunction().getDerivative(output);
-                neuron.setDelta(delta);*/
             }
         }
 
