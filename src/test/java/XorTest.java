@@ -16,9 +16,9 @@ public class XorTest {
         Model network = new FeedForwardModel();
 
         network.add(new DenseLayer(2, Activations.LINEAR));
-        network.add(new DenseLayer(128, Activations.RELU));
-        network.add(new DenseLayer(128, Activations.RELU));
-        network.add(new DenseLayer(128, Activations.RELU));
+        network.add(new DenseLayer(256, Activations.RELU));
+        network.add(new DenseLayer(256, Activations.RELU));
+        network.add(new DenseLayer(256, Activations.RELU));
         network.add(new DenseLayer(1, Activations.SIGMOID));
 
         network.compile(InitializationType.XAVIER, LossFunctions.BINARY_CROSS_ENTROPY, new Adam(0.001));
@@ -37,6 +37,10 @@ public class XorTest {
 
         while (epoches < 500) {
             epoches++;
+
+            double error = network.evaluate(training);
+
+            System.out.println("Epoch " + epoches + " with error " + error);
 
             network.fit(training);
         }

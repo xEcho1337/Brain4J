@@ -50,13 +50,20 @@ public class BackPropagation {
 
             for (Neuron neuron : layer.getNeurons()) {
                 double output = neuron.getValue();
-                double error = 0.0;
 
-                Synapse synapse = neuron.getSynapse();
+                for (Synapse synapse : neuron.getSynapses()) {
+                    double error = synapse.getWeight() * synapse.getOutputNeuron().getDelta();
+
+                    double delta = error * layer.getActivation().getFunction().getDerivative(output);
+                    neuron.setDelta(delta);
+
+                    synapse.setWeight(synapse.getWeight() + delta * synapse.getInputNeuron().getValue());
+                }
+                /*Synapse synapse = neuron.getSynapse();
                 error += synapse.getWeight() * synapse.getOutputNeuron().getDelta();
 
                 double delta = error * layer.getActivation().getFunction().getDerivative(output);
-                neuron.setDelta(delta);
+                neuron.setDelta(delta);*/
             }
         }
 

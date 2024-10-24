@@ -30,7 +30,7 @@ public class Layer {
             for (Neuron nextNeuron : nextLayer.neurons) {
                 Synapse synapse = new Synapse(neuron, nextNeuron, bound);
 
-                neuron.setSynapse(synapse);
+                neuron.addSynapse(synapse);
 
                 synapses.add(synapse);
             }

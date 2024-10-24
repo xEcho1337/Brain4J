@@ -2,19 +2,22 @@ package net.echo.brain4j.structure;
 
 import com.google.gson.annotations.Expose;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Neuron {
 
-    private Synapse synapse;
+    private final List<Synapse> synapses = new ArrayList<>();
     private double delta;
     private double value;
     @Expose private double bias = 2 * Math.random() - 1;
 
-    public Synapse getSynapse() {
-        return synapse;
+    public List<Synapse> getSynapses() {
+        return synapses;
     }
 
-    public void setSynapse(Synapse synapse) {
-        this.synapse = synapse;
+    public void addSynapse(Synapse synapse) {
+        this.synapses.add(synapse);
     }
 
     public double getDelta() {
