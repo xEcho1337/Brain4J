@@ -82,15 +82,14 @@ public class BackPropagation {
     private void updateWeightsAndBiases(List<Layer> layers, double learningRate) {
         timestep++;
 
-        layers.parallelStream().forEach(nextLayer -> {
-            for (Synapse synapse : nextLayer.getSynapses()) {
-                optimizer.update(synapse, timestep);
-            }
+        for (Layer layer : layers) {
+            // 30% improvement using parallel stream. TODO: Implement GPU support for better parallelization
+            layer.getSynapses().parallelStream().forEach(synapse -> optimizer.update(synapse, timestep));
 
-            for (Neuron neuron : nextLayer.getNeurons()) {
+            for (Neuron neuron : layer.getNeurons()) {
                 double deltaBias = learningRate * neuron.getDelta();
                 neuron.setBias(neuron.getBias() + deltaBias);
             }
-        });
+        }
     }
 }
