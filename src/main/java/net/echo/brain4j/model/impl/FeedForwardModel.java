@@ -110,7 +110,7 @@ public class FeedForwardModel implements Model {
         Layer inputLayer = layers.get(0);
 
         if (input.length != inputLayer.getNeurons().size()) {
-            throw new IllegalArgumentException("Input size does not match model's input dimension! " +
+            throw new IllegalArgumentException("Input size does not match model's input dimension! (Input != Expected) " +
                     input.length + " != " + inputLayer.getNeurons().size());
         }
 
