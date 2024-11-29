@@ -56,11 +56,7 @@ public class Layer {
     public void applyFunction() {
         Activation function = activation.getFunction();
 
-        for (Neuron neuron : neurons) {
-            double output = function.activate(neuron.getValue() + neuron.getBias());
-
-            neuron.setValue(output);
-        }
+        function.apply(neurons);
     }
 
     public int getTotalParams() {
