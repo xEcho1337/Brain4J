@@ -16,6 +16,7 @@ public class SelfAttention extends Layer implements AttentionMechanism {
 
     public SelfAttention(int embeddingDim, double temperature, double topK) {
         super(embeddingDim, Activations.LINEAR);
+
         this.scorer = new AttentionScorer(temperature, topK);
         this.headDim = embeddingDim;
 
@@ -28,6 +29,7 @@ public class SelfAttention extends Layer implements AttentionMechanism {
 
     private void initializeWeights() {
         Random random = new Random();
+
         for (int i = 0; i < headDim; i++) {
             for (int j = 0; j < headDim; j++) {
                 queryWeights[i][j] = random.nextGaussian() * 0.02;

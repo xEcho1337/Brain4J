@@ -45,7 +45,6 @@ public class LabelTransformer {
         return encoded;
     }
 
-    // to be implemented
     public String decode(double[] encoded) {
         StringBuilder decoded = new StringBuilder();
 

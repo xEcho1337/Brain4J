@@ -87,17 +87,12 @@ public class FeedForwardModel implements Model {
 
     @Override
     public void fit(DataSet set) {
-        System.out.println("Processing batch of " + set.getDataRows().size() + " samples");
         for (DataRow row : set.getDataRows()) {
             double[] inputs = row.inputs();
-            System.out.println("Input size: " + inputs.length);
-
             double[] outputs = predict(inputs);
-            System.out.println("Output size: " + outputs.length);
 
             propagation.iterate(new DataSet(row), optimizer.getLearningRate());
         }
-        System.out.println("Batch processing complete");
     }
 
     @Override
@@ -110,7 +105,9 @@ public class FeedForwardModel implements Model {
 
             double[] outputs = predict(inputs);
 
-            totalError += function.getFunction().calculate(targets, outputs);
+            double currentError = function.getFunction().calculate(targets, outputs);
+            // System.out.println("Currerr: " + currentError);
+            totalError += currentError;
         }
 
         return totalError;
@@ -154,7 +151,7 @@ public class FeedForwardModel implements Model {
             }
 
             Activation activation = layer.getActivation().getFunction();
-            System.out.println("Activation function: " + activation.getClass().getSimpleName());
+//            System.out.println("Activation function: " + activation.getClass().getSimpleName());
             nextLayer.applyFunction();
         }
 

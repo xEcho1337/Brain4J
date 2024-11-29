@@ -9,7 +9,8 @@ public class BinaryCrossEntropy implements LossFunction {
         double error = 0.0;
 
         for (int i = 0; i < actual.length; i++) {
-            error += -actual[i] * Math.log(predicted[i]) - (1 - actual[i]) * Math.log(1 - predicted[i]);
+            double p = Math.max(Math.min(predicted[i], 1 - 1e-15), 1e-15);
+            error += -actual[i] * Math.log(p) - (1 - actual[i]) * Math.log(1 - p);
         }
 
         return error / actual.length;

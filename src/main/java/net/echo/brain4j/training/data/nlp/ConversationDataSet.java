@@ -5,9 +5,11 @@ import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.data.DataSet;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class ConversationDataSet extends DataSet {
+
     private final LabelTransformer transformer;
     private final int maxLength;
 
@@ -23,6 +25,7 @@ public class ConversationDataSet extends DataSet {
         for (int i = 0; i < conversations.length - 1; i++) {
             double[] input = transformer.encode(conversations[i], maxLength);
             double[] output = transformer.encode(conversations[i + 1], maxLength);
+
             rows.add(new DataRow(input, output));
         }
 

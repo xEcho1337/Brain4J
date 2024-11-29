@@ -29,23 +29,17 @@ public class BackPropagation {
     }
 
     public void iterate(DataSet dataSet, double learningRate) {
-        System.out.println("Starting backpropagation iteration");
-
         for (DataRow row : dataSet.getDataRows()) {
             double[] inputs = row.inputs();
             double[] targets = row.outputs();
 
-            System.out.println("Forward pass");
             double[] outputs = model.predict(inputs);
 
-            System.out.println("Backward pass");
             backpropagate(targets, outputs, learningRate);
-
-            System.out.println("Iteration complete");
         }
     }
 
-    private void backpropagate(double[] targets, double[] outputs, double learningRate) {
+    public void backpropagate(double[] targets, double[] outputs, double learningRate) {
         List<Layer> layers = model.getLayers();
         initialDelta(layers, targets, outputs);
 
@@ -60,9 +54,11 @@ public class BackPropagation {
 
             for (Neuron neuron : layer.getNeurons()) {
                 double output = neuron.getValue();
+
                 for (Synapse synapse : neuron.getSynapses()) {
                     double error = clipGradient(synapse.getWeight() * synapse.getOutputNeuron().getDelta());
                     double delta = clipGradient(error * layer.getActivation().getFunction().getDerivative(output));
+
                     neuron.setDelta(delta);
                     synapse.setWeight(synapse.getWeight() + clipGradient(delta * synapse.getInputNeuron().getValue()));
                 }

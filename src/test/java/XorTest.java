@@ -7,6 +7,7 @@ import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.impl.FeedForwardModel;
 import net.echo.brain4j.training.optimizers.impl.Adam;
+import net.echo.brain4j.training.optimizers.impl.SGD;
 
 import java.util.Arrays;
 
@@ -16,12 +17,12 @@ public class XorTest {
         Model network = new FeedForwardModel();
 
         network.add(new DenseLayer(2, Activations.LINEAR));
-        network.add(new DenseLayer(256, Activations.RELU));
-        network.add(new DenseLayer(256, Activations.RELU));
-        network.add(new DenseLayer(256, Activations.RELU));
+        network.add(new DenseLayer(32, Activations.RELU));
+        network.add(new DenseLayer(32, Activations.RELU));
+        network.add(new DenseLayer(32, Activations.RELU));
         network.add(new DenseLayer(1, Activations.SIGMOID));
 
-        network.compile(InitializationType.XAVIER, LossFunctions.BINARY_CROSS_ENTROPY, new Adam(0.001));
+        network.compile(InitializationType.HE, LossFunctions.BINARY_CROSS_ENTROPY, new Adam(0.001));
 
         System.out.println(network.getStats());
 
@@ -34,16 +35,17 @@ public class XorTest {
 
         long start = System.nanoTime();
         int epoches = 0;
+        double currError;
 
-        while (epoches < 500) {
+        do {
             epoches++;
 
-            double error = network.evaluate(training);
+            currError = network.evaluate(training);
 
-            System.out.println("Epoch " + epoches + " with error " + error);
+            System.out.println("Epoch " + epoches + " with error " + currError);
 
             network.fit(training);
-        }
+        } while (currError > 0.01);
 
         double error = network.evaluate(training);
         double took = (System.nanoTime() - start) / 1e6;

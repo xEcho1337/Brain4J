@@ -39,7 +39,7 @@ public class ChatAgent implements Agent {
         model.compile(
                 InitializationType.XAVIER,
                 LossFunctions.MEAN_SQUARED_ERROR,
-                new Adam(0.1)
+                new Adam(0.001)
         );
     }
 

@@ -5,12 +5,13 @@ import net.echo.brain4j.training.optimizers.Optimizer;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Adam extends Optimizer {
 
     // Momentum vectors
-    private final Map<Synapse, Double> firstMomentum = new HashMap<>();
-    private final Map<Synapse, Double> secondMomentum = new HashMap<>();
+    private final Map<Synapse, Double> firstMomentum = new ConcurrentHashMap<>();
+    private final Map<Synapse, Double> secondMomentum = new ConcurrentHashMap<>();
 
     private double beta1;
     private double beta2;
