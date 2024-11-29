@@ -1,16 +1,15 @@
 package net.echo.brain4j.activation;
 
-import net.echo.brain4j.activation.impl.LeakyReLUActivation;
-import net.echo.brain4j.activation.impl.LinearActivation;
-import net.echo.brain4j.activation.impl.ReLUActivation;
-import net.echo.brain4j.activation.impl.SigmoidActivation;
+import net.echo.brain4j.activation.impl.*;
 
 public enum Activations {
 
     LINEAR(new LinearActivation()),
     RELU(new ReLUActivation()),
     LEAKY_RELU(new LeakyReLUActivation()),
-    SIGMOID(new SigmoidActivation());
+    SIGMOID(new SigmoidActivation()),
+    SOFTMAX(new SoftmaxActivation()),
+    TANH(new TanhActivation());
 
     private final Activation function;
 
