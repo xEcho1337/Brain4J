@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
+import net.echo.brain4j.activation.Activation;
 import net.echo.brain4j.adapters.LayerAdapter;
 import net.echo.brain4j.adapters.OptimizerAdapter;
 import net.echo.brain4j.layer.Layer;
@@ -86,7 +87,17 @@ public class FeedForwardModel implements Model {
 
     @Override
     public void fit(DataSet set) {
-        propagation.iterate(set, optimizer.getLearningRate());
+        System.out.println("Processing batch of " + set.getDataRows().size() + " samples");
+        for (DataRow row : set.getDataRows()) {
+            double[] inputs = row.inputs();
+            System.out.println("Input size: " + inputs.length);
+
+            double[] outputs = predict(inputs);
+            System.out.println("Output size: " + outputs.length);
+
+            propagation.iterate(new DataSet(row), optimizer.getLearningRate());
+        }
+        System.out.println("Batch processing complete");
     }
 
     @Override
@@ -139,11 +150,11 @@ public class FeedForwardModel implements Model {
                 Neuron inputNeuron = synapse.getInputNeuron();
                 Neuron outputNeuron = synapse.getOutputNeuron();
 
-                // Weighted sum
                 outputNeuron.setValue(outputNeuron.getValue() + inputNeuron.getValue() * synapse.getWeight());
             }
 
-            // Apply the activation function
+            Activation activation = layer.getActivation().getFunction();
+            System.out.println("Activation function: " + activation.getClass().getSimpleName());
             nextLayer.applyFunction();
         }
 

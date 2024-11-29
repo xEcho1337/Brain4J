@@ -15,6 +15,7 @@ public class BackPropagation {
 
     private final Model model;
     private final Optimizer optimizer;
+    private static final double GRADIENT_CLIP = 5.0;
 
     private int timestep = 0;
 
@@ -23,14 +24,24 @@ public class BackPropagation {
         this.optimizer = optimizer;
     }
 
+    private double clipGradient(double gradient) {
+        return Math.max(Math.min(gradient, GRADIENT_CLIP), -GRADIENT_CLIP);
+    }
+
     public void iterate(DataSet dataSet, double learningRate) {
+        System.out.println("Starting backpropagation iteration");
+
         for (DataRow row : dataSet.getDataRows()) {
             double[] inputs = row.inputs();
             double[] targets = row.outputs();
 
+            System.out.println("Forward pass");
             double[] outputs = model.predict(inputs);
 
+            System.out.println("Backward pass");
             backpropagate(targets, outputs, learningRate);
+
+            System.out.println("Iteration complete");
         }
     }
 
@@ -38,7 +49,6 @@ public class BackPropagation {
         List<Layer> layers = model.getLayers();
         initialDelta(layers, targets, outputs);
 
-        // Hidden layers error and delta
         for (int l = layers.size() - 2; l > 0; l--) {
             Layer layer = layers.get(l);
 
@@ -50,14 +60,11 @@ public class BackPropagation {
 
             for (Neuron neuron : layer.getNeurons()) {
                 double output = neuron.getValue();
-
                 for (Synapse synapse : neuron.getSynapses()) {
-                    double error = synapse.getWeight() * synapse.getOutputNeuron().getDelta();
-
-                    double delta = error * layer.getActivation().getFunction().getDerivative(output);
+                    double error = clipGradient(synapse.getWeight() * synapse.getOutputNeuron().getDelta());
+                    double delta = clipGradient(error * layer.getActivation().getFunction().getDerivative(output));
                     neuron.setDelta(delta);
-
-                    synapse.setWeight(synapse.getWeight() + delta * synapse.getInputNeuron().getValue());
+                    synapse.setWeight(synapse.getWeight() + clipGradient(delta * synapse.getInputNeuron().getValue()));
                 }
             }
         }
