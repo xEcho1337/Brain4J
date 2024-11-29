@@ -8,14 +8,15 @@ import net.echo.brain4j.training.data.nlp.ConversationDataSet;
 public class ChatAgentTest {
     public static void main(String[] args) {
         int size = 128;
+        double temperature = 0.6;
 
-        AttentionMechanism selfAttention = new SelfAttention(size, 0.6, 0.95);
-        ChatAgent agent = new ChatAgent(selfAttention, size, size, 0.6, 0.95);
+        AttentionMechanism selfAttention = new SelfAttention(size, temperature, 0.95);
+        ChatAgent agent = new ChatAgent(selfAttention, size, size, temperature, 0.95);
 
         LabelTransformer transformer = new LabelTransformer(AlphabetInitialization.NORMAL);
         ConversationDataSet trainingData = new ConversationDataSet(size, transformer,
-                "Hello, how are you?", "I'm doing great, thanks for asking!\\",
-                "What's the weather like?", "It's sunny and warm today.\"
+                "Hello, how are you?", "I'm doing great, thanks for asking!",
+                "What's the weather like?", "It's sunny and warm today."
         );
 
         System.out.println(agent.getModel().getStats());
@@ -30,7 +31,7 @@ public class ChatAgentTest {
 
         String userInput = "Hello, how are you?";
         System.out.println("\nUser: " + userInput);
-        String response = agent.generateResponse(userInput);
+        String response = agent.generateResponse(transformer, userInput);
         System.out.println("ChatBot: " + response);
         System.out.println(agent.getModel().getStats());
     }

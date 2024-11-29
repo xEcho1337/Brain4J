@@ -12,7 +12,7 @@ public class TransformerModel extends FeedForwardModel {
         for (int i = 0; i < 3; i++) {
             add(new DenseLayer(maxSequenceLength, Activations.SIGMOID));
             add(new MultiHeadAttention(numHeads, embeddingDim, temperature, topK));
-            add(new DenseLayer(512, Activations.RELU));
+            add(new DenseLayer(1024, Activations.RELU));
             add(new DropoutLayer(0.1));
             add(new DenseLayer(embeddingDim, Activations.SOFTMAX));
         }

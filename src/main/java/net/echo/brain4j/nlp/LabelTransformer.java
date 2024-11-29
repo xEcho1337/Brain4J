@@ -22,6 +22,10 @@ public class LabelTransformer {
         }
     }
 
+    public char transform(int index) {
+        return indexToCharMap.get(index);
+    }
+
     public DataSet getDataSet(Map<String, Integer> labels, int length) {
         List<DataRow> rows = new ArrayList<>();
 

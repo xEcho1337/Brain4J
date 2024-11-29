@@ -2,6 +2,8 @@ package net.echo.brain4j.nlp.agents.impl;
 
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.initialization.InitializationType;
+import net.echo.brain4j.nlp.AlphabetInitialization;
+import net.echo.brain4j.nlp.LabelTransformer;
 import net.echo.brain4j.nlp.agents.Agent;
 import net.echo.brain4j.nlp.agents.attention.AttentionMechanism;
 import net.echo.brain4j.nlp.agents.encoding.PositionalEncoding;
@@ -45,28 +47,36 @@ public class ChatAgent implements Agent {
         );
     }
 
-    public String generateResponse(String userInput) {
-        String processedInput = preprocessInput(userInput);
-        double[] encodedInput = processInput(processedInput);
+    public String generateResponse(LabelTransformer transformer, String userInput) {
+        String initialInput = userInput;
+        StringBuilder totalOutput = new StringBuilder();
 
-        System.out.println("======== Encoded input ========");
-        System.out.println(Arrays.toString(encodedInput));
+        for (int i = 0; i < 10; i++) {
+            String processedInput = preprocessInput(initialInput);
+            double[] encodedInput = processInput(processedInput);
 
-        String contextKey = String.valueOf(conversationHistory.size());
-        double[] attendedInput = attentionMechanism.attend(encodedInput, contextKey);
+            System.out.println(i + " ======== Encoded input ========");
+            System.out.println(Arrays.toString(encodedInput));
 
-        System.out.println("======== Attended input ========");
-        System.out.println(Arrays.toString(attendedInput));
+            String contextKey = String.valueOf(conversationHistory.size());
+            double[] attendedInput = attentionMechanism.attend(encodedInput, contextKey);
 
-        double[] modelOutput = model.predict(attendedInput);
-        String response = decodeResponse(modelOutput);
+            System.out.println("======== Attended input ========");
+            System.out.println(Arrays.toString(attendedInput));
 
-        System.out.println("======== Response ========");
-        System.out.println(Arrays.toString(modelOutput));
+            double[] modelOutput = model.predict(attendedInput);
+            String response = decodeResponse(transformer, modelOutput);
 
-        updateContext(userInput, response);
+            System.out.println("======== Response ========");
+            System.out.println(Arrays.toString(modelOutput));
 
-        return formatResponse(response);
+            initialInput += response;
+            totalOutput.append(response);
+
+            updateContext(userInput, response);
+        }
+
+        return totalOutput.toString();
     }
 
     private String preprocessInput(String input) {
@@ -88,7 +98,7 @@ public class ChatAgent implements Agent {
         double[] weightedInput = processInput(input);
         double[] response = model.predict(weightedInput);
 
-        String output = decodeResponse(response);
+        String output = decodeResponse(null, response);
         updateContext(output);
 
         return output;
@@ -155,17 +165,18 @@ public class ChatAgent implements Agent {
         return weighted;
     }
 
-    private String decodeResponse(double[] response) {
-        StringBuilder output = new StringBuilder();
+    private String decodeResponse(LabelTransformer transformer, double[] response) {
+        int biggestIndex = 0;
+        double biggestValue = 0;
 
-        for (double value : response) {
-            int index = (int) Math.round(value);
-
-            if (index >= 0 && index < 26) {
-                output.append((char) (index + 'a'));
+        for (int i = 0; i < response.length; i++) {
+            if (response[i] > biggestValue) {
+                biggestIndex = i;
+                biggestValue = response[i];
             }
         }
-        return output.toString();
+
+        return String.valueOf(transformer.transform(biggestIndex));
     }
 
     public TransformerModel getModel() {
