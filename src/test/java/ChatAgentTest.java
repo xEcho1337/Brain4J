@@ -7,13 +7,15 @@ import net.echo.brain4j.training.data.nlp.ConversationDataSet;
 
 public class ChatAgentTest {
     public static void main(String[] args) {
-        AttentionMechanism selfAttention = new SelfAttention(512, 0.6, 0.95);
-        ChatAgent agent = new ChatAgent(selfAttention, 512, 512, 0.6, 0.95);
+        int size = 128;
 
-        LabelTransformer transformer = new LabelTransformer(AlphabetInitialization.SEMANTIC);
-        ConversationDataSet trainingData = new ConversationDataSet(512, transformer,
-                "Hello, how are you?", "I'm doing great, thanks for asking!",
-                "What's the weather like?", "It's sunny and warm today."
+        AttentionMechanism selfAttention = new SelfAttention(size, 0.6, 0.95);
+        ChatAgent agent = new ChatAgent(selfAttention, size, size, 0.6, 0.95);
+
+        LabelTransformer transformer = new LabelTransformer(AlphabetInitialization.NORMAL);
+        ConversationDataSet trainingData = new ConversationDataSet(size, transformer,
+                "Hello, how are you?", "I'm doing great, thanks for asking!\\",
+                "What's the weather like?", "It's sunny and warm today.\"
         );
 
         System.out.println(agent.getModel().getStats());

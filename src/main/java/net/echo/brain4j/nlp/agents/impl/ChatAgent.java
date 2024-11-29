@@ -6,21 +6,23 @@ import net.echo.brain4j.nlp.agents.Agent;
 import net.echo.brain4j.nlp.agents.attention.AttentionMechanism;
 import net.echo.brain4j.nlp.agents.encoding.PositionalEncoding;
 import net.echo.brain4j.nlp.agents.model.TransformerModel;
-import net.echo.brain4j.nlp.token.weight.TokenWeighter;
+import net.echo.brain4j.nlp.token.weight.TokenWeightier;
 import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.impl.Adam;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class ChatAgent implements Agent {
-    double temperature, topK;
+
     private final TransformerModel model;
-    private final TokenWeighter weighter;
+    private final TokenWeightier weighter;
     private final PositionalEncoding encoder;
     private final AttentionMechanism attentionMechanism;
     private final int contextWindow;
     private final List<String> conversationHistory;
+    private double temperature, topK;
 
     public ChatAgent(AttentionMechanism attentionMechanism, int contextWindow, int embeddingDim, double temperature, double topK) {
         this.temperature = temperature;
@@ -28,7 +30,7 @@ public class ChatAgent implements Agent {
         this.attentionMechanism = attentionMechanism;
         this.contextWindow = contextWindow;
         this.model = new TransformerModel(contextWindow, 128, embeddingDim, temperature, topK);
-        this.weighter = new TokenWeighter(0.1);
+        this.weighter = new TokenWeightier(0.1);
         this.encoder = new PositionalEncoding(contextWindow, embeddingDim);
         this.conversationHistory = new ArrayList<>();
 
@@ -47,11 +49,21 @@ public class ChatAgent implements Agent {
         String processedInput = preprocessInput(userInput);
         double[] encodedInput = processInput(processedInput);
 
+        System.out.println("======== Encoded input ========");
+        System.out.println(Arrays.toString(encodedInput));
+
         String contextKey = String.valueOf(conversationHistory.size());
         double[] attendedInput = attentionMechanism.attend(encodedInput, contextKey);
 
+        System.out.println("======== Attended input ========");
+        System.out.println(Arrays.toString(attendedInput));
+
         double[] modelOutput = model.predict(attendedInput);
         String response = decodeResponse(modelOutput);
+
+        System.out.println("======== Response ========");
+        System.out.println(Arrays.toString(modelOutput));
+
         updateContext(userInput, response);
 
         return formatResponse(response);
@@ -72,16 +84,19 @@ public class ChatAgent implements Agent {
     @Override
     public String process(String input) {
         updateContext(input);
+
         double[] weightedInput = processInput(input);
         double[] response = model.predict(weightedInput);
+
         String output = decodeResponse(response);
         updateContext(output);
+
         return output;
     }
 
     @Override
     public void train(DataSet conversationData) {
-        int maxEpochs = 150;  // Further reduced for testing
+        int maxEpochs = 50;  // Further reduced for testing
         double errorThreshold = 0.001;
 
         System.out.println("Starting training loop");
@@ -115,6 +130,7 @@ public class ChatAgent implements Agent {
 
     private void updateContext(String text) {
         conversationHistory.add(text);
+
         if (conversationHistory.size() > contextWindow) {
             conversationHistory.remove(0);
         }
@@ -132,6 +148,7 @@ public class ChatAgent implements Agent {
         for (int i = 0; i < tokens.length && i < contextWindow; i++) {
             double weight = weighter.getWeight(tokens[i]);
             double[] posEncoded = encoder.encode(new double[]{weight}, i);
+
             weighted[i] = posEncoded[0];
         }
 
@@ -140,8 +157,10 @@ public class ChatAgent implements Agent {
 
     private String decodeResponse(double[] response) {
         StringBuilder output = new StringBuilder();
+
         for (double value : response) {
             int index = (int) Math.round(value);
+
             if (index >= 0 && index < 26) {
                 output.append((char) (index + 'a'));
             }

@@ -1,6 +1,7 @@
 package net.echo.brain4j.nlp.agents.encoding;
 
 public class PositionalEncoding {
+
     private final int maxLength;
     private final int embeddingDim;
     private final double[][] encodings;
@@ -23,9 +24,11 @@ public class PositionalEncoding {
 
     public double[] encode(double[] input, int position) {
         double[] encoded = new double[input.length];
+
         for (int i = 0; i < input.length; i++) {
             encoded[i] = input[i] + encodings[position][i];
         }
+
         return encoded;
     }
 }
