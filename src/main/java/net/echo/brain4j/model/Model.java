@@ -82,9 +82,9 @@ public interface Model {
     void save(String path);
 
     /**
-     * Adds a layer to the network.
+     * Adds a layers to the network.
      *
-     * @param layer the layer to add
+     * @param layers the layers to add
      */
-    void add(Layer layer);
+    void add(Layer... layers);
 }

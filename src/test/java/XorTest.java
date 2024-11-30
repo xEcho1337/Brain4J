@@ -1,26 +1,39 @@
 import net.echo.brain4j.activation.Activations;
+import net.echo.brain4j.convolution.impl.ConvolutionalLayer;
+import net.echo.brain4j.convolution.impl.InputLayer;
+import net.echo.brain4j.convolution.impl.PoolingLayer;
+import net.echo.brain4j.pooling.PoolingType;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.model.initialization.InitializationType;
 import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.Model;
-import net.echo.brain4j.model.impl.FeedForwardModel;
+import net.echo.brain4j.model.impl.NeuralNetwork;
 import net.echo.brain4j.training.optimizers.impl.Adam;
-import net.echo.brain4j.training.optimizers.impl.SGD;
 
 import java.util.Arrays;
 
 public class XorTest {
 
     public static void main(String[] args) {
-        Model network = new FeedForwardModel();
+        Model convolutionalModel = new NeuralNetwork(
+                new InputLayer(24, 24),
+                new ConvolutionalLayer(24, 24, 32, Activations.RELU),
+                new PoolingLayer(PoolingType.MAX, 2, 2, 2, 0),
+                new ConvolutionalLayer(24, 24, 32, Activations.RELU),
+                new PoolingLayer(PoolingType.MAX, 2, 2, 2, 0),
+                new DenseLayer(128, Activations.RELU),
+                new DenseLayer(1, Activations.SIGMOID)
+        );
 
-        network.add(new DenseLayer(2, Activations.LINEAR));
-        network.add(new DenseLayer(32, Activations.RELU));
-        network.add(new DenseLayer(32, Activations.RELU));
-        network.add(new DenseLayer(32, Activations.RELU));
-        network.add(new DenseLayer(1, Activations.SIGMOID));
+        Model network = new NeuralNetwork(
+                new DenseLayer(2, Activations.LINEAR),
+                new DenseLayer(32, Activations.RELU),
+                new DenseLayer(32, Activations.RELU),
+                new DenseLayer(32, Activations.RELU),
+                new DenseLayer(1, Activations.SIGMOID)
+        );
 
         network.compile(InitializationType.HE, LossFunctions.BINARY_CROSS_ENTROPY, new Adam(0.001));
 

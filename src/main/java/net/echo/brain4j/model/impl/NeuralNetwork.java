@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
-import net.echo.brain4j.activation.Activation;
 import net.echo.brain4j.adapters.LayerAdapter;
 import net.echo.brain4j.adapters.OptimizerAdapter;
 import net.echo.brain4j.layer.Layer;
@@ -32,7 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class FeedForwardModel implements Model {
+public class NeuralNetwork implements Model {
 
     private static final OptimizerAdapter OPTIMIZER_ADAPTER = new OptimizerAdapter();
     private static final LayerAdapter LAYER_ADAPTER = new LayerAdapter();
@@ -51,7 +50,7 @@ public class FeedForwardModel implements Model {
     private Optimizer optimizer;
     private BackPropagation propagation;
 
-    public FeedForwardModel(Layer... layers) {
+    public NeuralNetwork(Layer... layers) {
         this.layers = new ArrayList<>(Arrays.asList(layers));
     }
 
@@ -150,8 +149,6 @@ public class FeedForwardModel implements Model {
                 outputNeuron.setValue(outputNeuron.getValue() + inputNeuron.getValue() * synapse.getWeight());
             }
 
-            Activation activation = layer.getActivation().getFunction();
-//            System.out.println("Activation function: " + activation.getClass().getSimpleName());
             nextLayer.applyFunction();
         }
 
@@ -289,7 +286,7 @@ public class FeedForwardModel implements Model {
     }
 
     @Override
-    public void add(Layer layer) {
-        layers.add(layer);
+    public void add(Layer... layers) {
+        this.layers.addAll(Arrays.asList(layers));
     }
 }
