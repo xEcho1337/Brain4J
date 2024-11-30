@@ -9,7 +9,6 @@ import net.echo.brain4j.model.initialization.InitializationType;
 import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.Model;
-import net.echo.brain4j.model.impl.NeuralNetwork;
 import net.echo.brain4j.training.optimizers.impl.Adam;
 
 import java.util.Arrays;
@@ -17,7 +16,7 @@ import java.util.Arrays;
 public class XorTest {
 
     public static void main(String[] args) {
-        Model convolutionalModel = new NeuralNetwork(
+        Model convolutionalModel = new Model(
                 new InputLayer(24, 24),
                 new ConvolutionalLayer(24, 24, 32, Activations.RELU),
                 new PoolingLayer(PoolingType.MAX, 2, 2, 2, 0),
@@ -27,7 +26,7 @@ public class XorTest {
                 new DenseLayer(1, Activations.SIGMOID)
         );
 
-        Model network = new NeuralNetwork(
+        Model network = new Model(
                 new DenseLayer(2, Activations.LINEAR),
                 new DenseLayer(32, Activations.RELU),
                 new DenseLayer(32, Activations.RELU),
