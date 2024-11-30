@@ -13,10 +13,10 @@ import java.util.List;
 
 public class BackPropagation {
 
-    private final Model model;
-    private final Optimizer optimizer;
     private static final double GRADIENT_CLIP = 5.0;
 
+    private final Model model;
+    private final Optimizer optimizer;
     private int timestep = 0;
 
     public BackPropagation(Model model, Optimizer optimizer) {
