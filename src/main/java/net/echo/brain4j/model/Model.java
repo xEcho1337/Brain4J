@@ -20,6 +20,7 @@ import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.optimizers.impl.Adam;
 import net.echo.brain4j.training.optimizers.impl.SGD;
+import net.echo.brain4j.utils.Vector;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -97,8 +98,8 @@ public class Model {
      *
      * @param set dataset for training
      */
-    public void fit(DataSet set) {
-        propagation.iterate(set, optimizer.getLearningRate());
+    public void fit(DataSet set, int batchSize) {
+        propagation.iterate(set, optimizer.getLearningRate(), batchSize);
     }
 
     /**
@@ -111,12 +112,12 @@ public class Model {
         double totalError = 0.0;
 
         for (DataRow row : set.getDataRows()) {
-            double[] inputs = row.inputs();
-            double[] targets = row.outputs();
+            Vector inputs = row.inputs();
+            Vector targets = row.outputs();
 
-            double[] outputs = predict(inputs);
+            Vector outputs = predict(inputs);
 
-            totalError += function.getFunction().calculate(targets, outputs);
+            totalError += function.getFunction().calculate(targets.toArray(), outputs.toArray());
         }
 
         return totalError;
@@ -128,12 +129,12 @@ public class Model {
      * @param input input data
      * @return predicted outputs
      */
-    public double[] predict(double ... input) {
+    public Vector predict(Vector input) {
         Layer inputLayer = layers.get(0);
 
-        if (input.length != inputLayer.getNeurons().size()) {
+        if (input.toArray().length != inputLayer.getNeurons().size()) {
             throw new IllegalArgumentException("Input size does not match model's input dimension! (Input != Expected) " +
-                    input.length + " != " + inputLayer.getNeurons().size());
+                    input.toArray().length + " != " + inputLayer.getNeurons().size());
         }
 
         for (Layer layer : layers) {
@@ -142,8 +143,8 @@ public class Model {
             }
         }
 
-        for (int i = 0; i < input.length; i++) {
-            inputLayer.getNeuronAt(i).setValue(input[i]);
+        for (int i = 0; i < input.toArray().length; i++) {
+            inputLayer.getNeuronAt(i).setValue(input.get(i));
         }
 
         for (int l = 0; l < layers.size() - 1; l++) {
@@ -174,7 +175,7 @@ public class Model {
             output[i] = outputLayer.getNeuronAt(i).getValue();
         }
 
-        return output;
+        return new Vector(output);
     }
 
     /**

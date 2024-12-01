@@ -11,6 +11,7 @@ import net.echo.brain4j.nlp.agents.model.TransformerModel;
 import net.echo.brain4j.nlp.token.weight.TokenWeightier;
 import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.impl.Adam;
+import net.echo.brain4j.utils.Vector;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -60,11 +61,11 @@ public class ChatAgent implements Agent {
             System.out.println("======== Attended input ========");
             System.out.println(Arrays.toString(attendedInput));
 
-            double[] modelOutput = model.predict(attendedInput);
-            String response = decodeResponse(transformer, modelOutput);
+            Vector modelOutput = model.predict(new Vector(attendedInput));
+            String response = decodeResponse(transformer, modelOutput.toArray());
 
             System.out.println("======== Response ========");
-            System.out.println(Arrays.toString(modelOutput));
+            System.out.println(Arrays.toString(modelOutput.toArray()));
 
             initialInput += response;
             totalOutput.append(response);
@@ -92,9 +93,9 @@ public class ChatAgent implements Agent {
         updateContext(input);
 
         double[] weightedInput = processInput(input);
-        double[] response = model.predict(weightedInput);
+        Vector response = model.predict(new Vector(weightedInput));
 
-        String output = decodeResponse(null, response);
+        String output = decodeResponse(null, response.toArray());
         updateContext(output);
 
         return output;
@@ -102,13 +103,13 @@ public class ChatAgent implements Agent {
 
     @Override
     public void train(DataSet conversationData) {
-        int maxEpochs = 50;  // Further reduced for testing
+        int maxEpochs = 10;  // Further reduced for testing
         double errorThreshold = 0.001;
 
         System.out.println("Starting training loop");
         for(int epoch = 0; epoch < maxEpochs; epoch++) {
             System.out.printf("Epoch %d/%d%n", epoch + 1, maxEpochs);
-            model.fit(conversationData);
+            model.fit(conversationData, 1);
             double error = model.evaluate(conversationData);
             if (Double.isNaN(error)) {
                 throw new RuntimeException("Error is NaN");

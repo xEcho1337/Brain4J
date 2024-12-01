@@ -3,6 +3,7 @@ package net.echo.brain4j.training.data.nlp;
 import net.echo.brain4j.nlp.LabelTransformer;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.data.DataSet;
+import net.echo.brain4j.utils.Vector;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,10 +24,18 @@ public class ConversationDataSet extends DataSet {
         List<DataRow> rows = new ArrayList<>();
 
         for (int i = 0; i < conversations.length - 1; i++) {
-            double[] input = transformer.encode(conversations[i], maxLength);
-            double[] output = transformer.encode(conversations[i + 1], maxLength);
+            List<Vector> input = transformer.textToEmbedding(conversations[i], maxLength);
+            List<Vector> output = transformer.textToEmbedding(conversations[i + 1], maxLength);
 
-            rows.add(new DataRow(input, output));
+            for (int j = 0; j < input.size(); j++) {
+                Vector inputVec = input.get(i);
+
+                if (j < output.size()) {
+                    Vector outputVec = output.get(i);
+
+                    rows.add(new DataRow(inputVec, outputVec));
+                }
+            }
         }
 
         return rows.toArray(new DataRow[0]);
@@ -35,7 +44,7 @@ public class ConversationDataSet extends DataSet {
     public void addConversation(String input, String output) {
         double[] encodedInput = transformer.encode(input, maxLength);
         double[] encodedOutput = transformer.encode(output, maxLength);
-        getDataRows().add(new DataRow(encodedInput, encodedOutput));
+        getDataRows().add(new DataRow(new Vector(encodedInput), new Vector(encodedOutput)));
     }
 }
 

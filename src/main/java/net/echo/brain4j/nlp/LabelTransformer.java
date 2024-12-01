@@ -2,6 +2,7 @@ package net.echo.brain4j.nlp;
 
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.data.DataSet;
+import net.echo.brain4j.utils.Vector;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,6 +23,34 @@ public class LabelTransformer {
         }
     }
 
+    public List<Vector> textToEmbedding(String text, int embeddingDimension) {
+        String[] tokens = text.split("\\s+");
+
+        List<Vector> vectors = new ArrayList<>();
+
+        for (String token : tokens) {
+            vectors.add(wordToEmbedding(token, embeddingDimension));
+        }
+
+        return vectors;
+    }
+
+    public Vector wordToEmbedding(String word, int embeddingDimension) {
+        int hash = 1;
+
+        for (int i = 0; i < word.length(); i++) {
+            hash *= word.charAt(i);
+        }
+
+        Vector vector = new Vector(embeddingDimension);
+
+        for (int i = 0; i < embeddingDimension; i++) {
+            vector.set(i, Math.sin(hash + i));
+        }
+
+        return vector;
+    }
+
     public char transform(int index) {
         return indexToCharMap.get(index);
     }
@@ -30,7 +59,8 @@ public class LabelTransformer {
         List<DataRow> rows = new ArrayList<>();
 
         for (Map.Entry<String, Integer> entry : labels.entrySet()) {
-            rows.add(new DataRow(encode(entry.getKey(), length), entry.getValue()));
+            double[] encoded = encode(entry.getKey(), length);
+            rows.add(new DataRow(new Vector(encoded), new Vector(entry.getValue())));
         }
 
         return new DataSet(rows.toArray(new DataRow[0]));

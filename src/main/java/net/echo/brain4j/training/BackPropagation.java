@@ -8,7 +8,9 @@ import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.Optimizer;
+import net.echo.brain4j.utils.Vector;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class BackPropagation {
@@ -28,15 +30,48 @@ public class BackPropagation {
         return Math.max(Math.min(gradient, GRADIENT_CLIP), -GRADIENT_CLIP);
     }
 
-    public void iterate(DataSet dataSet, double learningRate) {
-        for (DataRow row : dataSet.getDataRows()) {
-            double[] inputs = row.inputs();
-            double[] targets = row.outputs();
+    public void iterate(DataSet dataSet, double learningRate, int batchSize) {
+        List<List<DataRow>> batches = createBatches(dataSet, batchSize);
 
-            double[] outputs = model.predict(inputs);
+        int inputSize = model.getLayers().getFirst().getNeurons().size();
+        int outputSize = model.getLayers().getLast().getNeurons().size();
 
-            backpropagate(targets, outputs, learningRate);
+        for (List<DataRow> batch : batches) {
+            Vector avgInputs = new Vector(inputSize);
+            Vector avgOutputs = new Vector(outputSize);
+
+            for (DataRow row : batch) {
+                avgInputs.add(row.inputs());
+                avgOutputs.add(row.outputs());
+            }
+
+            avgInputs.scale(1.0 / batch.size());
+            avgOutputs.scale(1.0 / batch.size());
+
+            Vector outputs = model.predict(avgInputs);
+
+            backpropagate(avgOutputs.toArray(), outputs.toArray(), learningRate);
         }
+    }
+
+    private List<List<DataRow>> createBatches(DataSet dataSet, int batchSize) {
+        List<List<DataRow>> batches = new ArrayList<>();
+        List<DataRow> currentBatch = new ArrayList<>();
+
+        for (DataRow row : dataSet.getDataRows()) {
+            currentBatch.add(row);
+
+            if (currentBatch.size() == batchSize) {
+                batches.add(currentBatch);
+                currentBatch = new ArrayList<>();
+            }
+        }
+
+        if (!currentBatch.isEmpty()) {
+            batches.add(currentBatch);
+        }
+
+        return batches;
     }
 
     public void backpropagate(double[] targets, double[] outputs, double learningRate) {

@@ -97,4 +97,16 @@ public class Vector {
     public double[] toArray() {
         return data;
     }
+
+    public void add(Vector other) {
+        for (int i = 0; i < data.length; i++) {
+            data[i] += other.data[i];
+        }
+    }
+
+    public void scale(double value) {
+        for (int i = 0; i < data.length; i++) {
+            data[i] *= value;
+        }
+    }
 }
