@@ -98,12 +98,7 @@ public class Model {
      * @param set dataset for training
      */
     public void fit(DataSet set) {
-        for (DataRow row : set.getDataRows()) {
-            double[] inputs = row.inputs();
-            double[] outputs = predict(inputs);
-
-            propagation.iterate(new DataSet(row), optimizer.getLearningRate());
-        }
+        propagation.iterate(set, optimizer.getLearningRate());
     }
 
     /**
