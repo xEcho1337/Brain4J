@@ -8,11 +8,12 @@ import net.echo.brain4j.nlp.agents.attention.score.AttentionScorer;
 import java.util.Random;
 
 public class MultiHeadAttention extends Layer implements AttentionMechanism {
-    private final int numHeads;
-    private final int headDim;
+
     private final AttentionScorer scorer;
     private final double[][] projectionWeights;
     private final double[][] outputWeights;
+    private final int numHeads;
+    private final int headDim;
 
     public MultiHeadAttention(int numHeads, int embeddingDim, double temperature, double topK) {
         super(embeddingDim, Activations.LINEAR);

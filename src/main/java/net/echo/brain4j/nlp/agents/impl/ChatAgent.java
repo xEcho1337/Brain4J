@@ -40,11 +40,7 @@ public class ChatAgent implements Agent {
     }
 
     private void initializeModel() {
-        model.compile(
-                InitializationType.XAVIER,
-                LossFunctions.MEAN_SQUARED_ERROR,
-                new Adam(0.001)
-        );
+        model.compile(InitializationType.XAVIER, LossFunctions.MEAN_SQUARED_ERROR, new Adam(0.001));
     }
 
     public String generateResponse(LabelTransformer transformer, String userInput) {
