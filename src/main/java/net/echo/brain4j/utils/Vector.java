@@ -12,8 +12,8 @@ public class Vector {
         this.data = data;
     }
 
-    public double set(int index, double value) {
-        return data[index] = value;
+    public void set(int index, double value) {
+        data[index] = value;
     }
 
     public double get(int index) {

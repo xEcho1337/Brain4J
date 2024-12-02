@@ -2,12 +2,11 @@ package net.echo.brain4j.nlp.agents.impl;
 
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.initialization.InitializationType;
-import net.echo.brain4j.nlp.AlphabetInitialization;
 import net.echo.brain4j.nlp.LabelTransformer;
 import net.echo.brain4j.nlp.agents.Agent;
 import net.echo.brain4j.nlp.agents.attention.AttentionMechanism;
 import net.echo.brain4j.nlp.agents.encoding.PositionalEncoding;
-import net.echo.brain4j.nlp.agents.model.TransformerModel;
+import net.echo.brain4j.nlp.agents.model.TransformerDecoder;
 import net.echo.brain4j.nlp.token.weight.TokenWeightier;
 import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.impl.Adam;
@@ -19,7 +18,7 @@ import java.util.List;
 
 public class ChatAgent implements Agent {
 
-    private final TransformerModel model;
+    private final TransformerDecoder model;
     private final TokenWeightier weighter;
     private final PositionalEncoding encoder;
     private final AttentionMechanism attentionMechanism;
@@ -32,7 +31,7 @@ public class ChatAgent implements Agent {
         this.topK = topK;
         this.attentionMechanism = attentionMechanism;
         this.contextWindow = contextWindow;
-        this.model = new TransformerModel(contextWindow, 128, embeddingDim, temperature, topK);
+        this.model = new TransformerDecoder(6, 128, embeddingDim, temperature, topK);
         this.weighter = new TokenWeightier(0.1);
         this.encoder = new PositionalEncoding(contextWindow, embeddingDim);
         this.conversationHistory = new ArrayList<>();
@@ -176,7 +175,7 @@ public class ChatAgent implements Agent {
         return String.valueOf(transformer.transform(biggestIndex));
     }
 
-    public TransformerModel getModel() {
+    public TransformerDecoder getModel() {
         return model;
     }
 }

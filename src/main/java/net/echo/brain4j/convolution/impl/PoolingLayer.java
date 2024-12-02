@@ -2,7 +2,7 @@ package net.echo.brain4j.convolution.impl;
 
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.layer.Layer;
-import net.echo.brain4j.pooling.PoolingType;
+import net.echo.brain4j.convolution.pooling.PoolingType;
 
 public class PoolingLayer extends Layer {
 

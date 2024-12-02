@@ -58,23 +58,20 @@ public class Model {
     }
 
     private void connect(InitializationType type) {
-        for (int i = 0; i < layers.size() - 1; i++) {
+        Layer lastNormalLayer = layers.get(0);
+
+        for (int i = 1; i < layers.size(); i++) {
             Layer layer = layers.get(i);
 
-            if (layer instanceof DropoutLayer) continue;
+            if (layer.getNeurons().isEmpty()) continue;
 
-            Layer nextLayer = layers.get(i + 1);
-
-            if (nextLayer instanceof DropoutLayer) {
-                nextLayer = layers.get(i + 2);
-            }
-
-            int nIn = layer.getNeurons().size();
-            int nOut = nextLayer.getNeurons().size();
+            int nIn = lastNormalLayer.getNeurons().size();
+            int nOut = layer.getNeurons().size();
 
             double bound = type.getInitializer().getBound(nIn, nOut);
 
-            layer.connectAll(nextLayer, bound);
+            lastNormalLayer.connectAll(layer, bound);
+            lastNormalLayer = layer;
         }
     }
 
@@ -165,7 +162,7 @@ public class Model {
                 outputNeuron.setValue(outputNeuron.getValue() + inputNeuron.getValue() * synapse.getWeight());
             }
 
-            nextLayer.applyFunction();
+            nextLayer.applyFunction(layer);
         }
 
         Layer outputLayer = layers.get(layers.size() - 1);

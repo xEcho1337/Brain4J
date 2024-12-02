@@ -1,0 +1,56 @@
+package net.echo.brain4j.layer.impl;
+
+import net.echo.brain4j.activation.Activations;
+import net.echo.brain4j.layer.Layer;
+import net.echo.brain4j.structure.Neuron;
+
+import java.util.List;
+
+public class LayerNorm extends Layer {
+
+    private final double epsilon;
+
+    public LayerNorm() {
+        this(1e-5);
+    }
+
+    public LayerNorm(double epsilon) {
+        super(0, Activations.LINEAR);
+        this.epsilon = epsilon;
+    }
+
+    @Override
+    public void applyFunction(Layer previous) {
+        List<Neuron> inputs = previous.getNeurons();
+
+        double mean = calculateMean(inputs);
+        double variance = calculateVariance(inputs, mean);
+
+        for (Neuron input : inputs) {
+            double value = input.getValue();
+            double normalized = (value - mean) / Math.sqrt(variance + epsilon);
+
+            input.setValue(normalized);
+        }
+    }
+
+    private double calculateMean(List<Neuron> inputs) {
+        double sum = 0.0;
+
+        for (Neuron value : inputs) {
+            sum += value.getValue();
+        }
+
+        return sum / inputs.size();
+    }
+
+    private double calculateVariance(List<Neuron> inputs, double mean) {
+        double sum = 0.0;
+
+        for (Neuron value : inputs) {
+            sum += Math.pow(value.getValue() - mean, 2);
+        }
+
+        return sum / inputs.size();
+    }
+}

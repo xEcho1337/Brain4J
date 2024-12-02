@@ -16,7 +16,7 @@ public class MultiHeadAttention extends Layer implements AttentionMechanism {
     private final int headDim;
 
     public MultiHeadAttention(int numHeads, int embeddingDim, double temperature, double topK) {
-        super(embeddingDim, Activations.LINEAR);
+        super(0, Activations.LINEAR);
         this.numHeads = numHeads;
         this.headDim = embeddingDim / numHeads;
         this.scorer = new AttentionScorer(temperature, topK);

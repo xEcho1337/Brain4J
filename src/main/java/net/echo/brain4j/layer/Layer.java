@@ -53,7 +53,7 @@ public class Layer {
         return neurons.get(i);
     }
 
-    public void applyFunction() {
+    public void applyFunction(Layer previous) {
         Activation function = activation.getFunction();
 
         function.apply(neurons);
