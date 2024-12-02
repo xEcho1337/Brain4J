@@ -1,5 +1,8 @@
 package net.echo.brain4j.utils;
 
+import java.util.Arrays;
+import java.util.function.Supplier;
+
 public class Vector {
 
     private final double[] data;
@@ -94,10 +97,6 @@ public class Vector {
         return new Vector(result);
     }
 
-    public double[] toArray() {
-        return data;
-    }
-
     public void add(Vector other) {
         for (int i = 0; i < data.length; i++) {
             data[i] += other.data[i];
@@ -108,5 +107,31 @@ public class Vector {
         for (int i = 0; i < data.length; i++) {
             data[i] *= value;
         }
+    }
+
+    public double[] toArray() {
+        return data;
+    }
+
+    @Override
+    public String toString() {
+        return Arrays.toString(data);
+    }
+
+    public Vector fill(double value) {
+        Arrays.fill(data, value);
+        return this;
+    }
+
+    public Vector fill(Supplier<Double> function) {
+        for (int i = 0; i < data.length; i++) {
+            data[i] = function.get();
+        }
+
+        return this;
+    }
+
+    public int size() {
+        return data.length;
     }
 }

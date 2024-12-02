@@ -6,6 +6,7 @@ import net.echo.brain4j.structure.Neuron;
 import java.util.List;
 
 public class SoftmaxActivation implements Activation {
+
     @Override
     public double activate(double input) {
         throw new UnsupportedOperationException("Softmax activation function is not supported for single value");
@@ -14,6 +15,7 @@ public class SoftmaxActivation implements Activation {
     @Override
     public double[] activate(double[] inputs) {
         double maxInput = Double.NEGATIVE_INFINITY;
+
         for (double input : inputs) {
             if (input > maxInput) {
                 maxInput = input;
@@ -22,13 +24,13 @@ public class SoftmaxActivation implements Activation {
 
         double[] expValues = new double[inputs.length];
         double sum = 0.0;
+
         for (int i = 0; i < inputs.length; i++) {
-            expValues[i] = Math.exp(inputs[i] - maxInput);
-            sum += expValues[i];
+            sum += (expValues[i] = Math.exp(inputs[i] - maxInput));
         }
 
         for (int i = 0; i < expValues.length; i++) {
-            expValues[i] /= sum;
+            expValues[i] = expValues[i] / sum;
         }
 
         return expValues;

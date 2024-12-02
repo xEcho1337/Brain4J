@@ -8,6 +8,10 @@ public class DataSet {
 
     private final List<DataRow> dataRows;
 
+    public DataSet(List<DataRow> dataRows) {
+        this.dataRows = dataRows;
+    }
+
     public DataSet(DataRow... rows) {
         this.dataRows = new ArrayList<>(Arrays.asList(rows));
     }

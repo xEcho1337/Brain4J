@@ -1,4 +1,4 @@
-package net.echo.brain4j.nlp.agents.encoding;
+package net.echo.brain4j.nlp.encoding;
 
 public class PositionalEncoding {
 

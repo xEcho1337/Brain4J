@@ -7,8 +7,10 @@ import java.util.List;
 public interface Activation {
 
     double activate(double input);
+
     double[] activate(double[] input);
 
     double getDerivative(double input);
+
     void apply(List<Neuron> neurons);
 }
