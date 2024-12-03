@@ -15,7 +15,6 @@ import java.util.List;
 public abstract class Optimizer {
 
     private static final double GRADIENT_CLIP = 5.0;
-
     protected double learningRate;
 
     /**
@@ -67,6 +66,13 @@ public abstract class Optimizer {
     public void postFit(List<Layer> layers) {
     }
 
+    /**
+     * Updates the given synapse based on the optimization algorithm.
+     *
+     * @param layer    the layer of the neuron
+     * @param neuron   the neuron connected to the synapse
+     * @param synapse  the synapse involved
+     */
     public void applyGradientStep(Layer layer, Neuron neuron, Synapse synapse) {
         double output = neuron.getValue();
 
@@ -77,7 +83,13 @@ public abstract class Optimizer {
         synapse.setWeight(synapse.getWeight() + clipGradient(delta * synapse.getInputNeuron().getValue()));
     }
 
-    protected double clipGradient(double gradient) {
+    /**
+     * Clips the gradient to avoid gradient explosion.
+     *
+     * @param gradient the gradient
+     * @return the clipped gradient
+     */
+    public double clipGradient(double gradient) {
         return Math.max(Math.min(gradient, GRADIENT_CLIP), -GRADIENT_CLIP);
     }
 }
