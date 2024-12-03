@@ -3,6 +3,7 @@ package net.echo.brain4j.layer.impl;
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.structure.Neuron;
+import net.echo.brain4j.utils.Vector;
 
 import java.util.List;
 
@@ -31,6 +32,18 @@ public class LayerNorm extends Layer {
             double normalized = (value - mean) / Math.sqrt(variance + epsilon);
 
             input.setValue(normalized);
+        }
+    }
+
+    public void normalize(Vector input) {
+        double mean = input.mean();
+        double variance = input.variance(mean);
+
+        for (int i = 0; i < input.size(); i++) {
+            double value = input.get(i);
+            double normalized = (value - mean) / Math.sqrt(variance + epsilon);
+
+            input.set(i, normalized);
         }
     }
 

@@ -48,10 +48,10 @@ public class Model {
             .registerTypeAdapter(StochasticGD.class, OPTIMIZER_ADAPTER)
             .create();
 
-    private List<Layer> layers;
-    private LossFunctions function;
-    private Optimizer optimizer;
-    private BackPropagation propagation;
+    protected List<Layer> layers;
+    protected LossFunctions function;
+    protected Optimizer optimizer;
+    protected BackPropagation propagation;
 
     public Model(Layer... layers) {
         this.layers = new ArrayList<>(Arrays.asList(layers));
@@ -172,7 +172,7 @@ public class Model {
             output[i] = outputLayer.getNeuronAt(i).getValue();
         }
 
-        return new Vector(output);
+        return Vector.of(output);
     }
 
     /**

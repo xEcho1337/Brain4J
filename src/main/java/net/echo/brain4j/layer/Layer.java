@@ -6,6 +6,7 @@ import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.adapters.LayerAdapter;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
+import net.echo.brain4j.utils.Vector;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,5 +62,47 @@ public class Layer {
 
     public int getTotalParams() {
         return synapses.size();
+    }
+
+    public void setInput(Vector input) {
+        if (input.size() != neurons.size()) {
+            throw new IllegalArgumentException("Input size does not match model's input dimension! (Input != Expected) " +
+                    input.size() + " != " + neurons.size());
+        }
+
+        for (int i = 0; i < input.size(); i++) {
+            neurons.get(i).setValue(input.get(i));
+        }
+    }
+
+    public void activate() {
+        for (Synapse synapse : synapses) {
+            Neuron inputNeuron = synapse.getInputNeuron();
+            Neuron outputNeuron = synapse.getOutputNeuron();
+
+            outputNeuron.setValue(outputNeuron.getValue() + inputNeuron.getValue() * synapse.getWeight());
+        }
+    }
+
+    public void activate(Vector input) {
+        for (Synapse synapse : synapses) {
+            Neuron inputNeuron = synapse.getInputNeuron();
+            Neuron outputNeuron = synapse.getOutputNeuron();
+
+            int index = neurons.indexOf(inputNeuron);
+            double inputValue = input.get(index);
+
+            outputNeuron.setValue(outputNeuron.getValue() + inputValue * synapse.getWeight());
+        }
+    }
+
+    public Vector getVector() {
+        Vector values = new Vector(neurons.size());
+
+        for (int i = 0; i < neurons.size(); i++) {
+            values.set(i, neurons.get(i).getValue());
+        }
+
+        return values;
     }
 }

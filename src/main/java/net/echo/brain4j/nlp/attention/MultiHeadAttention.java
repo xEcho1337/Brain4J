@@ -2,6 +2,7 @@ package net.echo.brain4j.nlp.attention;
 
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.layer.Layer;
+import net.echo.brain4j.utils.Vector;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +14,9 @@ public class MultiHeadAttention extends Layer {
     private final int headCount;
     private final int contextSize;
     private final int dimension;
+
+    private Vector input;
+    private Vector output;
 
     public MultiHeadAttention(int headCount, int contextSize, int dimension, double temperature) {
         super(0, Activations.LINEAR);
@@ -26,7 +30,7 @@ public class MultiHeadAttention extends Layer {
         initializeHeads();
     }
 
-    public double[] attend(double[] input) {
+    public Vector attend(double[] input) {
         List<double[]> attendedChanges = new ArrayList<>();
 
         heads.parallelStream().forEach(head -> {
@@ -43,7 +47,7 @@ public class MultiHeadAttention extends Layer {
             }
         }
 
-        return result;
+        return Vector.of(result);
     }
 
     private void initializeHeads() {

@@ -22,7 +22,7 @@ public class ToxicCommentClassification {
     private final static int EMBEDDING_DIM = 6;
 
     public static void main(String[] args) {
-        TransformerEncoder model = new TransformerEncoder(2, 4,128, EMBEDDING_DIM, 0.6);
+        TransformerEncoder model = new TransformerEncoder(2, 4,6, EMBEDDING_DIM, 0.6);
 
         model.add(new DenseLayer(6, Activations.SIGMOID));
 
@@ -30,11 +30,18 @@ public class ToxicCommentClassification {
 
         var vectors = loadVocab();
 
-        String phrase = "You are dumb";
+        String phrase = "You are very you dumb";
         var embeddings = getEmbeddings(vectors, phrase);
 
         for (var embed : embeddings) {
             System.out.println(embed);
+        }
+
+        List<Vector> output = model.transform(embeddings);
+
+        for (Vector vector : output) {
+            System.out.println("------------------------------");
+            System.out.println(vector);
         }
     }
 
@@ -49,7 +56,7 @@ public class ToxicCommentClassification {
 
             double[] encoded = encoder.encode(vector.toArray(), i);
 
-            embeddings.add(new Vector(encoded));
+            embeddings.add(Vector.of(encoded));
         }
 
         return embeddings;

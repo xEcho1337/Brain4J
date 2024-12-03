@@ -11,8 +11,12 @@ public class Vector {
         this.data = new double[size];
     }
 
-    public Vector(double... data) {
+    private Vector(double... data) {
         this.data = data;
+    }
+
+    public static Vector of(double... data) {
+        return new Vector(data);
     }
 
     public void set(int index, double value) {
@@ -133,5 +137,30 @@ public class Vector {
 
     public int size() {
         return data.length;
+    }
+
+    public double mean() {
+        return sum() / data.length;
+    }
+
+    public double variance(double mean) {
+        double sum = 0;
+
+        for (double datum : data) {
+            sum += Math.pow(datum - mean, 2);
+        }
+
+        return sum / data.length;
+    }
+
+    public double variance() {
+        double mean = mean();
+        double sum = 0;
+
+        for (double datum : data) {
+            sum += Math.pow(datum - mean, 2);
+        }
+
+        return sum / data.length;
     }
 }

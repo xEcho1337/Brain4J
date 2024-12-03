@@ -25,10 +25,10 @@ public class XorTest {
 
         System.out.println(network.getStats());
 
-        DataRow first = new DataRow(new Vector(0.0, 0.0), new Vector(0.0));
-        DataRow second = new DataRow(new Vector(0, 1), new Vector(1.0));
-        DataRow third = new DataRow(new Vector(1, 0), new Vector(1.0));
-        DataRow fourth = new DataRow(new Vector(1, 1), new Vector(0.0));
+        DataRow first = new DataRow(Vector.of(0.0, 0.0), Vector.of(0.0));
+        DataRow second = new DataRow(Vector.of(0, 1), Vector.of(1.0));
+        DataRow third = new DataRow(Vector.of(1, 0), Vector.of(1.0));
+        DataRow fourth = new DataRow(Vector.of(1, 1), Vector.of(0.0));
 
         DataSet training = new DataSet(first, second, third, fourth);
 
