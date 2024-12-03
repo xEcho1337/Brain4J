@@ -19,7 +19,7 @@ import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.optimizers.impl.Adam;
-import net.echo.brain4j.training.optimizers.impl.SGD;
+import net.echo.brain4j.training.optimizers.impl.StochasticGD;
 import net.echo.brain4j.utils.Vector;
 
 import java.io.BufferedWriter;
@@ -45,7 +45,7 @@ public class Model {
             .registerTypeAdapter(DenseLayer.class, LAYER_ADAPTER)
             .registerTypeAdapter(DropoutLayer.class, LAYER_ADAPTER)
             .registerTypeAdapter(Adam.class, OPTIMIZER_ADAPTER)
-            .registerTypeAdapter(SGD.class, OPTIMIZER_ADAPTER)
+            .registerTypeAdapter(StochasticGD.class, OPTIMIZER_ADAPTER)
             .create();
 
     private List<Layer> layers;
@@ -96,7 +96,7 @@ public class Model {
      * @param set dataset for training
      */
     public void fit(DataSet set, int batchSize) {
-        propagation.iterate(set, optimizer.getLearningRate(), batchSize);
+        propagation.iterate(set);
     }
 
     /**

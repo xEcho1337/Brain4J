@@ -2,13 +2,19 @@ package net.echo.brain4j.training.optimizers;
 
 import com.google.gson.annotations.JsonAdapter;
 import net.echo.brain4j.adapters.OptimizerAdapter;
+import net.echo.brain4j.layer.Layer;
+import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
+
+import java.util.List;
 
 /**
  * Abstract class for optimization algorithms.
  */
 @JsonAdapter(OptimizerAdapter.class)
 public abstract class Optimizer {
+
+    private static final double GRADIENT_CLIP = 5.0;
 
     protected double learningRate;
 
@@ -43,7 +49,35 @@ public abstract class Optimizer {
      * Updates the given synapse based on the optimization algorithm.
      *
      * @param synapse   the synapse to update
-     * @param timestep  the current timestep
      */
-    public abstract void update(Synapse synapse, int timestep);
+    public abstract void update(Synapse synapse);
+
+    /**
+     * Called after a sample has been iterated.
+     *
+     * @param layers the layers of the model
+     */
+    public abstract void postIteration(List<Layer> layers);
+
+    /**
+     * Called after all samples in the dataset have been iterated.
+     *
+     * @param layers the layers of the model
+     */
+    public void postFit(List<Layer> layers) {
+    }
+
+    public void applyGradientStep(Layer layer, Neuron neuron, Synapse synapse) {
+        double output = neuron.getValue();
+
+        double error = clipGradient(synapse.getWeight() * synapse.getOutputNeuron().getDelta());
+        double delta = clipGradient(error * layer.getActivation().getFunction().getDerivative(output));
+
+        neuron.setDelta(delta);
+        synapse.setWeight(synapse.getWeight() + clipGradient(delta * synapse.getInputNeuron().getValue()));
+    }
+
+    protected double clipGradient(double gradient) {
+        return Math.max(Math.min(gradient, GRADIENT_CLIP), -GRADIENT_CLIP);
+    }
 }

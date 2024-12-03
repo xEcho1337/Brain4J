@@ -10,71 +10,32 @@ import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.utils.Vector;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class BackPropagation {
 
-    private static final double GRADIENT_CLIP = 5.0;
-
     private final Model model;
     private final Optimizer optimizer;
-    private int timestep = 0;
 
     public BackPropagation(Model model, Optimizer optimizer) {
         this.model = model;
         this.optimizer = optimizer;
     }
 
-    private double clipGradient(double gradient) {
-        return Math.max(Math.min(gradient, GRADIENT_CLIP), -GRADIENT_CLIP);
-    }
 
-    public void iterate(DataSet dataSet, double learningRate, int batchSize) {
-        List<List<DataRow>> batches = createBatches(dataSet, batchSize);
-
-        int inputSize = model.getLayers().getFirst().getNeurons().size();
-        int outputSize = model.getLayers().getLast().getNeurons().size();
-
-        for (List<DataRow> batch : batches) {
-            Vector avgInputs = new Vector(inputSize);
-            Vector avgOutputs = new Vector(outputSize);
-
-            for (DataRow row : batch) {
-                avgInputs.add(row.inputs());
-                avgOutputs.add(row.outputs());
-            }
-
-            avgInputs.scale(1.0 / batch.size());
-            avgOutputs.scale(1.0 / batch.size());
-
-            Vector outputs = model.predict(avgInputs);
-
-            backpropagate(avgOutputs.toArray(), outputs.toArray(), learningRate);
-        }
-    }
-
-    private List<List<DataRow>> createBatches(DataSet dataSet, int batchSize) {
-        List<List<DataRow>> batches = new ArrayList<>();
-        List<DataRow> currentBatch = new ArrayList<>();
-
+    public void iterate(DataSet dataSet) {
         for (DataRow row : dataSet.getDataRows()) {
-            currentBatch.add(row);
+            Vector output = model.predict(row.inputs());
+            Vector target = row.outputs();
 
-            if (currentBatch.size() == batchSize) {
-                batches.add(currentBatch);
-                currentBatch = new ArrayList<>();
-            }
+            backpropagate(target.toArray(), output.toArray());
         }
 
-        if (!currentBatch.isEmpty()) {
-            batches.add(currentBatch);
-        }
-
-        return batches;
+        List<Layer> layers = model.getLayers();
+        optimizer.postFit(layers);
     }
 
-    public void backpropagate(double[] targets, double[] outputs, double learningRate) {
+    public void backpropagate(double[] targets, double[] outputs) {
         List<Layer> layers = model.getLayers();
         initialDelta(layers, targets, outputs);
 
@@ -88,19 +49,13 @@ public class BackPropagation {
             }
 
             for (Neuron neuron : layer.getNeurons()) {
-                double output = neuron.getValue();
-
                 for (Synapse synapse : neuron.getSynapses()) {
-                    double error = clipGradient(synapse.getWeight() * synapse.getOutputNeuron().getDelta());
-                    double delta = clipGradient(error * layer.getActivation().getFunction().getDerivative(output));
-
-                    neuron.setDelta(delta);
-                    synapse.setWeight(synapse.getWeight() + clipGradient(delta * synapse.getInputNeuron().getValue()));
+                    optimizer.applyGradientStep(layer, neuron, synapse);
                 }
             }
         }
 
-        updateWeightsAndBiases(layers, learningRate);
+        optimizer.postIteration(layers);
     }
 
     private void initialDelta(List<Layer> layers, double[] targets, double[] outputs) {
@@ -114,20 +69,6 @@ public class BackPropagation {
 
             double delta = error * outputLayer.getActivation().getFunction().getDerivative(output);
             neuron.setDelta(delta);
-        }
-    }
-
-    private void updateWeightsAndBiases(List<Layer> layers, double learningRate) {
-        timestep++;
-
-        for (Layer layer : layers) {
-            // 30% improvement using parallel stream. TODO: Implement GPU support for better parallelization
-            layer.getSynapses().parallelStream().forEach(synapse -> optimizer.update(synapse, timestep));
-
-            for (Neuron neuron : layer.getNeurons()) {
-                double deltaBias = learningRate * neuron.getDelta();
-                neuron.setBias(neuron.getBias() + deltaBias);
-            }
         }
     }
 }
