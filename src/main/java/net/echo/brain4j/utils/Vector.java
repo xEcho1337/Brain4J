@@ -19,6 +19,10 @@ public class Vector {
         return new Vector(data);
     }
 
+    public static Vector random(int size) {
+        return new Vector(size).fill(Math::random);
+    }
+
     public void set(int index, double value) {
         data[index] = value;
     }
@@ -101,16 +105,20 @@ public class Vector {
         return new Vector(result);
     }
 
-    public void add(Vector other) {
+    public Vector add(Vector other) {
         for (int i = 0; i < data.length; i++) {
             data[i] += other.data[i];
         }
+
+        return this;
     }
 
-    public void scale(double value) {
+    public Vector scale(double value) {
         for (int i = 0; i < data.length; i++) {
             data[i] *= value;
         }
+
+        return this;
     }
 
     public double[] toArray() {

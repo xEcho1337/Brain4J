@@ -71,11 +71,7 @@ public class ToxicCommentClassification {
             for (String token : content) {
                 if (token.startsWith("[") || token.startsWith("##")) continue;
 
-                Vector embedding = new Vector(EMBEDDING_DIM);
-
-                embedding.fill(Math::random).scale(10);
-
-                vectors.put(token, embedding);
+                vectors.put(token, Vector.random(EMBEDDING_DIM).scale(10));
             }
         } catch (Exception e) {
             e.printStackTrace(System.err);
