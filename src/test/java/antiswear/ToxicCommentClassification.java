@@ -5,7 +5,8 @@ import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.initialization.InitializationType;
 import net.echo.brain4j.nlp.encoding.PositionalEncoding;
-import net.echo.brain4j.nlp.model.TransformerEncoder;
+import net.echo.brain4j.nlp.model.Transformer;
+import net.echo.brain4j.nlp.model.layers.TransformerEncoder;
 import net.echo.brain4j.training.optimizers.impl.Adam;
 import net.echo.brain4j.utils.Vector;
 import org.apache.commons.io.FileUtils;
@@ -19,14 +20,21 @@ import java.util.Map;
 
 public class ToxicCommentClassification {
 
+    private final static int CONTEXT_SIZE = 12;
     private final static int EMBEDDING_DIM = 6;
+    private final static double TEMPERATURE = 0.6;
 
     public static void main(String[] args) {
-        TransformerEncoder model = new TransformerEncoder(2, 4,6, EMBEDDING_DIM, 0.6);
+        Transformer transformer = new Transformer(
+                new TransformerEncoder(4, CONTEXT_SIZE, EMBEDDING_DIM, TEMPERATURE)
+        );
 
-        model.add(new DenseLayer(6, Activations.SIGMOID));
+        transformer.concat(
+                new DenseLayer(EMBEDDING_DIM, Activations.LINEAR), // Subsampling layer, required to make the model work
+                new DenseLayer(6, Activations.SIGMOID)
+        );
 
-        model.compile(InitializationType.XAVIER, LossFunctions.MEAN_SQUARED_ERROR, new Adam(0.001));
+        transformer.compile(InitializationType.XAVIER, LossFunctions.MEAN_SQUARED_ERROR, new Adam(0.001));
 
         var vectors = loadVocab();
 
@@ -37,7 +45,7 @@ public class ToxicCommentClassification {
             System.out.println(embed);
         }
 
-        List<Vector> output = model.transform(embeddings);
+        List<Vector> output = transformer.transform(embeddings);
 
         for (Vector vector : output) {
             System.out.println("------------------------------");

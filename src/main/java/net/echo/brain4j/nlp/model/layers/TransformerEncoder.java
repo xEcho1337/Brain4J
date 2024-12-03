@@ -1,6 +1,7 @@
-package net.echo.brain4j.nlp.model;
+package net.echo.brain4j.nlp.model.layers;
 
 import net.echo.brain4j.activation.Activations;
+import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.layer.impl.LayerNorm;
 import net.echo.brain4j.model.Model;
@@ -10,17 +11,16 @@ import net.echo.brain4j.utils.Vector;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TransformerEncoder extends Model {
+public class TransformerEncoder extends Layer {
 
-    private Model feedForward;
-    private LayerNorm normalizer;
-    private MultiHeadAttention attention;
-    private int contextSize;
+    private final Model feedForward;
+    private final LayerNorm normalizer;
+    private final MultiHeadAttention attention;
 
-    public TransformerEncoder(int layers, int numHeads, int contextSize, int dimension, double temperature) {
+    public TransformerEncoder(int numHeads, int contextSize, int dimension, double temperature) {
+        super(0, Activations.LINEAR);
         this.normalizer = new LayerNorm();
         this.attention = new MultiHeadAttention(numHeads, contextSize, dimension, temperature);
-        this.contextSize = contextSize;
         this.feedForward = new Model(
                 new DenseLayer(dimension, Activations.LINEAR),
                 new DenseLayer(4 * dimension, Activations.RELU),
@@ -45,6 +45,18 @@ public class TransformerEncoder extends Model {
         }
 
         return resulting;
+    }
+
+    public Model getFeedForward() {
+        return feedForward;
+    }
+
+    public LayerNorm getNormalizer() {
+        return normalizer;
+    }
+
+    public MultiHeadAttention getAttention() {
+        return attention;
     }
 }
 

@@ -22,7 +22,6 @@ public class BackPropagation {
         this.optimizer = optimizer;
     }
 
-
     public void iterate(DataSet dataSet) {
         for (DataRow row : dataSet.getDataRows()) {
             Vector output = model.predict(row.inputs());

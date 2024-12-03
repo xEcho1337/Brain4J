@@ -1,4 +1,4 @@
-package net.echo.brain4j.nlp.model;
+package net.echo.brain4j.nlp.model.layers;
 
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.layer.impl.DenseLayer;
