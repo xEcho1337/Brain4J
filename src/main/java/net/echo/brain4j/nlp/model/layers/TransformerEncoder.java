@@ -28,6 +28,20 @@ public class TransformerEncoder extends Layer {
         );
     }
 
+    /**
+     * Transforms a list of embeddings using a sequence of neural network layers.
+     * <p>
+     * The transformation is applied in the following order:
+     * <ol>
+     *     <li>Layer Normalization</li>
+     *     <li>Multi-Head Attention</li>
+     *     <li>Layer Normalization</li>
+     *     <li>Feed Forward Network</li>
+     *     <li>Layer Normalization</li>
+     * </ol>
+     *
+     * @param embeddings the list of embeddings to transform
+     */
     public List<Vector> transform(List<Vector> embeddings) {
         List<Vector> resulting = new ArrayList<>();
 

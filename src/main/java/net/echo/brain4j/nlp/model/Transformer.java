@@ -1,12 +1,11 @@
 package net.echo.brain4j.nlp.model;
 
 import net.echo.brain4j.layer.Layer;
-import net.echo.brain4j.layer.impl.DenseLayer;
-import net.echo.brain4j.layer.impl.LayerNorm;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.model.initialization.InitializationType;
 import net.echo.brain4j.nlp.model.layers.TransformerEncoder;
+import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.utils.Vector;
 
@@ -46,6 +45,11 @@ public class Transformer extends Model {
         }
 
         return concatEmbeddings;
+    }
+
+    @Override
+    public void fit(DataSet set, int batchSize) {
+
     }
 
     @Override
