@@ -38,7 +38,7 @@ public class ToxicCommentClassification {
 
         var vectors = loadVocab();
 
-        String phrase = "nigga I will rape you";
+        String phrase = "the pen is on the table";
         var embeddings = getEmbeddings(vectors, phrase);
 
         for (var embed : embeddings) {
