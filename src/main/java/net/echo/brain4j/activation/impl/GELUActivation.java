@@ -26,7 +26,7 @@ public class GELUActivation implements Activation {
     @Override
     public void apply(List<Neuron> neurons) {
         for (Neuron neuron : neurons) {
-            neuron.setValue(activate(neuron.getValue())); // Applicare GELU al valore di ciascun neurone
+            neuron.setValue(activate(neuron.getValue()));
         }
     }
 }

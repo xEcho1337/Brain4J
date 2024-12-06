@@ -6,6 +6,7 @@ public enum Activations {
 
     LINEAR(new LinearActivation()),
     RELU(new ReLUActivation()),
+    GELU(new GELUActivation()),
     LEAKY_RELU(new LeakyReLUActivation()),
     SIGMOID(new SigmoidActivation()),
     SOFTMAX(new SoftmaxActivation()),

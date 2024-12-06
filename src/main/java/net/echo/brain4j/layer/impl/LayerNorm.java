@@ -35,16 +35,20 @@ public class LayerNorm extends Layer {
         }
     }
 
-    public void normalize(Vector input) {
+    public Vector normalize(Vector input) {
         double mean = input.mean();
         double variance = input.variance(mean);
 
+        double denominator = Math.sqrt(variance + epsilon);
+
         for (int i = 0; i < input.size(); i++) {
             double value = input.get(i);
-            double normalized = (value - mean) / Math.sqrt(variance + epsilon);
+            double normalized = (value - mean) / denominator;
 
             input.set(i, normalized);
         }
+
+        return input;
     }
 
     private double calculateMean(List<Neuron> inputs) {

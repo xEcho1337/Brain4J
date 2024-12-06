@@ -166,6 +166,7 @@ public class Model {
         }
 
         Layer outputLayer = layers.get(layers.size() - 1);
+
         double[] output = new double[outputLayer.getNeurons().size()];
 
         for (int i = 0; i < output.length; i++) {

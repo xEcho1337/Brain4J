@@ -16,7 +16,7 @@ public class Vector {
     }
 
     public static Vector of(double... data) {
-        return new Vector(data);
+        return new Vector(Arrays.copyOf(data, data.length));
     }
 
     public static Vector random(int size) {

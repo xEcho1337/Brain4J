@@ -41,14 +41,9 @@ public class ToxicCommentClassification {
         String phrase = "the pen is on the table";
         var embeddings = getEmbeddings(vectors, phrase);
 
-        for (var embed : embeddings) {
-            System.out.println(embed);
-        }
-
         List<Vector> output = transformer.transform(embeddings);
 
         for (Vector vector : output) {
-            System.out.println("------------------------------");
             System.out.println(vector);
         }
     }

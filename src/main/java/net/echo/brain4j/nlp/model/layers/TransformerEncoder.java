@@ -23,7 +23,7 @@ public class TransformerEncoder extends Layer {
         this.attention = new MultiHeadAttention(numHeads, contextSize, dimension, temperature);
         this.feedForward = new Model(
                 new DenseLayer(dimension, Activations.LINEAR),
-                new DenseLayer(4 * dimension, Activations.RELU),
+                new DenseLayer(4 * dimension, Activations.GELU),
                 new DenseLayer(dimension, Activations.LINEAR)
         );
     }
@@ -47,14 +47,18 @@ public class TransformerEncoder extends Layer {
 
         for (Vector vector : embeddings) {
             Vector embedding = Vector.of(vector.toArray());
-            normalizer.normalize(embedding);
+            embedding = normalizer.normalize(embedding);
 
             Vector attended = attention.attend(embedding.toArray());
-            normalizer.normalize(attended);
+            attended = normalizer.normalize(attended);
 
+            System.out.println("Attended");
+            System.out.println(attended);
             Vector result = feedForward.predict(attended);
-            normalizer.normalize(result);
+            result = normalizer.normalize(result);
 
+            System.out.println("Result");
+            System.out.println(result);
             resulting.add(result);
         }
 

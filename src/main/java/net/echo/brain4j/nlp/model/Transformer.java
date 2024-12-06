@@ -38,6 +38,11 @@ public class Transformer extends Model {
             }
         }
 
+        for (Vector vector : resulting) {
+            System.out.println("Resulting");
+            System.out.println(vector);
+        }
+
         List<Vector> concatEmbeddings = new ArrayList<>(resulting);
 
         for (Vector embedding : resulting) {
