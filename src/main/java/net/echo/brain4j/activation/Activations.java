@@ -5,6 +5,7 @@ import net.echo.brain4j.activation.impl.*;
 public enum Activations {
 
     LINEAR(new LinearActivation()),
+    ELU(new ELUActivation()),
     RELU(new ReLUActivation()),
     GELU(new GELUActivation()),
     LEAKY_RELU(new LeakyReLUActivation()),

@@ -7,11 +7,7 @@ import java.util.List;
 
 public class ELUActivation implements Activation {
 
-    private final double alpha;
-
-    public ELUActivation(double alpha) {
-        this.alpha = alpha;
-    }
+    private final double alpha = 1.0;
 
     @Override
     public double activate(double input) {
