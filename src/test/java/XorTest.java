@@ -36,10 +36,6 @@ public class XorTest {
 
         for (int i = 0; i < 1000; i++) {
             network.fit(training, 1);
-
-            /*double error = network.evaluate(training);
-
-            System.out.println("Epoch " + i + " with error " + error);*/
         }
 
         double error = network.evaluate(training);
@@ -52,7 +48,5 @@ public class XorTest {
 
             System.out.println("Input: " + row.inputs() + " Output: " + output.get(0));
         }
-
-        network.save("xor-test.json");
     }
 }
