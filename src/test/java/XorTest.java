@@ -15,9 +15,9 @@ public class XorTest {
     public static void main(String[] args) {
         Model network = new Model(
                 new DenseLayer(2, Activations.LINEAR),
-                new DenseLayer(32, Activations.RELU),
-                new DenseLayer(32, Activations.RELU),
-                new DenseLayer(32, Activations.RELU),
+                new DenseLayer(128, Activations.RELU),
+                new DenseLayer(128, Activations.RELU),
+                new DenseLayer(128, Activations.RELU),
                 new DenseLayer(1, Activations.SIGMOID)
         );
 
@@ -33,23 +33,19 @@ public class XorTest {
         DataSet training = new DataSet(first, second, third, fourth);
 
         long start = System.nanoTime();
-        int epoches = 0;
-        double currError;
 
-        do {
-            epoches++;
-
-            currError = network.evaluate(training);
-
-            System.out.println("Epoch " + epoches + " with error " + currError);
-
+        for (int i = 0; i < 1000; i++) {
             network.fit(training, 1);
-        } while (currError > 0.01);
+
+            double error = network.evaluate(training);
+
+            System.out.println("Epoch " + i + " with error " + error);
+        }
 
         double error = network.evaluate(training);
         double took = (System.nanoTime() - start) / 1e6;
 
-        System.out.println("Took " + took + " ms with an average of " + (took / epoches) + " ms per epoch and error " + error);
+        System.out.println("Took " + took + " ms with an average of " + (took / 1000) + " ms per epoch and error " + error);
 
         for (DataRow row : training.getDataRows()) {
             Vector output = network.predict(row.inputs());

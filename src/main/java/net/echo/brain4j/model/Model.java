@@ -88,6 +88,8 @@ public class Model {
         this.propagation = new BackPropagation(this, optimizer);
 
         connect(type);
+
+        this.optimizer.postInitialize();
     }
 
     /**

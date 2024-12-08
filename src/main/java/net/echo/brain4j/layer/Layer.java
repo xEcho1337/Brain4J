@@ -6,6 +6,7 @@ import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.adapters.LayerAdapter;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
+import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.utils.Vector;
 
 import java.util.ArrayList;
@@ -104,5 +105,13 @@ public class Layer {
         }
 
         return values;
+    }
+
+    public void propagate(Optimizer optimizer) {
+        for (Neuron neuron : neurons) {
+            for (Synapse synapse : neuron.getSynapses()) {
+                optimizer.applyGradientStep(this, neuron, synapse);
+            }
+        }
     }
 }

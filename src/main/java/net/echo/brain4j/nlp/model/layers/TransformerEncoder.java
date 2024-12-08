@@ -23,7 +23,7 @@ public class TransformerEncoder extends Layer {
         this.attention = new MultiHeadAttention(numHeads, contextSize, dimension, temperature);
         this.feedForward = new Model(
                 new DenseLayer(dimension, Activations.LINEAR),
-                new DenseLayer(4 * dimension, Activations.GELU),
+                new DenseLayer(4 * dimension, Activations.RELU),
                 new DenseLayer(dimension, Activations.LINEAR)
         );
     }
@@ -55,7 +55,7 @@ public class TransformerEncoder extends Layer {
             System.out.println("Attended");
             System.out.println(attended);
             Vector result = feedForward.predict(attended);
-            result = normalizer.normalize(result);
+            // result = normalizer.normalize(result);
 
             System.out.println("Result");
             System.out.println(result);

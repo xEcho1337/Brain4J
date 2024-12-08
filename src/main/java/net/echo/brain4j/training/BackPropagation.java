@@ -47,11 +47,7 @@ public class BackPropagation {
                 continue;
             }
 
-            for (Neuron neuron : layer.getNeurons()) {
-                for (Synapse synapse : neuron.getSynapses()) {
-                    optimizer.applyGradientStep(layer, neuron, synapse);
-                }
-            }
+            layer.propagate(optimizer);
         }
 
         optimizer.postIteration(layers);

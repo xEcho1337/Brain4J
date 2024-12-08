@@ -5,16 +5,15 @@ import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.training.optimizers.Optimizer;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class Adam extends Optimizer {
 
     // Momentum vectors
-    private final Map<Synapse, Double> firstMomentum = new ConcurrentHashMap<>();
-    private final Map<Synapse, Double> secondMomentum = new ConcurrentHashMap<>();
+    private double[] firstMomentum;
+    private double[] secondMomentum;
+    // private final Map<Synapse, Double> firstMomentum = new ConcurrentHashMap<>();
+    // private final Map<Synapse, Double> secondMomentum = new ConcurrentHashMap<>();
 
     private double beta1;
     private double beta2;
@@ -33,17 +32,25 @@ public class Adam extends Optimizer {
     }
 
     @Override
+    public void postInitialize() {
+        this.firstMomentum = new double[Synapse.ID_COUNTER];
+        this.secondMomentum = new double[Synapse.ID_COUNTER];
+    }
+
+    @Override
     public void update(Synapse synapse) {
         double gradient = synapse.getOutputNeuron().getDelta() * synapse.getInputNeuron().getValue();
 
-        double currentFirstMomentum = firstMomentum.getOrDefault(synapse, 0.0);
-        double currentSecondMomentum = secondMomentum.getOrDefault(synapse, 0.0);
+        int synapseId = synapse.getSynapseId();
+
+        double currentFirstMomentum = firstMomentum[synapseId];
+        double currentSecondMomentum = secondMomentum[synapseId];
 
         double m = beta1 * currentFirstMomentum + (1 - beta1) * gradient;
         double v = beta2 * currentSecondMomentum + (1 - beta2) * gradient * gradient;
 
-        firstMomentum.put(synapse, m);
-        secondMomentum.put(synapse, v);
+        firstMomentum[synapseId] = m;
+        secondMomentum[synapseId] = v;
 
         double mHat = m / (1 - Math.pow(beta1, timestep));
         double vHat = v / (1 - Math.pow(beta2, timestep));

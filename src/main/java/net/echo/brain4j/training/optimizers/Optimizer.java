@@ -27,6 +27,12 @@ public abstract class Optimizer {
     }
 
     /**
+     * Called after the network has been compiled and all the synapses have been initialized.
+     */
+    public void postInitialize() {
+    }
+
+    /**
      * Gets the current learning rate.
      *
      * @return learning rate
@@ -47,7 +53,7 @@ public abstract class Optimizer {
     /**
      * Updates the given synapse based on the optimization algorithm.
      *
-     * @param synapse   the synapse to update
+     * @param synapse the synapse to update
      */
     public abstract void update(Synapse synapse);
 

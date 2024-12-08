@@ -44,6 +44,7 @@ public class SoftmaxActivation implements Activation {
     @Override
     public void apply(List<Neuron> neurons) {
         double[] values = new double[neurons.size()];
+
         for (int i = 0; i < neurons.size(); i++) {
             values[i] = neurons.get(i).getValue() + neurons.get(i).getBias();
         }
