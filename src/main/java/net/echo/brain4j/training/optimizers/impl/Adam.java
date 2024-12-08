@@ -12,8 +12,6 @@ public class Adam extends Optimizer {
     // Momentum vectors
     private double[] firstMomentum;
     private double[] secondMomentum;
-    // private final Map<Synapse, Double> firstMomentum = new ConcurrentHashMap<>();
-    // private final Map<Synapse, Double> secondMomentum = new ConcurrentHashMap<>();
 
     private double beta1Timestep;
     private double beta2Timestep;
