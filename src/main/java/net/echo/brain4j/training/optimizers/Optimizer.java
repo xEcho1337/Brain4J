@@ -85,8 +85,10 @@ public abstract class Optimizer {
         double error = clipGradient(synapse.getWeight() * synapse.getOutputNeuron().getDelta());
         double delta = clipGradient(error * layer.getActivation().getFunction().getDerivative(output));
 
+        double weightChange = clipGradient(delta * synapse.getInputNeuron().getValue());
+
         neuron.setDelta(delta);
-        synapse.setWeight(synapse.getWeight() + clipGradient(delta * synapse.getInputNeuron().getValue()));
+        synapse.setWeight(synapse.getWeight() + weightChange);
     }
 
     /**

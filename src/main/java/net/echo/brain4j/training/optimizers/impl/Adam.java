@@ -15,6 +15,9 @@ public class Adam extends Optimizer {
     // private final Map<Synapse, Double> firstMomentum = new ConcurrentHashMap<>();
     // private final Map<Synapse, Double> secondMomentum = new ConcurrentHashMap<>();
 
+    private double beta1Timestep;
+    private double beta2Timestep;
+
     private double beta1;
     private double beta2;
     private double epsilon;
@@ -52,8 +55,8 @@ public class Adam extends Optimizer {
         firstMomentum[synapseId] = m;
         secondMomentum[synapseId] = v;
 
-        double mHat = m / (1 - Math.pow(beta1, timestep));
-        double vHat = v / (1 - Math.pow(beta2, timestep));
+        double mHat = m / (1 - beta1Timestep);
+        double vHat = v / (1 - beta2Timestep);
 
         double deltaWeight = (learningRate * mHat) / (Math.sqrt(vHat) + epsilon);
         synapse.setWeight(synapse.getWeight() + deltaWeight);
@@ -62,6 +65,9 @@ public class Adam extends Optimizer {
     @Override
     public void postIteration(List<Layer> layers) {
         timestep++;
+
+        this.beta1Timestep = Math.pow(beta1, timestep);
+        this.beta2Timestep = Math.pow(beta2, timestep);
 
         for (Layer layer : layers) {
             // 30% improvement using parallel stream. TODO: Implement GPU support for better parallelization
