@@ -8,8 +8,6 @@ import net.echo.brain4j.model.Model;
 import net.echo.brain4j.training.optimizers.impl.Adam;
 import net.echo.brain4j.utils.Vector;
 
-import java.util.Arrays;
-
 public class XorTest {
 
     public static void main(String[] args) {
@@ -25,10 +23,10 @@ public class XorTest {
 
         System.out.println(network.getStats());
 
-        DataRow first = new DataRow(Vector.of(0.0, 0.0), Vector.of(0.0));
-        DataRow second = new DataRow(Vector.of(0, 1), Vector.of(1.0));
-        DataRow third = new DataRow(Vector.of(1, 0), Vector.of(1.0));
-        DataRow fourth = new DataRow(Vector.of(1, 1), Vector.of(0.0));
+        DataRow first = new DataRow(Vector.of(0, 0), Vector.of(0));
+        DataRow second = new DataRow(Vector.of(0, 1), Vector.of(1));
+        DataRow third = new DataRow(Vector.of(1, 0), Vector.of(1));
+        DataRow fourth = new DataRow(Vector.of(1, 1), Vector.of(0));
 
         DataSet training = new DataSet(first, second, third, fourth);
 
