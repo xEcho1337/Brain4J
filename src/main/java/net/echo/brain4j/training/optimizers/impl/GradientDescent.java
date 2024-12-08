@@ -49,7 +49,11 @@ public class GradientDescent extends Optimizer {
     @Override
     public void applyGradientStep(Layer layer, Neuron neuron, Synapse synapse) {
         double gradient = calculateGradient(layer, synapse, neuron);
-        gradientMap.put(synapse, gradientMap.getOrDefault(synapse, 0.0) + gradient);
+
+        Object gradientObj = gradientMap.get(synapse);
+        double gradientSum = (gradientObj == null) ? 0.0 : (double) gradientObj;
+
+        gradientMap.put(synapse, gradientSum + gradient);
     }
 
     /**
