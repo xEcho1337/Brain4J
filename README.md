@@ -25,7 +25,7 @@ At this point, we need to define the weight initialization method and the loss f
 We can achieve this by calling the compile method like below:
 
 ```java
-network.compile(InitializationType.XAVIER, LossFunctions.BINARY_CROSS_ENTROPY, new Adam(0.001));
+network.compile(WeightInitialization.HE, LossFunctions.BINARY_CROSS_ENTROPY, new Adam(0.001));
 ```
 
 For networks with only one output neuron (where the output is between 0 and 1) we use Binary Cross Entropy,
@@ -34,10 +34,10 @@ with Adaptive Moment Estimation (Adam).
 Now we need to define our training data by using `DataSet` and `DataRow`.
 
 ```java
-DataRow first = new DataRow(new double[]{0.0, 0.0}, 0.0);
-DataRow second = new DataRow(new double[]{0.0, 1.0}, 1.0);
-DataRow third = new DataRow(new double[]{1.0, 0.0}, 1.0);
-DataRow fourth = new DataRow(new double[]{1.0, 1.0}, 0.0);
+DataRow first = new DataRow(Vector.of(0, 0), Vector.of(0));
+DataRow second = new DataRow(Vector.of(0, 1), Vector.of(1));
+DataRow third = new DataRow(Vector.of(1, 0), Vector.of(1));
+DataRow fourth = new DataRow(Vector.of(1, 1), Vector.of(0));
 
 DataSet training = new DataSet(first, second, third, fourth);
 ```
@@ -60,4 +60,7 @@ error of less than 1%.
 
 ## Contributing & Contact
 
-Pull requests and issues are always welcome. Do not hesitate to contact [@nettyfan](https://t.me/nettyfan) on telegram if you need further explanation
+Pull requests and issues are always welcome. 
+
+- Telegram: [@nettyfan](https://t.me/nettyfan)
+- Discord: @xecho1337

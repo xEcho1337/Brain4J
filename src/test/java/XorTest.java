@@ -1,7 +1,7 @@
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.data.DataSet;
-import net.echo.brain4j.model.initialization.InitializationType;
+import net.echo.brain4j.model.initialization.WeightInitialization;
 import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.Model;
@@ -13,13 +13,13 @@ public class XorTest {
     public static void main(String[] args) {
         Model network = new Model(
                 new DenseLayer(2, Activations.LINEAR),
-                new DenseLayer(128, Activations.RELU),
-                new DenseLayer(128, Activations.RELU),
-                new DenseLayer(128, Activations.RELU),
+                new DenseLayer(32, Activations.RELU),
+                new DenseLayer(32, Activations.RELU),
+                new DenseLayer(32, Activations.RELU),
                 new DenseLayer(1, Activations.SIGMOID)
         );
 
-        network.compile(InitializationType.HE, LossFunctions.BINARY_CROSS_ENTROPY, new Adam(0.001));
+        network.compile(WeightInitialization.HE, LossFunctions.BINARY_CROSS_ENTROPY, new Adam(0.01));
 
         System.out.println(network.getStats());
 

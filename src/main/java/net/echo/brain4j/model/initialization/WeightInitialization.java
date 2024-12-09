@@ -9,7 +9,7 @@ import net.echo.brain4j.model.initialization.impl.XavierInit;
  * Enum that defines the different types of weight initialization strategies used for neural networks.
  * Each type corresponds to a different algorithm that initializes the weights of a neural network layer.
  */
-public enum InitializationType {
+public enum WeightInitialization {
 
     /**
      * Normal initialization uses a normal distribution to initialize the weights.
@@ -42,7 +42,7 @@ public enum InitializationType {
      *
      * @param initializer the weight initializer for the corresponding type
      */
-    InitializationType(WeightInitializer initializer) {
+    WeightInitialization(WeightInitializer initializer) {
         this.initializer = initializer;
     }
 

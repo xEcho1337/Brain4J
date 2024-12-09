@@ -11,7 +11,7 @@ import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.layer.impl.DropoutLayer;
 import net.echo.brain4j.loss.LossFunction;
 import net.echo.brain4j.loss.LossFunctions;
-import net.echo.brain4j.model.initialization.InitializationType;
+import net.echo.brain4j.model.initialization.WeightInitialization;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.training.BackPropagation;
@@ -57,7 +57,7 @@ public class Model {
         this.layers = new ArrayList<>(Arrays.asList(layers));
     }
 
-    private void connect(InitializationType type) {
+    private void connect(WeightInitialization type) {
         Layer lastNormalLayer = layers.get(0);
 
         for (int i = 1; i < layers.size(); i++) {
@@ -82,7 +82,7 @@ public class Model {
      * @param function  loss function for error assessment
      * @param optimizer optimization algorithm
      */
-    public void compile(InitializationType type, LossFunctions function, Optimizer optimizer) {
+    public void compile(WeightInitialization type, LossFunctions function, Optimizer optimizer) {
         this.function = function;
         this.optimizer = optimizer;
         this.propagation = new BackPropagation(this, optimizer);
@@ -260,7 +260,7 @@ public class Model {
 
             this.layers = GSON.fromJson(parent.get("layers"), listType);
 
-            connect(InitializationType.NORMAL);
+            connect(WeightInitialization.NORMAL);
 
             double[][] weights = GSON.fromJson(parent.get("weights"), double[][].class);
 

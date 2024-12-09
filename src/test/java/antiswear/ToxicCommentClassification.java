@@ -3,7 +3,7 @@ package antiswear;
 import net.echo.brain4j.activation.Activations;
 import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.loss.LossFunctions;
-import net.echo.brain4j.model.initialization.InitializationType;
+import net.echo.brain4j.model.initialization.WeightInitialization;
 import net.echo.brain4j.nlp.encoding.PositionalEncoding;
 import net.echo.brain4j.nlp.model.Transformer;
 import net.echo.brain4j.nlp.model.layers.TransformerEncoder;
@@ -34,7 +34,7 @@ public class ToxicCommentClassification {
                 new DenseLayer(6, Activations.SIGMOID)
         );
 
-        transformer.compile(InitializationType.XAVIER, LossFunctions.MEAN_SQUARED_ERROR, new Adam(0.001));
+        transformer.compile(WeightInitialization.XAVIER, LossFunctions.MEAN_SQUARED_ERROR, new Adam(0.001));
 
         var vectors = loadVocab();
 
