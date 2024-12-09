@@ -2,15 +2,17 @@
 
 [![Brain4J](https://img.shields.io/badge/Brain4J-2.1-blue.svg)](https://github.com/xEcho1337/Brain4J)
 
-Brain4J is Java library for Machine Learning, designed to be as light as possible and easily portable.
+**Brain4J** is a powerful, lightweight, and easy-to-use Machine Learning library written in Java, designed for speed and simplicity.
 
+---
 
-## Getting started
+## Getting Started
 
-When making a neural network there are plenty of options you can choose from. This time we are making a simple NN to 
-calculate the XOR gate.
+When building a neural network, you have many options. In this example, we will create a neural network to simulate an XOR gate.
 
-Firstly, we need to define the model, for a XOR gate we can use a really simple one, made by only 4 layers.
+### Defining the Model
+
+To represent an XOR gate, we can use a simple neural network with four layers:
 
 ```java
 Model network = new Model(
@@ -21,17 +23,21 @@ Model network = new Model(
 );
 ```
 
-At this point, we need to define the weight initialization method and the loss function that will be used when training. 
-We can achieve this by calling the compile method like below:
+### Compiling the Model
+
+Next, define the weight initialization method and the loss function for training. Use the compile method as follows:
 
 ```java
 network.compile(WeightInitialization.HE, LossFunctions.BINARY_CROSS_ENTROPY, new Adam(0.001));
 ```
 
-For networks with only one output neuron (where the output is between 0 and 1) we use Binary Cross Entropy,
-with Adaptive Moment Estimation (Adam).
+For models with a single output neuron (producing values between 0 and 1), Binary Cross Entropy is the recommended loss function, paired with the Adam optimizer.
 
-Now we need to define our training data by using `DataSet` and `DataRow`.
+Also, when using the ReLU activation function it's suggested to use the `He` weight initialization for better results.
+
+### Preparing Training Data
+
+Create your training dataset using DataSet and DataRow:
 
 ```java
 DataRow first = new DataRow(Vector.of(0, 0), Vector.of(0));
@@ -42,25 +48,26 @@ DataRow fourth = new DataRow(Vector.of(1, 1), Vector.of(0));
 DataSet training = new DataSet(first, second, third, fourth);
 ```
 
-We have everything setup, we can call the fit method inside a loop and wait for the network to finish.
+### Training the Model
 
-Tip: When training always split the data in two, one set for training and one for testing/evaluation.
+Once the setup is complete, use the fit method inside a loop to train the network. Training stops when the error is below a certain threshold.
+
+	Tip: Always split your dataset into training and testing sets to evaluate the model’s performance.
 
 ```java
 double error;
-        
+
 do {
     network.fit(training, 1);
     error = network.evaluate(training);
 } while (error > 0.01);
 ```
 
-The code above will train the neural network with a learning rate of 0.01, and it will stop only when it achieves an 
-error of less than 1%.
+The above code trains the neural network with a learning rate of 0.001, stopping when the error falls below 1%.
 
 ## Contributing & Contact
 
-Pull requests and issues are always welcome. 
+Contributions are always welcome via pull requests or issue reports.
 
-- Telegram: [@nettyfan](https://t.me/nettyfan)
+- Telegram: @nettyfan
 - Discord: @xecho1337
