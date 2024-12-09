@@ -13,7 +13,7 @@ calculate the XOR gate.
 Firstly, we need to define the model, for a XOR gate we can use a really simple one, made by only 4 layers.
 
 ```java
-Model network = new FeedForwardModel(
+Model network = new Model(
         new DenseLayer(2, Activations.LINEAR),
         new DenseLayer(4, Activations.RELU),
         new DenseLayer(4, Activations.RELU),
@@ -50,7 +50,7 @@ Tip: When training always split the data in two, one set for training and one fo
 double error;
         
 do {
-    network.fit(training);
+    network.fit(training, 1);
     error = network.evaluate(training);
 } while (error > 0.01);
 ```
