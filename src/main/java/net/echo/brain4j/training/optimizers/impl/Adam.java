@@ -67,15 +67,16 @@ public class Adam extends Optimizer {
         this.beta1Timestep = Math.pow(beta1, timestep);
         this.beta2Timestep = Math.pow(beta2, timestep);
 
-        for (Layer layer : layers) {
-            // 30% improvement using parallel stream. TODO: Implement GPU support for better parallelization
-            layer.getSynapses().parallelStream().forEach(this::update);
+        layers.parallelStream().forEach(layer -> {
+            for (Synapse synapse : layer.getSynapses()) {
+                update(synapse);
+            }
 
             for (Neuron neuron : layer.getNeurons()) {
                 double deltaBias = learningRate * neuron.getDelta();
                 neuron.setBias(neuron.getBias() + deltaBias);
             }
-        }
+        });
     }
 
     public double getBeta1() {
