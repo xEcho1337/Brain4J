@@ -1,6 +1,6 @@
 # Brain4J
 
-[![Brain4J](https://img.shields.io/badge/Brain4J-2.0.3-blue.svg)](https://github.com/xEcho1337/Brain4J)
+[![Brain4J](https://img.shields.io/badge/Brain4J-2.1-blue.svg)](https://github.com/xEcho1337/Brain4J)
 
 Brain4J is Java library for Machine Learning, designed to be as light as possible and easily portable.
 
