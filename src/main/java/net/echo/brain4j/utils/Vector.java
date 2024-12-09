@@ -121,15 +121,6 @@ public class Vector {
         return this;
     }
 
-    public double[] toArray() {
-        return data;
-    }
-
-    @Override
-    public String toString() {
-        return Arrays.toString(data);
-    }
-
     public Vector fill(double value) {
         Arrays.fill(data, value);
         return this;
@@ -141,10 +132,6 @@ public class Vector {
         }
 
         return this;
-    }
-
-    public int size() {
-        return data.length;
     }
 
     public double mean() {
@@ -170,5 +157,18 @@ public class Vector {
         }
 
         return sum / data.length;
+    }
+
+    public double[] toArray() {
+        return data;
+    }
+
+    public int size() {
+        return data.length;
+    }
+
+    @Override
+    public String toString() {
+        return Arrays.toString(data);
     }
 }
