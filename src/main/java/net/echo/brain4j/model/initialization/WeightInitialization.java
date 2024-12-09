@@ -12,26 +12,29 @@ import net.echo.brain4j.model.initialization.impl.XavierInit;
 public enum WeightInitialization {
 
     /**
-     * Normal initialization uses a normal distribution to initialize the weights.
-     * It typically uses a mean of 0 and a small standard deviation.
+     * Uses a normal distribution for weight initialization.
+     * Suitable for shallow networks or simple architectures.
+     * May cause issues like vanishing or exploding gradients in deep networks.
      */
     NORMAL(new NormalInit()),
 
     /**
-     * He initialization (also known as He et al. initialization) is designed for layers with ReLU activations.
-     * It initializes weights with a normal distribution, scaled by the square root of 2 divided by the number of input neurons.
+     * He Initialization (also known as Kaiming or MSRA Initialization):
+     * Initializes weights with variance 2 / n_in, optimized for ReLU and its variants.
+     * Ideal for deep networks with ReLU activation to prevent the vanishing gradient problem.
      */
     HE(new HeInit()),
 
     /**
-     * Xavier initialization (also known as Glorot initialization) is designed for layers with sigmoid or tanh activations.
-     * It initializes weights using a uniform distribution with a variance based on the number of input and output neurons.
+     * Also known as Glorot Initialization: Initializes weights with variance 1 / (n_in + n_out).
+     * Best suited for networks with symmetric activations like Tanh or Sigmoid.
+     * Ensures proper scaling of activations and gradients, particularly in moderate-depth networks.
      */
     XAVIER(new XavierInit()),
 
     /**
-     * LeCun initialization is specifically designed for layers with the sigmoid or tanh activation functions.
-     * It initializes weights using a normal distribution, scaled by 1 divided by the number of input neurons.
+     * Initializes weights with variance 1 / n_in, particularly for networks with Sigmoid activation.
+     * Works well for shallow networks but may not perform optimally for deeper or ReLU-based networks.
      */
     LECUN(new LeCunInit());
 
