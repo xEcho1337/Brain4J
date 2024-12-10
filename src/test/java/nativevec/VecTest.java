@@ -32,7 +32,6 @@ public class VecTest {
         double improvement = (double) javaTook / nativeTook;
 
         System.out.println("Native improvement: " + improvement + "x");
-
     }
 
     private static long evaluate(Runnable runnable) {
