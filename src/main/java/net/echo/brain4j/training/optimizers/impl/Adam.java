@@ -55,9 +55,6 @@ public class Adam extends Optimizer {
         double currentFirstMomentum = firstMomentum[synapseId];
         double currentSecondMomentum = secondMomentum[synapseId];
 
-        //double[] changes = calculateChange(currentFirstMomentum, currentSecondMomentum, gradient,
-        //        beta1Timestep, beta2Timestep, learningRate, epsilon, beta1, beta2);
-
         double m = beta1 * currentFirstMomentum + (1 - beta1) * gradient;
         double v = beta2 * currentSecondMomentum + (1 - beta2) * gradient * gradient;
 
@@ -69,7 +66,10 @@ public class Adam extends Optimizer {
 
         double deltaWeight = (learningRate * mHat) / (Math.sqrt(vHat) + epsilon);
 
-        /*firstMomentum[synapseId] = changes[0];
+        /*double[] changes = calculateChange(currentFirstMomentum, currentSecondMomentum, gradient,
+                beta1Timestep, beta2Timestep, learningRate, epsilon, beta1, beta2);
+
+        firstMomentum[synapseId] = changes[0];
         secondMomentum[synapseId] = changes[1];
 
         double deltaWeight = changes[2];*/
