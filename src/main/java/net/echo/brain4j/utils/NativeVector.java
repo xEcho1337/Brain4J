@@ -3,7 +3,7 @@ package net.echo.brain4j.utils;
 public class NativeVector {
 
     static {
-        System.loadLibrary("nativevector");
+        System.load("/Users/echo/IdeaProjects/Brain4J/src/test/java/nativevec/natives/libbrain4j_backend.dylib");
     }
 
     private final long nativeHandle;
@@ -13,22 +13,18 @@ public class NativeVector {
     }
 
     public NativeVector(double[] data) {
-        nativeHandle = initWithData(data);
+        nativeHandle = initWithData(data, data.length);
     }
 
-    public native double length();
+    public long getNativeHandle() {
+        return nativeHandle;
+    }
 
-    public native double sum();
+    public native double[] convolute(double[] a, double[] b);
 
-    public native void normalize();
-
-    public native void scale(double value);
-
-    public native double distance(NativeVector other);
-
-    public native void free();
+    public native double sum2(double[] input);
 
     private native long init(int size);
 
-    private native long initWithData(double[] data);
+    private native long initWithData(double[] data, int length);
 }

@@ -6,31 +6,39 @@ import net.echo.brain4j.utils.Vector;
 public class VecTest {
 
     public static void main(String[] args) {
-        /*System.setProperty("java.library.path", "./natives");
-        System.setProperty("sun.library.path", "./natives");*/
-
-
-        System.out.println(System.getProperty("java.library.path"));
         int size = 50;
-        double[] data = new double[size];
 
-        for (int i = 0; i < size; i++) {
-            data[i] = Math.random();
+        double[] a = Vector.random(size).toArray();
+
+        NativeVector nativeVector = new NativeVector(a);
+        Vector vector = Vector.of(a);
+
+        long nativeTook = 0;
+
+        for (int i = 0; i < 100; i++) {
+            nativeTook += evaluate(() -> nativeVector.sum2(a));
         }
 
-        NativeVector nativeVector = new NativeVector(data);
-        Vector vector = Vector.of(data);
+        System.out.println("Native took " + (nativeTook / 1e6) + " ms");
 
+        long javaTook = 0;
+
+        for (int i = 0; i < 100; i++) {
+            javaTook += evaluate(vector::sum);
+        }
+
+        System.out.println("Java took " + (javaTook / 1e6) + " ms");
+
+        double improvement = (double) javaTook / nativeTook;
+
+        System.out.println("Native improvement: " + improvement + "x");
+
+    }
+
+    private static long evaluate(Runnable runnable) {
         long start = System.nanoTime();
-        nativeVector.normalize();
-        long took = System.nanoTime() - start;
+        runnable.run();
 
-        System.out.println("Took " + took + " ns");
-
-        start = System.nanoTime();
-        vector.normalize();
-        took = System.nanoTime() - start;
-
-        System.out.println("Took " + took + " ns");
+        return System.nanoTime() - start;
     }
 }

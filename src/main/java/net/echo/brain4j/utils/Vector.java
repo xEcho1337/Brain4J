@@ -48,8 +48,10 @@ public class Vector {
     public double sum() {
         double sum = 0;
 
-        for (double value : data) {
-            sum += value;
+        for (int i = 0; i < 1_000_000; i++) {
+            for (double value : data) {
+                sum += value;
+            }
         }
 
         return sum;

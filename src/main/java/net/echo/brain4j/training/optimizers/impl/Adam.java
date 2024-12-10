@@ -9,6 +9,10 @@ import java.util.List;
 
 public class Adam extends Optimizer {
 
+    static {
+        System.load("/Users/echo/IdeaProjects/Brain4J/src/test/java/nativevec/natives/libbrain4j_backend.dylib");
+    }
+
     // Momentum vectors
     private double[] firstMomentum;
     private double[] secondMomentum;
@@ -32,6 +36,10 @@ public class Adam extends Optimizer {
         this.epsilon = epsilon;
     }
 
+    public native double[] calculateChange(double firstMomentum, double secondMomentum, double gradient,
+                                         double beta1Timestep, double beta2Timestep, double learningRate,
+                                         double epsilon, double beta1, double beta2);
+
     @Override
     public void postInitialize() {
         this.firstMomentum = new double[Synapse.ID_COUNTER];
@@ -47,6 +55,9 @@ public class Adam extends Optimizer {
         double currentFirstMomentum = firstMomentum[synapseId];
         double currentSecondMomentum = secondMomentum[synapseId];
 
+        //double[] changes = calculateChange(currentFirstMomentum, currentSecondMomentum, gradient,
+        //        beta1Timestep, beta2Timestep, learningRate, epsilon, beta1, beta2);
+
         double m = beta1 * currentFirstMomentum + (1 - beta1) * gradient;
         double v = beta2 * currentSecondMomentum + (1 - beta2) * gradient * gradient;
 
@@ -57,6 +68,12 @@ public class Adam extends Optimizer {
         double vHat = v / (1 - beta2Timestep);
 
         double deltaWeight = (learningRate * mHat) / (Math.sqrt(vHat) + epsilon);
+
+        /*firstMomentum[synapseId] = changes[0];
+        secondMomentum[synapseId] = changes[1];
+
+        double deltaWeight = changes[2];*/
+
         synapse.setWeight(synapse.getWeight() + deltaWeight);
     }
 
