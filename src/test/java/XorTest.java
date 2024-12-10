@@ -32,16 +32,14 @@ public class XorTest {
 
         long start = System.nanoTime();
 
-        int epoches = 10000;
-
-        for (int i = 0; i < epoches; i++) {
+        for (int i = 0; i < 1000; i++) {
             network.fit(training, 1);
         }
 
         double error = network.evaluate(training);
         double took = (System.nanoTime() - start) / 1e6;
 
-        System.out.println("Took " + took + " ms with an average of " + (took / epoches) + " ms per epoch and error " + error);
+        System.out.println("Took " + took + " ms with an average of " + (took / 1000) + " ms per epoch and error " + error);
 
         for (DataRow row : training.getDataRows()) {
             Vector output = network.predict(row.inputs());
