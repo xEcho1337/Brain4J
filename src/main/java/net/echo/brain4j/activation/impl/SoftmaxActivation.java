@@ -13,7 +13,7 @@ public class SoftmaxActivation implements Activation {
     }
 
     @Override
-    public double[] activate(double[] inputs) {
+    public double[] activateMultiple(double[] inputs) {
         double maxInput = Double.NEGATIVE_INFINITY;
 
         for (double input : inputs) {
@@ -49,7 +49,7 @@ public class SoftmaxActivation implements Activation {
             values[i] = neurons.get(i).getValue() + neurons.get(i).getBias();
         }
 
-        double[] activatedValues = activate(values);
+        double[] activatedValues = activateMultiple(values);
 
         for (int i = 0; i < neurons.size(); i++) {
             neurons.get(i).setValue(activatedValues[i]);

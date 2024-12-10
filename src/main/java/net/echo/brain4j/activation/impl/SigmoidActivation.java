@@ -13,7 +13,7 @@ public class SigmoidActivation implements Activation {
     }
 
     @Override
-    public double[] activate(double[] input) {
+    public double[] activateMultiple(double[] input) {
         double[] result = new double[input.length];
         for (int i = 0; i < input.length; i++) {
             result[i] = activate(input[i]);

@@ -13,7 +13,7 @@ public class GELUActivation implements Activation {
     }
 
     @Override
-    public double[] activate(double[] input) {
+    public double[] activateMultiple(double[] input) {
         throw new UnsupportedOperationException("GELU activation function is not supported for multiple inputs.");
     }
 
