@@ -19,7 +19,7 @@ public class ELUActivation implements Activation {
     }
 
     @Override
-    public double[] activate(double[] input) {
+    public double[] activateMultiple(double[] input) {
         throw new UnsupportedOperationException("ELU activation function is not supported for multiple inputs.");
     }
 

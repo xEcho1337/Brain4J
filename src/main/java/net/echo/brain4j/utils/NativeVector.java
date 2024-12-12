@@ -3,7 +3,7 @@ package net.echo.brain4j.utils;
 public class NativeVector {
 
     static {
-        System.load("/Users/echo/IdeaProjects/Brain4J/src/test/java/nativevec/natives/libbrain4j_backend.dylib");
+        System.load("C:\\Users\\xrefl\\Projects\\Java\\Brain4J\\src\\test\\java\\nativevec\\natives\\brain4j_backend.dll");
     }
 
     private final long nativeHandle;

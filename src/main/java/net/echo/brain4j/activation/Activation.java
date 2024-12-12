@@ -8,7 +8,7 @@ public interface Activation {
 
     double activate(double input);
 
-    double[] activate(double[] input);
+    double[] activateMultiple(double[] input);
 
     double getDerivative(double input);
 

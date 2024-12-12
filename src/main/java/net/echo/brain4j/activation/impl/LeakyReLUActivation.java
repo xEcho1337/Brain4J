@@ -13,7 +13,7 @@ public class LeakyReLUActivation implements Activation {
     }
 
     @Override
-    public double[] activate(double[] input) {
+    public double[] activateMultiple(double[] input) {
         throw new UnsupportedOperationException("Leaky ReLU activation function is not supported for multiple inputs");
     }
 

@@ -13,7 +13,7 @@ public class TanhActivation implements Activation {
     }
 
     @Override
-    public double[] activate(double[] inputs) {
+    public double[] activateMultiple(double[] inputs) {
         double[] result = new double[inputs.length];
         for (int i = 0; i < inputs.length; i++) {
             result[i] = activate(inputs[i]);
