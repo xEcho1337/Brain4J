@@ -19,7 +19,8 @@ import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.optimizers.impl.Adam;
-import net.echo.brain4j.training.optimizers.impl.StochasticGD;
+import net.echo.brain4j.training.optimizers.impl.GradientDescent;
+import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.utils.Vector;
 
 import java.io.BufferedWriter;
@@ -45,12 +46,13 @@ public class Model {
             .registerTypeAdapter(DenseLayer.class, LAYER_ADAPTER)
             .registerTypeAdapter(DropoutLayer.class, LAYER_ADAPTER)
             .registerTypeAdapter(Adam.class, OPTIMIZER_ADAPTER)
-            .registerTypeAdapter(StochasticGD.class, OPTIMIZER_ADAPTER)
+            .registerTypeAdapter(GradientDescent.class, OPTIMIZER_ADAPTER)
             .create();
 
     protected List<Layer> layers;
     protected LossFunctions function;
     protected Optimizer optimizer;
+    protected Updater updater;
     protected BackPropagation propagation;
 
     public Model(Layer... layers) {
@@ -78,18 +80,21 @@ public class Model {
     /**
      * Initializes the model and layers.
      *
-     * @param type      initialization method
-     * @param function  loss function for error assessment
+     * @param type initialization method
+     * @param function loss function for error assessment
      * @param optimizer optimization algorithm
+     * @param updater updater for weights
      */
-    public void compile(WeightInitialization type, LossFunctions function, Optimizer optimizer) {
+    public void compile(WeightInitialization type, LossFunctions function, Optimizer optimizer, Updater updater) {
         this.function = function;
         this.optimizer = optimizer;
-        this.propagation = new BackPropagation(this, optimizer);
+        this.updater = updater;
+        this.propagation = new BackPropagation(this, optimizer, updater);
 
         connect(type);
 
         this.optimizer.postInitialize();
+        this.updater.postInitialize();
     }
 
     /**

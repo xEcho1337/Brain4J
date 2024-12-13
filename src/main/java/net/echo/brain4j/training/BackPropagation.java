@@ -8,6 +8,7 @@ import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.Optimizer;
+import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.utils.Vector;
 
 import java.util.List;
@@ -16,10 +17,12 @@ public class BackPropagation {
 
     private final Model model;
     private final Optimizer optimizer;
+    private final Updater updater;
 
-    public BackPropagation(Model model, Optimizer optimizer) {
+    public BackPropagation(Model model, Optimizer optimizer, Updater updater) {
         this.model = model;
         this.optimizer = optimizer;
+        this.updater = updater;
     }
 
     public void iterate(DataSet dataSet) {
@@ -31,7 +34,7 @@ public class BackPropagation {
         }
 
         List<Layer> layers = model.getLayers();
-        optimizer.postFit(layers);
+        updater.postFit(layers, optimizer.getLearningRate());
     }
 
     public void backpropagate(double[] targets, double[] outputs) {
@@ -47,10 +50,11 @@ public class BackPropagation {
                 continue;
             }
 
-            layer.propagate(optimizer);
+            layer.propagate(updater, optimizer);
         }
 
-        optimizer.postIteration(layers);
+        optimizer.postIteration(updater, layers);
+        updater.postIteration(layers, optimizer.getLearningRate());
     }
 
     private void initialDelta(List<Layer> layers, double[] targets, double[] outputs) {
@@ -59,9 +63,11 @@ public class BackPropagation {
         for (int i = 0; i < outputLayer.getNeurons().size(); i++) {
             Neuron neuron = outputLayer.getNeuronAt(i);
 
+            // Calculates the error of the output
             double output = outputs[i];
             double error = targets[i] - output;
 
+            // Calculates the delta using the error and the derivative of the output
             double delta = error * outputLayer.getActivation().getFunction().getDerivative(output);
             neuron.setDelta(delta);
         }

@@ -1,76 +1,30 @@
 package net.echo.brain4j.training.optimizers.impl;
 
 import net.echo.brain4j.layer.Layer;
-import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.training.optimizers.Optimizer;
+import net.echo.brain4j.training.updater.Updater;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class GradientDescent extends Optimizer {
-
-    private final Map<Synapse, Double> gradientMap = new HashMap<>();
 
     public GradientDescent(double learningRate) {
         super(learningRate);
     }
 
     @Override
-    public void update(Synapse synapse) {
-        // We don't use this
+    public double update(Synapse synapse) {
+        return learningRate * synapse.getOutputNeuron().getDelta() * synapse.getInputNeuron().getValue();
     }
 
     @Override
-    public void postIteration(List<Layer> layers) {
-    }
-
-    @Override
-    public void postFit(List<Layer> layers) {
-        for (Map.Entry<Synapse, Double> entry : gradientMap.entrySet()) {
-            Synapse synapse = entry.getKey();
-
-            double gradientSum = entry.getValue();
-
-            synapse.setWeight(synapse.getWeight() + learningRate * gradientSum);
-        }
-
+    public void postIteration(Updater updater, List<Layer> layers) {
         for (Layer layer : layers) {
-            for (Neuron neuron : layer.getNeurons()) {
-                double deltaBias = learningRate * neuron.getDelta();
-                neuron.setBias(neuron.getBias() + deltaBias);
-            }
+            layer.getSynapses().parallelStream().forEach(synapse -> {
+                double change = update(synapse);
+                updater.acknowledgeChange(synapse, change, learningRate);
+            });
         }
-
-        gradientMap.clear();
-    }
-
-    @Override
-    public void applyGradientStep(Layer layer, Neuron neuron, Synapse synapse) {
-        double gradient = calculateGradient(layer, synapse, neuron);
-
-        Object gradientObj = gradientMap.get(synapse);
-        double gradientSum = (gradientObj == null) ? 0.0 : (double) gradientObj;
-
-        gradientMap.put(synapse, gradientSum + gradient);
-    }
-
-    /**
-     * Calculate the gradient for a synapse based on the delta and the value of the input.
-     *
-     * @param synapse the synapse
-     * @param neuron  the neuron
-     * @return the calculated gradient
-     */
-    private double calculateGradient(Layer layer, Synapse synapse, Neuron neuron) {
-        double output = neuron.getValue();
-
-        double error = clipGradient(synapse.getWeight() * synapse.getOutputNeuron().getDelta());
-        double delta = clipGradient(error * layer.getActivation().getFunction().getDerivative(output));
-
-        neuron.setDelta(delta);
-
-        return clipGradient(delta * synapse.getInputNeuron().getValue());
     }
 }

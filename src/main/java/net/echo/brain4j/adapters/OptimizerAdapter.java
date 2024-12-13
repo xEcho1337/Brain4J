@@ -3,7 +3,7 @@ package net.echo.brain4j.adapters;
 import com.google.gson.*;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.optimizers.impl.Adam;
-import net.echo.brain4j.training.optimizers.impl.StochasticGD;
+import net.echo.brain4j.training.optimizers.impl.GradientDescent;
 
 import java.lang.reflect.Type;
 
@@ -38,7 +38,7 @@ public class OptimizerAdapter implements JsonSerializer<Optimizer>, JsonDeserial
         double learningRate = data.get("learningRate").getAsDouble();
 
         return switch (optimizerType) {
-            case "SGD" -> new StochasticGD(learningRate);
+            case "SGD" -> new GradientDescent(learningRate);
             case "Adam" -> {
                 Adam adam = new Adam(learningRate);
 

@@ -4,6 +4,7 @@ import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.training.optimizers.Optimizer;
+import net.echo.brain4j.training.updater.Updater;
 
 import java.util.List;
 
@@ -39,7 +40,7 @@ public class Adam extends Optimizer {
     }
 
     @Override
-    public void update(Synapse synapse) {
+    public double update(Synapse synapse) {
         double gradient = synapse.getOutputNeuron().getDelta() * synapse.getInputNeuron().getValue();
 
         int synapseId = synapse.getSynapseId();
@@ -56,27 +57,22 @@ public class Adam extends Optimizer {
         double mHat = m / (1 - beta1Timestep);
         double vHat = v / (1 - beta2Timestep);
 
-        double deltaWeight = (learningRate * mHat) / (Math.sqrt(vHat) + epsilon);
-        synapse.setWeight(synapse.getWeight() + deltaWeight);
+        return (learningRate * mHat) / (Math.sqrt(vHat) + epsilon);
     }
 
     @Override
-    public void postIteration(List<Layer> layers) {
+    public void postIteration(Updater updater, List<Layer> layers) {
         timestep++;
 
         this.beta1Timestep = Math.pow(beta1, timestep);
         this.beta2Timestep = Math.pow(beta2, timestep);
 
-        layers.parallelStream().forEach(layer -> {
-            for (Synapse synapse : layer.getSynapses()) {
-                update(synapse);
-            }
-
-            for (Neuron neuron : layer.getNeurons()) {
-                double deltaBias = learningRate * neuron.getDelta();
-                neuron.setBias(neuron.getBias() + deltaBias);
-            }
-        });
+        for (Layer layer : layers) {
+            layer.getSynapses().parallelStream().forEach(synapse -> {
+                double change = update(synapse);
+                updater.acknowledgeChange(synapse, change, learningRate);
+            });
+        }
     }
 
     public double getBeta1() {

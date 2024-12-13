@@ -5,6 +5,7 @@ import net.echo.brain4j.adapters.OptimizerAdapter;
 import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
+import net.echo.brain4j.training.updater.Updater;
 
 import java.util.List;
 
@@ -55,40 +56,47 @@ public abstract class Optimizer {
      *
      * @param synapse the synapse to update
      */
-    public abstract void update(Synapse synapse);
+    public double update(Synapse synapse) {
+        return 0;
+    }
 
     /**
      * Called after a sample has been iterated.
      *
+     * @param updater the backpropagation updater
      * @param layers the layers of the model
      */
-    public abstract void postIteration(List<Layer> layers);
-
-    /**
-     * Called after all samples in the dataset have been iterated.
-     *
-     * @param layers the layers of the model
-     */
-    public void postFit(List<Layer> layers) {
+    public void postIteration(Updater updater, List<Layer> layers) {
     }
 
     /**
      * Updates the given synapse based on the optimization algorithm.
      *
-     * @param layer    the layer of the neuron
-     * @param neuron   the neuron connected to the synapse
-     * @param synapse  the synapse involved
+     * @param layer the layer of the neuron
+     * @param neuron the neuron connected to the synapse
+     * @param synapse the synapse involved
      */
-    public void applyGradientStep(Layer layer, Neuron neuron, Synapse synapse) {
+    public void applyGradientStep(Updater updater, Layer layer, Neuron neuron, Synapse synapse) {
+        double weightChange = calculateGradient(layer, neuron, synapse);
+        synapse.setWeight(synapse.getWeight() + weightChange);
+    }
+
+    /**
+     * Calculate the gradient for a synapse based on the delta and the value of the input.
+     *
+     * @param synapse the synapse
+     * @param neuron  the neuron
+     * @return the calculated gradient
+     */
+    public double calculateGradient(Layer layer, Neuron neuron, Synapse synapse) {
         double output = neuron.getValue();
 
         double error = clipGradient(synapse.getWeight() * synapse.getOutputNeuron().getDelta());
         double delta = clipGradient(error * layer.getActivation().getFunction().getDerivative(output));
 
-        double weightChange = clipGradient(delta * synapse.getInputNeuron().getValue());
-
         neuron.setDelta(delta);
-        synapse.setWeight(synapse.getWeight() + weightChange);
+
+        return clipGradient(delta * synapse.getInputNeuron().getValue());
     }
 
     /**

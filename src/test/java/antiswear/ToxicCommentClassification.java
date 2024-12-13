@@ -8,6 +8,7 @@ import net.echo.brain4j.nlp.encoding.PositionalEncoding;
 import net.echo.brain4j.nlp.model.Transformer;
 import net.echo.brain4j.nlp.model.layers.TransformerEncoder;
 import net.echo.brain4j.training.optimizers.impl.Adam;
+import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.brain4j.utils.Vector;
 import org.apache.commons.io.FileUtils;
 
@@ -34,7 +35,12 @@ public class ToxicCommentClassification {
                 new DenseLayer(6, Activations.SIGMOID)
         );
 
-        transformer.compile(WeightInitialization.XAVIER, LossFunctions.MEAN_SQUARED_ERROR, new Adam(0.001));
+        transformer.compile(
+                WeightInitialization.XAVIER,
+                LossFunctions.MEAN_SQUARED_ERROR,
+                new Adam(0.001),
+                new StochasticUpdater()
+        );
 
         var vectors = loadVocab();
 
