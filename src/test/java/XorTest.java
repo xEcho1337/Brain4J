@@ -13,8 +13,8 @@ public class XorTest {
     public static void main(String[] args) {
         Model network = new Model(
                 new DenseLayer(2, Activations.LINEAR),
-                new DenseLayer(12, Activations.RELU),
-                new DenseLayer(12, Activations.RELU),
+                new DenseLayer(16, Activations.RELU),
+                new DenseLayer(16, Activations.RELU),
                 new DenseLayer(1, Activations.SIGMOID)
         );
 

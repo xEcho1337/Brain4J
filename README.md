@@ -17,8 +17,8 @@ To represent an XOR gate, we can use a simple neural network with four layers:
 ```java
 Model network = new Model(
         new DenseLayer(2, Activations.LINEAR),
-        new DenseLayer(12, Activations.RELU),
-        new DenseLayer(12, Activations.RELU),
+        new DenseLayer(16, Activations.RELU),
+        new DenseLayer(16, Activations.RELU),
         new DenseLayer(1, Activations.SIGMOID)
 );
 ```
