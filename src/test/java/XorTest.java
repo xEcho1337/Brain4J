@@ -29,13 +29,18 @@ public class XorTest {
 
         DataSet training = new DataSet(first, second, third, fourth);
 
-        double error;
+        long start = System.nanoTime();
 
-        do {
+        int steps = 1000;
+
+        for (int i = 0; i < steps; i++) {
             network.fit(training, 1);
-            error = network.evaluate(training);
-        } while (error > 0.01);
+        }
 
+        long took = System.nanoTime() - start;
+        double error = network.evaluate(training);
+
+        System.out.println("Took " + took + " ns or " + (took / 1e6) + " ms, with an average of " + (took / 1e6 / steps) + " ms per step");
         System.out.println("Completed with error " + error);
 
         for (DataRow row : training.getDataRows()) {
