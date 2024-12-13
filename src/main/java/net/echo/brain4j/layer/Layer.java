@@ -86,14 +86,14 @@ public class Layer {
     }
 
     public void activate(Vector input) {
-        for (Synapse synapse : synapses) {
-            Neuron inputNeuron = synapse.getInputNeuron();
-            Neuron outputNeuron = synapse.getOutputNeuron();
+        for (int i = 0; i < neurons.size(); i++) {
+            Neuron inputNeuron = neurons.get(i);
 
-            int index = neurons.indexOf(inputNeuron);
-            double inputValue = input.get(index);
+            for (Synapse synapse : inputNeuron.getSynapses()) {
+                Neuron outputNeuron = synapse.getOutputNeuron();
 
-            outputNeuron.setValue(outputNeuron.getValue() + inputValue * synapse.getWeight());
+                outputNeuron.setValue(outputNeuron.getValue() + input.get(i) * synapse.getWeight());
+            }
         }
     }
 
