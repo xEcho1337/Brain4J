@@ -39,30 +39,10 @@ public class Layer {
         }
     }
 
-    public List<Neuron> getNeurons() {
-        return neurons;
-    }
-
-    public List<Synapse> getSynapses() {
-        return synapses;
-    }
-
-    public Activations getActivation() {
-        return activation;
-    }
-
-    public Neuron getNeuronAt(int i) {
-        return neurons.get(i);
-    }
-
     public void applyFunction(Layer previous) {
         Activation function = activation.getFunction();
 
         function.apply(neurons);
-    }
-
-    public int getTotalParams() {
-        return synapses.size();
     }
 
     public void setInput(Vector input) {
@@ -113,5 +93,26 @@ public class Layer {
                 optimizer.applyGradientStep(this, neuron, synapse);
             }
         }
+    }
+
+
+    public List<Neuron> getNeurons() {
+        return neurons;
+    }
+
+    public List<Synapse> getSynapses() {
+        return synapses;
+    }
+
+    public Activations getActivation() {
+        return activation;
+    }
+
+    public Neuron getNeuronAt(int i) {
+        return neurons.get(i);
+    }
+
+    public int getTotalParams() {
+        return synapses.size();
     }
 }
