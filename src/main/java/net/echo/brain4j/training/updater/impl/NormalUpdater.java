@@ -18,6 +18,7 @@ public class NormalUpdater extends Updater {
     public void postInitialize() {
         this.synapses = new Synapse[Synapse.ID_COUNTER];
         this.gradients = new Double[Synapse.ID_COUNTER];
+
         Arrays.fill(gradients, 0.0);
     }
 

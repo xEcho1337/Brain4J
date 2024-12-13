@@ -5,8 +5,10 @@ import net.echo.brain4j.model.initialization.WeightInitialization;
 import net.echo.brain4j.layer.impl.DenseLayer;
 import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.Model;
+import net.echo.brain4j.training.optimizers.impl.Adam;
 import net.echo.brain4j.training.optimizers.impl.GradientDescent;
 import net.echo.brain4j.training.updater.impl.NormalUpdater;
+import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.brain4j.utils.Vector;
 
 public class XorTest {
@@ -22,8 +24,8 @@ public class XorTest {
         network.compile(
                 WeightInitialization.HE,
                 LossFunctions.BINARY_CROSS_ENTROPY,
-                new GradientDescent(0.1),
-                new NormalUpdater()
+                new Adam(0.1),
+                new StochasticUpdater()
         );
 
         System.out.println(network.getStats());
@@ -36,23 +38,7 @@ public class XorTest {
         DataSet training = new DataSet(first, second, third, fourth);
 
         long start = System.nanoTime();
-
-        int epoch = 0;
-        double error = Double.MAX_VALUE;
-
-        do {
-            network.fit(training, 1);
-
-            if (epoch % 100 == 0) {
-                error = network.evaluate(training);
-                System.out.println("Epoch #" + epoch + " error: " + error);
-            }
-
-            epoch++;
-        } while (error > 0.01);
-
-        System.out.println("completed in " + epoch + " with error " + error);
-        /*int steps = 1000;
+        int steps = 100;
 
         for (int i = 0; i < steps; i++) {
             network.fit(training, 1);
@@ -62,7 +48,7 @@ public class XorTest {
         double error = network.evaluate(training);
 
         System.out.println("Took " + took + " ns or " + (took / 1e6) + " ms, with an average of " + (took / 1e6 / steps) + " ms per step");
-        System.out.println("Completed with error " + error);*/
+        System.out.println("Completed with error " + error);
 
         for (DataRow row : training.getDataRows()) {
             Vector output = network.predict(row.inputs());
