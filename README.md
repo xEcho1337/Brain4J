@@ -28,7 +28,12 @@ Model network = new Model(
 Next, define the weight initialization method and the loss function for training. Use the compile method as follows:
 
 ```java
-network.compile(WeightInitialization.HE, LossFunctions.BINARY_CROSS_ENTROPY, new Adam(0.001));
+network.compile(
+        WeightInitialization.HE,
+        LossFunctions.BINARY_CROSS_ENTROPY,
+        new Adam(0.1),
+        new StochasticUpdater()
+);
 ```
 
 For models with a single output neuron (producing values between 0 and 1), Binary Cross Entropy is the recommended loss function, paired with the Adam optimizer.
