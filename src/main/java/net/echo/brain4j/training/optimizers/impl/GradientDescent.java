@@ -21,10 +21,10 @@ public class GradientDescent extends Optimizer {
     @Override
     public void postIteration(Updater updater, List<Layer> layers) {
         for (Layer layer : layers) {
-            layer.getSynapses().parallelStream().forEach(synapse -> {
+            for (Synapse synapse : layer.getSynapses()) {
                 double change = update(synapse);
                 updater.acknowledgeChange(synapse, change, learningRate);
-            });
+            }
         }
     }
 }

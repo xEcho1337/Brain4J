@@ -82,8 +82,8 @@ public class Model {
      *
      * @param type initialization method
      * @param function loss function for error assessment
-     * @param optimizer optimization algorithm
-     * @param updater updater for weights
+     * @param optimizer optimization algorithm for training
+     * @param updater weights updating algorithm for training
      */
     public void compile(WeightInitialization type, LossFunctions function, Optimizer optimizer, Updater updater) {
         this.function = function;
@@ -103,7 +103,7 @@ public class Model {
      * @param set dataset for training
      */
     public void fit(DataSet set, int batchSize) {
-        propagation.iterate(set);
+        propagation.iterate(set, batchSize);
     }
 
     /**

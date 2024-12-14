@@ -2,6 +2,7 @@ package net.echo.brain4j.training.data;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class DataSet {
@@ -18,5 +19,12 @@ public class DataSet {
 
     public List<DataRow> getDataRows() {
         return dataRows;
+    }
+
+    /**
+     * Randomly shuffles the dataset, making the training more efficient.
+     */
+    public void shuffle() {
+        Collections.shuffle(dataRows);
     }
 }

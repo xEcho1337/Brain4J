@@ -12,7 +12,6 @@ public class NormalUpdater extends Updater {
 
     private Synapse[] synapses;
     private Double[] gradients;
-    private int minSynapseIndex;
 
     @Override
     public void postInitialize() {

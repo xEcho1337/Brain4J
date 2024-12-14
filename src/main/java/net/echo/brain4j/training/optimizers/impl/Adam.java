@@ -68,10 +68,10 @@ public class Adam extends Optimizer {
         this.beta2Timestep = Math.pow(beta2, timestep);
 
         for (Layer layer : layers) {
-            layer.getSynapses().parallelStream().forEach(synapse -> {
+            for (Synapse synapse : layer.getSynapses()) {
                 double change = update(synapse);
                 updater.acknowledgeChange(synapse, change, learningRate);
-            });
+            }
         }
     }
 

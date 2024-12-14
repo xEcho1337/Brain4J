@@ -4,14 +4,15 @@ import net.echo.brain4j.layer.Layer;
 import net.echo.brain4j.layer.impl.DropoutLayer;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.structure.Neuron;
-import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.training.data.DataRow;
 import net.echo.brain4j.training.data.DataSet;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
 import net.echo.brain4j.utils.Vector;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class BackPropagation {
 
@@ -25,7 +26,39 @@ public class BackPropagation {
         this.updater = updater;
     }
 
-    public void iterate(DataSet dataSet) {
+    private List<DataRow> partition(List<DataRow> rows, int batches, int offset) {
+        return rows.subList(offset * batches, Math.max((offset + 1) * batches, rows.size()));
+    }
+
+    public void iterate(DataSet dataSet, int batches) {
+        /*List<DataRow> rows = dataSet.getDataRows();
+        
+        int rowsPerBatch = rows.size() / batches;
+
+        List<Thread> threads = new ArrayList<>();
+
+        for (int i = 0; i < batches; i++) {
+            List<DataRow> batch = partition(rows, rowsPerBatch, i);
+
+            Thread thread = Thread.startVirtualThread(() -> {
+                for (DataRow row : batch) {
+                    Vector output = model.predict(row.inputs());
+                    Vector target = row.outputs();
+
+                    backpropagate(target.toArray(), output.toArray());
+                }
+            });
+
+            threads.add(thread);
+        }
+
+        for (Thread thread : threads) {
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }*/
         for (DataRow row : dataSet.getDataRows()) {
             Vector output = model.predict(row.inputs());
             Vector target = row.outputs();

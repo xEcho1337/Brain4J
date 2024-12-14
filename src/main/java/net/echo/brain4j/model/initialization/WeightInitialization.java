@@ -18,7 +18,7 @@ public enum WeightInitialization {
     NORMAL(new NormalInit()),
 
     /**
-     * He initialization (also known as He et al. initialization) is designed for layers with ReLU activations.
+     * He initialization (also known as Kaiming initialization) is designed for layers with ReLU activations.
      * It initializes weights with a normal distribution, scaled by the square root of 2 divided by the number of input neurons.
      */
     HE(new HeInit()),
