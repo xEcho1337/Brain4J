@@ -89,15 +89,11 @@ public class Layer {
     }
 
     public void propagate(Updater updater, Optimizer optimizer) {
-        for (Neuron neuron : neurons) {
-            List<Synapse> synapses = neuron.getSynapses();
-
-            for (Synapse synapse : synapses) {
-                optimizer.applyGradientStep(updater, this, neuron, synapse);
-            }
+        for (Synapse synapse : synapses) {
+            Neuron inputNeuron = synapse.getInputNeuron();
+            optimizer.applyGradientStep(updater, this, inputNeuron, synapse);
         }
     }
-
 
     public List<Neuron> getNeurons() {
         return neurons;

@@ -28,6 +28,13 @@ public abstract class Optimizer {
     }
 
     /**
+     * Updates the given synapse based on the optimization algorithm.
+     *
+     * @param synapse the synapse to update
+     */
+    public abstract double update(Synapse synapse);
+
+    /**
      * Called after the network has been compiled and all the synapses have been initialized.
      */
     public void postInitialize() {
@@ -52,15 +59,6 @@ public abstract class Optimizer {
     }
 
     /**
-     * Updates the given synapse based on the optimization algorithm.
-     *
-     * @param synapse the synapse to update
-     */
-    public double update(Synapse synapse) {
-        return 0;
-    }
-
-    /**
      * Called after a sample has been iterated.
      *
      * @param updater the backpropagation updater
@@ -78,7 +76,7 @@ public abstract class Optimizer {
      */
     public void applyGradientStep(Updater updater, Layer layer, Neuron neuron, Synapse synapse) {
         double weightChange = calculateGradient(layer, neuron, synapse);
-        synapse.setWeight(synapse.getWeight() + weightChange);
+        updater.acknowledgeChange(synapse, weightChange, learningRate);
     }
 
     /**
@@ -91,8 +89,10 @@ public abstract class Optimizer {
     public double calculateGradient(Layer layer, Neuron neuron, Synapse synapse) {
         double output = neuron.getValue();
 
+        double derivative = layer.getActivation().getFunction().getDerivative(output);
+
         double error = clipGradient(synapse.getWeight() * synapse.getOutputNeuron().getDelta());
-        double delta = clipGradient(error * layer.getActivation().getFunction().getDerivative(output));
+        double delta = clipGradient(error * derivative);
 
         neuron.setDelta(delta);
 

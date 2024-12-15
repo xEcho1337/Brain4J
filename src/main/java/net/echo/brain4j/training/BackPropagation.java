@@ -31,34 +31,6 @@ public class BackPropagation {
     }
 
     public void iterate(DataSet dataSet, int batches) {
-        /*List<DataRow> rows = dataSet.getDataRows();
-        
-        int rowsPerBatch = rows.size() / batches;
-
-        List<Thread> threads = new ArrayList<>();
-
-        for (int i = 0; i < batches; i++) {
-            List<DataRow> batch = partition(rows, rowsPerBatch, i);
-
-            Thread thread = Thread.startVirtualThread(() -> {
-                for (DataRow row : batch) {
-                    Vector output = model.predict(row.inputs());
-                    Vector target = row.outputs();
-
-                    backpropagate(target.toArray(), output.toArray());
-                }
-            });
-
-            threads.add(thread);
-        }
-
-        for (Thread thread : threads) {
-            try {
-                thread.join();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }*/
         for (DataRow row : dataSet.getDataRows()) {
             Vector output = model.predict(row.inputs());
             Vector target = row.outputs();
