@@ -12,7 +12,6 @@ import net.echo.brain4j.utils.Vector;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 public class BackPropagation {
 
@@ -90,7 +89,7 @@ public class BackPropagation {
     }
 
     private void initialDelta(List<Layer> layers, double[] targets, double[] outputs) {
-        Layer outputLayer = layers.get(layers.size() - 1);
+        Layer outputLayer = layers.getLast();
 
         for (int i = 0; i < outputLayer.getNeurons().size(); i++) {
             Neuron neuron = outputLayer.getNeuronAt(i);
