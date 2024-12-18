@@ -11,24 +11,24 @@ import net.echo.brain4j.training.updater.impl.NormalUpdater;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.brain4j.utils.Vector;
 
+import java.util.Random;
+
 public class XorTest {
 
     public static void main(String[] args) {
-        Model network = new Model(
+        Model model = new Model(
                 new DenseLayer(2, Activations.LINEAR),
                 new DenseLayer(16, Activations.RELU),
                 new DenseLayer(16, Activations.RELU),
                 new DenseLayer(1, Activations.SIGMOID)
         );
 
-        network.compile(
+        model.compile(
                 WeightInitialization.HE,
                 LossFunctions.BINARY_CROSS_ENTROPY,
                 new Adam(0.1),
-                new StochasticUpdater()
+                new NormalUpdater()
         );
-
-        System.out.println(network.getStats());
 
         DataRow first = new DataRow(Vector.of(0, 0), Vector.of(0));
         DataRow second = new DataRow(Vector.of(0, 1), Vector.of(1));
@@ -37,23 +37,35 @@ public class XorTest {
 
         DataSet training = new DataSet(first, second, third, fourth);
 
+        trainForBenchmark(model, training);
+    }
+
+    private static void trainForBenchmark(Model model, DataSet data) {
         long start = System.nanoTime();
-        int steps = 100;
 
-        for (int i = 0; i < steps; i++) {
-            network.fit(training, 1);
+        for (int i = 0; i < 5000; i++) {
+            model.fit(data, 1);
         }
 
-        long took = System.nanoTime() - start;
-        double error = network.evaluate(training);
+        long end = System.nanoTime();
 
-        System.out.println("Took " + took + " ns or " + (took / 1e6) + " ms, with an average of " + (took / 1e6 / steps) + " ms per step");
-        System.out.println("Completed with error " + error);
+        double took = (end - start) / 1e6;
+        double error = model.evaluate(data);
 
-        for (DataRow row : training.getDataRows()) {
-            Vector output = network.predict(row.inputs());
+        System.out.println("Completed 5000 epoches in " + took + " ms with error: " + error);
+    }
 
-            System.out.println("Input: " + row.inputs() + " Output: " + output.get(0));
-        }
+    private static void trainTillError(Model model, DataSet data) {
+        double error;
+        int epoches = 0;
+
+        do {
+            model.fit(data, 1);
+
+            error = model.evaluate(data);
+            epoches++;
+
+            System.out.println("Epoch " + epoches + " error: " + error);
+        } while (error > 0.01);
     }
 }

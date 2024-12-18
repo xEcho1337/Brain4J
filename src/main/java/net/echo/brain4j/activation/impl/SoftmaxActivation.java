@@ -46,7 +46,7 @@ public class SoftmaxActivation implements Activation {
         double[] values = new double[neurons.size()];
 
         for (int i = 0; i < neurons.size(); i++) {
-            values[i] = neurons.get(i).getLocalValue() + neurons.get(i).getBias();
+            values[i] = neurons.get(i).getValue() + neurons.get(i).getBias();
         }
 
         double[] activatedValues = activate(values);

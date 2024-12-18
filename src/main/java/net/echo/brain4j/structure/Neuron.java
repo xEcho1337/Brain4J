@@ -8,9 +8,9 @@ import java.util.List;
 public class Neuron {
 
     private final List<Synapse> synapses = new ArrayList<>();
-    private ThreadLocal<Double> localValue = new ThreadLocal<>();
-    private double delta;
-    private double value;
+    private final ThreadLocal<Double> localValue = new ThreadLocal<>();
+    private final ThreadLocal<Double> delta = new ThreadLocal<>();
+    private double totalDelta;
     @Expose private double bias = 2 * Math.random() - 1;
 
     public List<Synapse> getSynapses() {
@@ -21,25 +21,29 @@ public class Neuron {
         this.synapses.add(synapse);
     }
 
+    public void setTotalDelta(double totalDelta) {
+        this.totalDelta = totalDelta;
+    }
+
+    public double getTotalDelta() {
+        return totalDelta;
+    }
+
     public double getDelta() {
-        return delta;
+        return delta.get();
     }
 
     public void setDelta(double delta) {
-        this.delta = delta;
-    }
-
-    public double getLocalValue() {
-        return localValue.get();
+        this.delta.set(delta);
+        this.totalDelta += delta;
     }
 
     public double getValue() {
-        return value;
+        return localValue.get();
     }
 
     public void setValue(double value) {
-        localValue.set(value);
-        this.value = value;
+        this.localValue.set(value);
     }
 
     public double getBias() {

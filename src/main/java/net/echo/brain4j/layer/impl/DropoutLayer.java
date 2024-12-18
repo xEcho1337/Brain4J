@@ -43,7 +43,7 @@ public class DropoutLayer extends Layer {
 
     public void backward(List<Neuron> neurons) {
         for (Neuron neuron : neurons) {
-            neuron.setValue(neuron.getLocalValue() * (1.0 - dropout));
+            neuron.setValue(neuron.getValue() * (1.0 - dropout));
         }
     }
 

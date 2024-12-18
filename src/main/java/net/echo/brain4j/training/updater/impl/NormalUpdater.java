@@ -32,8 +32,10 @@ public class NormalUpdater extends Updater {
 
         for (Layer layer : layers) {
             for (Neuron neuron : layer.getNeurons()) {
-                double deltaBias = learningRate * neuron.getDelta();
+                double deltaBias = learningRate * neuron.getTotalDelta();
                 neuron.setBias(neuron.getBias() + deltaBias);
+
+                neuron.setTotalDelta(0.0);
             }
         }
 

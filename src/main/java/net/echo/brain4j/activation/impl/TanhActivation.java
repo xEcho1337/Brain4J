@@ -29,7 +29,7 @@ public class TanhActivation implements Activation {
     @Override
     public void apply(List<Neuron> neurons) {
         for (Neuron neuron : neurons) {
-            double value = neuron.getLocalValue() + neuron.getBias();
+            double value = neuron.getValue() + neuron.getBias();
             neuron.setValue(activate(value));
         }
     }

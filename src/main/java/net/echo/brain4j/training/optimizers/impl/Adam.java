@@ -1,7 +1,6 @@
 package net.echo.brain4j.training.optimizers.impl;
 
 import net.echo.brain4j.layer.Layer;
-import net.echo.brain4j.structure.Neuron;
 import net.echo.brain4j.structure.Synapse;
 import net.echo.brain4j.training.optimizers.Optimizer;
 import net.echo.brain4j.training.updater.Updater;
@@ -41,7 +40,7 @@ public class Adam extends Optimizer {
 
     @Override
     public double update(Synapse synapse) {
-        double gradient = synapse.getOutputNeuron().getDelta() * synapse.getInputNeuron().getLocalValue();
+        double gradient = synapse.getOutputNeuron().getDelta() * synapse.getInputNeuron().getValue();
 
         int synapseId = synapse.getSynapseId();
 
