@@ -29,6 +29,7 @@ public class BackPropagation {
     private List<DataRow> partition(List<DataRow> rows, double batches, int offset) {
         int start = (int) Math.min(offset * batches, rows.size());
         int stop = (int) Math.min((offset + 1) * batches, rows.size());
+
         return rows.subList(start, stop);
     }
 
@@ -41,12 +42,14 @@ public class BackPropagation {
             List<Thread> threads = new ArrayList<>();
 
             for (DataRow row : batch) {
-                threads.add(Thread.startVirtualThread(() -> {
+                Thread thread = Thread.startVirtualThread(() -> {
                     Vector output = model.predict(row.inputs());
                     Vector target = row.outputs();
 
                     backpropagate(target.toArray(), output.toArray());
-                }));
+                });
+
+                threads.add(thread);
             }
 
             waitAll(threads);
@@ -92,11 +95,9 @@ public class BackPropagation {
         for (int i = 0; i < outputLayer.getNeurons().size(); i++) {
             Neuron neuron = outputLayer.getNeuronAt(i);
 
-            // Calculates the error of the output
             double output = outputs[i];
             double error = targets[i] - output;
 
-            // Calculates the delta using the error and the derivative of the output
             double delta = error * outputLayer.getActivation().getFunction().getDerivative(output);
             neuron.setDelta(delta);
         }
