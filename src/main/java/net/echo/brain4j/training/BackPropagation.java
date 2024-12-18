@@ -32,15 +32,15 @@ public class BackPropagation {
         return rows.subList(start, stop);
     }
 
-    public void iterate(DataSet dataSet, int batches) {
-        List<DataRow> rows = dataSet.getDataRows();
-        double rowsPerBatch = (double) rows.size() / batches;
+    public void iterate(DataSet dataSet) {
+        if (!dataSet.isPartitioned()) {
+            throw new RuntimeException("Dataset must be partitioned, use DataSet#partition(batches) before training.");
+        }
 
-        for (int i = 0; i < batches; i++) {
-            List<DataRow> batch = partition(dataSet.getDataRows(), rowsPerBatch, i);
+        for (List<DataRow> partition : dataSet.getPartitions()) {
             List<Thread> threads = new ArrayList<>();
 
-            for (DataRow row : batch) {
+            for (DataRow row : partition) {
                 Thread thread = Thread.startVirtualThread(() -> {
                     Vector output = model.predict(row.inputs());
                     Vector target = row.outputs();

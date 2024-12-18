@@ -54,7 +54,7 @@ public class Transformer extends Model {
     }
 
     @Override
-    public void fit(DataSet set, int batchSize) {
+    public void fit(DataSet set) {
 
     }
 

@@ -102,8 +102,8 @@ public class Model {
      *
      * @param set dataset for training
      */
-    public void fit(DataSet set, int batchSize) {
-        propagation.iterate(set, batchSize);
+    public void fit(DataSet set) {
+        propagation.iterate(set);
     }
 
     /**

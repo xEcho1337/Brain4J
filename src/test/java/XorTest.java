@@ -36,6 +36,7 @@ public class XorTest {
         DataRow fourth = new DataRow(Vector.of(1, 1), Vector.of(0));
 
         DataSet training = new DataSet(first, second, third, fourth);
+        training.partition(1);
 
         trainForBenchmark(model, training);
     }
@@ -44,7 +45,7 @@ public class XorTest {
         long start = System.nanoTime();
 
         for (int i = 0; i < 5000; i++) {
-            model.fit(data, 1);
+            model.fit(data);
         }
 
         long end = System.nanoTime();
@@ -60,7 +61,7 @@ public class XorTest {
         int epoches = 0;
 
         do {
-            model.fit(data, 1);
+            model.fit(data);
 
             error = model.evaluate(data);
             epoches++;
