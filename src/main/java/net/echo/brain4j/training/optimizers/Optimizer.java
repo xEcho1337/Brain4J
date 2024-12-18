@@ -87,7 +87,7 @@ public abstract class Optimizer {
      * @return the calculated gradient
      */
     public double calculateGradient(Layer layer, Neuron neuron, Synapse synapse) {
-        double output = neuron.getValue();
+        double output = neuron.getLocalValue();
 
         double derivative = layer.getActivation().getFunction().getDerivative(output);
 
@@ -96,7 +96,7 @@ public abstract class Optimizer {
 
         neuron.setDelta(delta);
 
-        return clipGradient(delta * synapse.getInputNeuron().getValue());
+        return clipGradient(delta * synapse.getInputNeuron().getLocalValue());
     }
 
     /**

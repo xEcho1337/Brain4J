@@ -166,7 +166,7 @@ public class Model {
                 Neuron inputNeuron = synapse.getInputNeuron();
                 Neuron outputNeuron = synapse.getOutputNeuron();
 
-                outputNeuron.setValue(outputNeuron.getValue() + inputNeuron.getValue() * synapse.getWeight());
+                outputNeuron.setValue(outputNeuron.getLocalValue() + inputNeuron.getLocalValue() * synapse.getWeight());
             }
 
             nextLayer.applyFunction(layer);
@@ -177,7 +177,7 @@ public class Model {
         double[] output = new double[outputLayer.getNeurons().size()];
 
         for (int i = 0; i < output.length; i++) {
-            output[i] = outputLayer.getNeuronAt(i).getValue();
+            output[i] = outputLayer.getNeuronAt(i).getLocalValue();
         }
 
         return Vector.of(output);

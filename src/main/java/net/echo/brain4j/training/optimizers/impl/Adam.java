@@ -20,7 +20,7 @@ public class Adam extends Optimizer {
     private double beta1;
     private double beta2;
     private double epsilon;
-    private int timestep;
+    private int timestep = 1;
 
     public Adam(double learningRate) {
         this(learningRate, 0.9, 0.999, 1e-8);
@@ -41,7 +41,7 @@ public class Adam extends Optimizer {
 
     @Override
     public double update(Synapse synapse) {
-        double gradient = synapse.getOutputNeuron().getDelta() * synapse.getInputNeuron().getValue();
+        double gradient = synapse.getOutputNeuron().getDelta() * synapse.getInputNeuron().getLocalValue();
 
         int synapseId = synapse.getSynapseId();
 

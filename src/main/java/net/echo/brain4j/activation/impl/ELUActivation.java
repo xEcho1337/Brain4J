@@ -35,7 +35,7 @@ public class ELUActivation implements Activation {
     @Override
     public void apply(List<Neuron> neurons) {
         for (Neuron neuron : neurons) {
-            neuron.setValue(activate(neuron.getValue()));
+            neuron.setValue(activate(neuron.getLocalValue()));
         }
     }
 }

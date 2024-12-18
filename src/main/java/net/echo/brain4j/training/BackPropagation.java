@@ -26,20 +26,44 @@ public class BackPropagation {
         this.updater = updater;
     }
 
-    private List<DataRow> partition(List<DataRow> rows, int batches, int offset) {
-        return rows.subList(offset * batches, Math.max((offset + 1) * batches, rows.size()));
+    private List<DataRow> partition(List<DataRow> rows, double batches, int offset) {
+        int start = (int) Math.min(offset * batches, rows.size());
+        int stop = (int) Math.min((offset + 1) * batches, rows.size());
+        return rows.subList(start, stop);
     }
 
     public void iterate(DataSet dataSet, int batches) {
-        for (DataRow row : dataSet.getDataRows()) {
-            Vector output = model.predict(row.inputs());
-            Vector target = row.outputs();
+        List<DataRow> rows = dataSet.getDataRows();
+        double rowsPerBatch = (double) rows.size() / batches;
 
-            backpropagate(target.toArray(), output.toArray());
+        for (int i = 0; i < batches; i++) {
+            List<DataRow> batch = partition(dataSet.getDataRows(), rowsPerBatch, i);
+            List<Thread> threads = new ArrayList<>();
+
+            for (DataRow row : batch) {
+                threads.add(Thread.startVirtualThread(() -> {
+                    Vector output = model.predict(row.inputs());
+                    Vector target = row.outputs();
+
+                    backpropagate(target.toArray(), output.toArray());
+                }));
+            }
+
+            waitAll(threads);
+
+            List<Layer> layers = model.getLayers();
+            updater.postFit(layers, optimizer.getLearningRate());
         }
+    }
 
-        List<Layer> layers = model.getLayers();
-        updater.postFit(layers, optimizer.getLearningRate());
+    private void waitAll(List<Thread> threads) {
+        for (Thread thread : threads) {
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace(System.err);
+            }
+        }
     }
 
     public void backpropagate(double[] targets, double[] outputs) {

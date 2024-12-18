@@ -1,9 +1,6 @@
 package net.echo.brain4j.loss;
 
-import net.echo.brain4j.loss.impl.BinaryCrossEntropy;
-import net.echo.brain4j.loss.impl.CategoricalCrossEntropy;
-import net.echo.brain4j.loss.impl.CrossEntropy;
-import net.echo.brain4j.loss.impl.MeanSquaredError;
+import net.echo.brain4j.loss.impl.*;
 
 public enum LossFunctions {
 
@@ -13,6 +10,8 @@ public enum LossFunctions {
      * It is sensitive to outliers.
      */
     MEAN_SQUARED_ERROR(new MeanSquaredError()),
+
+    MEAN_ABSOLUTE_ERROR(new MeanAbsoluteError()),
 
     /**
      * Binary Cross Entropy: Used to evaluate the error in binary classification tasks

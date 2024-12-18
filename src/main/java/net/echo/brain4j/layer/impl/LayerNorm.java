@@ -28,7 +28,7 @@ public class LayerNorm extends Layer {
         double variance = calculateVariance(inputs, mean);
 
         for (Neuron input : inputs) {
-            double value = input.getValue();
+            double value = input.getLocalValue();
             double normalized = (value - mean) / Math.sqrt(variance + epsilon);
 
             input.setValue(normalized);
@@ -55,7 +55,7 @@ public class LayerNorm extends Layer {
         double sum = 0.0;
 
         for (Neuron value : inputs) {
-            sum += value.getValue();
+            sum += value.getLocalValue();
         }
 
         return sum / inputs.size();
@@ -65,7 +65,7 @@ public class LayerNorm extends Layer {
         double sum = 0.0;
 
         for (Neuron value : inputs) {
-            sum += Math.pow(value.getValue() - mean, 2);
+            sum += Math.pow(value.getLocalValue() - mean, 2);
         }
 
         return sum / inputs.size();

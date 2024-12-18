@@ -25,7 +25,7 @@ public class LeakyReLUActivation implements Activation {
     @Override
     public void apply(List<Neuron> neurons) {
         for (Neuron neuron : neurons) {
-            double output = activate(neuron.getValue() + neuron.getBias());
+            double output = activate(neuron.getLocalValue() + neuron.getBias());
 
             neuron.setValue(output);
         }

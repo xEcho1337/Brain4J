@@ -62,7 +62,7 @@ public class Layer {
             Neuron inputNeuron = synapse.getInputNeuron();
             Neuron outputNeuron = synapse.getOutputNeuron();
 
-            outputNeuron.setValue(outputNeuron.getValue() + inputNeuron.getValue() * synapse.getWeight());
+            outputNeuron.setValue(outputNeuron.getLocalValue() + inputNeuron.getLocalValue() * synapse.getWeight());
         }
     }
 
@@ -73,7 +73,7 @@ public class Layer {
             for (Synapse synapse : inputNeuron.getSynapses()) {
                 Neuron outputNeuron = synapse.getOutputNeuron();
 
-                outputNeuron.setValue(outputNeuron.getValue() + input.get(i) * synapse.getWeight());
+                outputNeuron.setValue(outputNeuron.getLocalValue() + input.get(i) * synapse.getWeight());
             }
         }
     }
@@ -82,7 +82,7 @@ public class Layer {
         Vector values = new Vector(neurons.size());
 
         for (int i = 0; i < neurons.size(); i++) {
-            values.set(i, neurons.get(i).getValue());
+            values.set(i, neurons.get(i).getLocalValue());
         }
 
         return values;
