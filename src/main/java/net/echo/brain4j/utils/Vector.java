@@ -23,6 +23,10 @@ public class Vector {
         return new Vector(size).fill(Math::random);
     }
 
+    public static Vector uniform(double lowerBound, double upperBound, int size) {
+        return new Vector(size).fill(() -> Math.random() * (upperBound - lowerBound) + lowerBound);
+    }
+
     public void set(int index, double value) {
         data[index] = value;
     }

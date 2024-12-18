@@ -12,6 +12,7 @@ import net.echo.brain4j.utils.Vector;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 @JsonAdapter(LayerAdapter.class)
 public class Layer {
@@ -28,11 +29,16 @@ public class Layer {
         this.activation = activation;
     }
 
-    public void connectAll(Layer nextLayer, double bound) {
+    public void init(Random generator) {
+        for (Neuron neuron : neurons) {
+            neuron.setBias(2 * generator.nextDouble() - 1);
+        }
+    }
+
+    public void connectAll(Random generator, Layer nextLayer, double bound) {
         for (Neuron neuron : neurons) {
             for (Neuron nextNeuron : nextLayer.neurons) {
-                Synapse synapse = new Synapse(neuron, nextNeuron, bound);
-
+                Synapse synapse = new Synapse(generator, neuron, nextNeuron, bound);
                 neuron.addSynapse(synapse);
 
                 synapses.add(synapse);

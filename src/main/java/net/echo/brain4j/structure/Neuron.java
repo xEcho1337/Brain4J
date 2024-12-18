@@ -11,7 +11,7 @@ public class Neuron {
     private final ThreadLocal<Double> localValue = new ThreadLocal<>();
     private final ThreadLocal<Double> delta = new ThreadLocal<>();
     private double totalDelta;
-    @Expose private double bias = 2 * Math.random() - 1;
+    @Expose private double bias;
 
     public List<Synapse> getSynapses() {
         return synapses;

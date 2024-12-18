@@ -31,6 +31,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Represents a generic neural network model.
@@ -54,13 +55,39 @@ public class Model {
     protected Optimizer optimizer;
     protected Updater updater;
     protected BackPropagation propagation;
+    protected Random generator;
+    private int seed;
 
     public Model(Layer... layers) {
         this.layers = new ArrayList<>(Arrays.asList(layers));
     }
 
+    /**
+     * Sets the seed for the weights generation.
+     *
+     * @param seed the seed, may be any value
+     */
+    public void setSeed(int seed) {
+        this.seed = seed;
+    }
+
+    /**
+     * Returns the seed for the weights generation.
+     *
+     * @return the seed, generated randomly at first
+     */
+    public int getSeed() {
+        return seed;
+    }
+
     private void connect(WeightInitialization type) {
-        Layer lastNormalLayer = layers.get(0);
+        Layer lastNormalLayer = layers.getFirst();
+
+        for (Layer layer : layers) {
+            if (layer instanceof DenseLayer denseLayer) {
+                denseLayer.init(generator);
+            }
+        }
 
         for (int i = 1; i < layers.size(); i++) {
             Layer layer = layers.get(i);
@@ -72,7 +99,7 @@ public class Model {
 
             double bound = type.getInitializer().getBound(nIn, nOut);
 
-            lastNormalLayer.connectAll(layer, bound);
+            lastNormalLayer.connectAll(generator, layer, bound);
             lastNormalLayer = layer;
         }
     }
@@ -86,6 +113,7 @@ public class Model {
      * @param updater weights updating algorithm for training
      */
     public void compile(WeightInitialization type, LossFunctions function, Optimizer optimizer, Updater updater) {
+        this.generator = new Random(seed);
         this.function = function;
         this.optimizer = optimizer;
         this.updater = updater;
@@ -134,7 +162,7 @@ public class Model {
      * @return predicted outputs
      */
     public Vector predict(Vector input) {
-        Layer inputLayer = layers.get(0);
+        Layer inputLayer = layers.getFirst();
 
         if (input.toArray().length != inputLayer.getNeurons().size()) {
             throw new IllegalArgumentException("Input size does not match model's input dimension! (Input != Expected) " +
@@ -172,7 +200,7 @@ public class Model {
             nextLayer.applyFunction(layer);
         }
 
-        Layer outputLayer = layers.get(layers.size() - 1);
+        Layer outputLayer = layers.getLast();
 
         double[] output = new double[outputLayer.getNeurons().size()];
 

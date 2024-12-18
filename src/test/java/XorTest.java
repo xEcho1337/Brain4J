@@ -23,6 +23,7 @@ public class XorTest {
                 new DenseLayer(1, Activations.SIGMOID)
         );
 
+        model.setSeed(123);
         model.compile(
                 WeightInitialization.HE,
                 LossFunctions.BINARY_CROSS_ENTROPY,
@@ -38,7 +39,7 @@ public class XorTest {
         DataSet training = new DataSet(first, second, third, fourth);
         training.partition(1);
 
-        trainForBenchmark(model, training);
+        trainTillError(model, training);
     }
 
     private static void trainForBenchmark(Model model, DataSet data) {
