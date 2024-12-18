@@ -1,8 +1,10 @@
 # Brain4J
 
-[![Brain4J](https://img.shields.io/badge/Brain4J-2.1-blue.svg)](https://github.com/xEcho1337/Brain4J)
+[![Brain4J](https://img.shields.io/badge/Brain4J-2.3-blue.svg)](https://github.com/xEcho1337/Brain4J)
 
 **Brain4J** is a powerful, lightweight, and easy-to-use Machine Learning library written in Java, designed for speed and simplicity.
+
+Note: As of 2.2, Java 21 is required to make Brain4J work.
 
 ---
 
@@ -68,7 +70,7 @@ do {
 } while (error > 0.01);
 ```
 
-The above code trains the neural network with a learning rate of 0.001, stopping when the error falls below 1%.
+The above code trains the neural network with a learning rate of 0.1, stopping when the error falls below 1%.
 
 ## Contributing & Contact
 
