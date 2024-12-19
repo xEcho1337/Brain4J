@@ -8,6 +8,20 @@ Note: As of 2.2, Java 21 is required to make Brain4J work.
 
 ---
 
+## Importing the library
+
+As of 2.4, the library is now available to download on JitPack.
+
+```groovy
+repositories {
+    mavenCentral()
+    maven { url 'https://jitpack.io' }
+}
+dependencies {
+    implementation 'com.github.xEcho1337:brain4j:2.4'
+}
+```
+
 ## Getting Started
 
 When building a neural network, you have many options. In this example, we will create a neural network to simulate an XOR gate.
