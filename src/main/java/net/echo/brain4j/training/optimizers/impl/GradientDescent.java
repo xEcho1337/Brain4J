@@ -23,7 +23,7 @@ public class GradientDescent extends Optimizer {
         for (Layer layer : layers) {
             for (Synapse synapse : layer.getSynapses()) {
                 double change = update(synapse);
-                updater.acknowledgeChange(synapse, change, learningRate);
+                updater.acknowledgeChange(synapse, change);
             }
         }
     }

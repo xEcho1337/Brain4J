@@ -13,14 +13,16 @@ public class StochasticUpdater extends Updater {
     public void postIteration(List<Layer> layers, double learningRate) {
         for (Layer layer : layers) {
             for (Neuron neuron : layer.getNeurons()) {
-                double deltaBias = learningRate * neuron.getDelta();
+                double deltaBias = learningRate * neuron.getTotalDelta();
+
                 neuron.setBias(neuron.getBias() + deltaBias);
+                neuron.setTotalDelta(0);
             }
         }
     }
 
     @Override
-    public void acknowledgeChange(Synapse synapse, double change, double learningRate) {
+    public void acknowledgeChange(Synapse synapse, double change) {
         synapse.setWeight(synapse.getWeight() + change);
     }
 }

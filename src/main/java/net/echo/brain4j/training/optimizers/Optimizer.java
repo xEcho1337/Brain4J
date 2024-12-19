@@ -76,7 +76,7 @@ public abstract class Optimizer {
      */
     public void applyGradientStep(Updater updater, Layer layer, Neuron neuron, Synapse synapse) {
         double weightChange = calculateGradient(layer, neuron, synapse);
-        updater.acknowledgeChange(synapse, weightChange, learningRate);
+        updater.acknowledgeChange(synapse, weightChange);
     }
 
     /**

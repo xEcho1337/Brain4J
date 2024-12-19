@@ -10,8 +10,8 @@ import java.util.List;
 
 public class NormalUpdater extends Updater {
 
-    private Synapse[] synapses;
-    private Double[] gradients;
+    protected Synapse[] synapses;
+    protected Double[] gradients;
 
     @Override
     public void postInitialize() {
@@ -33,8 +33,8 @@ public class NormalUpdater extends Updater {
         for (Layer layer : layers) {
             for (Neuron neuron : layer.getNeurons()) {
                 double deltaBias = learningRate * neuron.getTotalDelta();
-                neuron.setBias(neuron.getBias() + deltaBias);
 
+                neuron.setBias(neuron.getBias() + deltaBias);
                 neuron.setTotalDelta(0.0);
             }
         }
@@ -43,7 +43,7 @@ public class NormalUpdater extends Updater {
     }
 
     @Override
-    public void acknowledgeChange(Synapse synapse, double change, double learningRate) {
+    public void acknowledgeChange(Synapse synapse, double change) {
         int id = synapse.getSynapseId();
 
         synapses[id] = synapse;

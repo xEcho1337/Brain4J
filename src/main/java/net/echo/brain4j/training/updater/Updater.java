@@ -16,5 +16,8 @@ public abstract class Updater {
     public void postFit(List<Layer> layers, double learningRate) {
     }
 
-    public abstract void acknowledgeChange(Synapse synapse, double change, double learningRate);
+    public void postBatch(List<Layer> layers, double learningRate) {
+    }
+
+    public abstract void acknowledgeChange(Synapse synapse, double change);
 }

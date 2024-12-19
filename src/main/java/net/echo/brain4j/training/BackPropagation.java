@@ -25,13 +25,6 @@ public class BackPropagation {
         this.updater = updater;
     }
 
-    private List<DataRow> partition(List<DataRow> rows, double batches, int offset) {
-        int start = (int) Math.min(offset * batches, rows.size());
-        int stop = (int) Math.min((offset + 1) * batches, rows.size());
-
-        return rows.subList(start, stop);
-    }
-
     public void iterate(DataSet dataSet) {
         if (!dataSet.isPartitioned()) {
             throw new RuntimeException("Dataset must be partitioned, use DataSet#partition(batches) before training.");
@@ -53,9 +46,10 @@ public class BackPropagation {
 
             waitAll(threads);
 
-            List<Layer> layers = model.getLayers();
-            updater.postFit(layers, optimizer.getLearningRate());
+            updater.postBatch(model.getLayers(), optimizer.getLearningRate());
         }
+
+        updater.postFit(model.getLayers(), optimizer.getLearningRate());
     }
 
     private void waitAll(List<Thread> threads) {
