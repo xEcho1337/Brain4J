@@ -1,11 +1,8 @@
 package net.echo.brain4j.training.data;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
-public class DataSet {
+public class DataSet implements Iterable<DataRow> {
 
     private final List<DataRow> dataRows;
     private final List<List<DataRow>> partitions = new ArrayList<>();
@@ -67,5 +64,10 @@ public class DataSet {
      */
     public void shuffle() {
         Collections.shuffle(dataRows);
+    }
+
+    @Override
+    public Iterator<DataRow> iterator() {
+        return dataRows.iterator();
     }
 }
