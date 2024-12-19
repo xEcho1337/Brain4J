@@ -7,6 +7,7 @@ import net.echo.brain4j.loss.LossFunctions;
 import net.echo.brain4j.model.Model;
 import net.echo.brain4j.training.optimizers.impl.Adam;
 import net.echo.brain4j.training.optimizers.impl.GradientDescent;
+import net.echo.brain4j.training.updater.impl.BatchedUpdater;
 import net.echo.brain4j.training.updater.impl.NormalUpdater;
 import net.echo.brain4j.training.updater.impl.StochasticUpdater;
 import net.echo.brain4j.utils.Vector;
@@ -28,7 +29,7 @@ public class XorTest {
                 WeightInitialization.HE,
                 LossFunctions.BINARY_CROSS_ENTROPY,
                 new Adam(0.1),
-                new NormalUpdater()
+                new StochasticUpdater()
         );
 
         DataRow first = new DataRow(Vector.of(0, 0), Vector.of(0));
@@ -39,22 +40,24 @@ public class XorTest {
         DataSet training = new DataSet(first, second, third, fourth);
         training.partition(1);
 
-        trainTillError(model, training);
+        trainForBenchmark(model, training);
     }
 
     private static void trainForBenchmark(Model model, DataSet data) {
-        long start = System.nanoTime();
+        double total = 0.0;
 
         for (int i = 0; i < 5000; i++) {
+            long start = System.nanoTime();
             model.fit(data);
+
+            total += (System.nanoTime() - start) / 1e6;
         }
 
-        long end = System.nanoTime();
 
-        double took = (end - start) / 1e6;
         double error = model.evaluate(data);
+        double mean = total / 5000;
 
-        System.out.println("Completed 5000 epoches in " + took + " ms with error: " + error);
+        System.out.println("Completed 5000 epoches in " + total + " ms with error: " + error + " and an average of " + mean + " ms per epoch");
     }
 
     private static void trainTillError(Model model, DataSet data) {
