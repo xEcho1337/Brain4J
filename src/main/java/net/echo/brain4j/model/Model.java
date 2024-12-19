@@ -132,10 +132,6 @@ public class Model {
      * @param set dataset for training
      */
     public void fit(DataSet set) {
-        if (updater instanceof StochasticUpdater && set.getBatches() > 1) {
-            throw new IllegalArgumentException("Multiple batches are not supported for StochasticUpdater, use BatchedUpdater instead.");
-        }
-
         propagation.iterate(set);
     }
 
