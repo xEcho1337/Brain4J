@@ -1,5 +1,8 @@
 package org.brain4j.math.activation;
 
+import org.silicon.api.function.ComputeFunction;
+import org.silicon.api.kernel.ComputeSize;
+
 import org.brain4j.math.Tensors;
 import org.brain4j.math.gpu.GpuContext;
 import org.brain4j.math.gpu.device.Device;
@@ -7,55 +10,61 @@ import org.brain4j.math.gpu.kernel.KernelFactory;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.impl.GpuTensor;
 import org.brain4j.math.weightsinit.WeightInit;
-import org.silicon.api.function.ComputeFunction;
-import org.silicon.api.kernel.ComputeSize;
 
+/**
+ * Applies a non-linear function to layer outputs.
+ * Use it to let networks learn complex patterns.
+ */
 public interface Activation {
 
     /**
-     * The default weight initialization for this activation function.
-     * @return The default weight initialization.
+     * Returns the weight initialization matching this activation.
+     *
+     * @return the default weight init
      */
     WeightInit defaultWeightInit();
 
     /**
-     * Activate a single scalar value (e.g. ReLU, Sigmoid, Tanh, etc.).
-     * @return the activation of the input
+     * Applies this activation to a single value.
+     *
+     * @return the activated value
      */
     double activate(double input);
 
     /**
-     * Gets the derivative (scalar) of the activation at a single value.
-     * @return the derivative of the input as a double value
+     * Returns the derivative at a single value.
+     *
+     * @return the derivative value
      */
     double derivative(double input);
 
     /**
-     * Gets the kernel prefix for this activation
-     * @return the prefix of the kernel
+     * Returns the GPU kernel prefix for this activation.
+     *
+     * @return the kernel prefix
      */
     String getKernelPrefix();
 
     /**
-     * Gets the identifier of this activation
-     * @return the activation identifier
+     * Returns the numeric identifier of this activation.
+     *
+     * @return the activation id
      */
     int getActivationId();
 
     /**
-     * Gets the default name for this activation function.
-     * @return The name of the activation function.
+     * Returns the display name of this activation.
+     *
+     * @return the activation name
      */
     default String name() {
         return getClass().getSimpleName().replace("Activation", "");
     }
 
-     /**
-     * Creates the kernel to execute.
-     * @param kernel the Silicon compute function
-     * @param input the current tensor
-     * @param output the resulting tensor
-     * @return a kernel factory ready to be launched
+    /**
+     * Builds the GPU kernel applying this activation.
+     *
+     * @return a kernel factory ready to launch
      */
     default KernelFactory createKernel(
         ComputeFunction kernel,
@@ -64,24 +73,25 @@ public interface Activation {
     ) {
         return KernelFactory
             .create(kernel)
-            .intVal(getActivationId()) // activation type
-            .floatVal(0f) // alpha
-            .intVal(input.size()) // length
+            .intVal(getActivationId())
+            .floatVal(0f)
+            .intVal(input.size())
             .buffer(input.getDataBuffer())
             .buffer(output.getDataBuffer());
     }
 
     /**
-     * Activate a vector of values.
-     * Return a new vector containing the activated values.
+     * Applies this activation element-wise.
+     *
+     * @return a new tensor with activated values
      */
     default Tensor activate(Tensor input) {
         int[] shape = input.shape();
-        
+
         if (input instanceof GpuTensor gpuInput) {
             return computeGpu(gpuInput, "forward");
         }
-        
+
         float[] inputData = input.data();
         float[] resultData = new float[inputData.length];
 
@@ -93,16 +103,20 @@ public interface Activation {
     }
 
     /**
-     * Get the derivative (vector) of the activation at a vector of values.
+     * Returns the element-wise derivative, scaled by the output gradient when given.
+     *
+     * @param gradOut downstream gradient, or {@code null} to skip scaling
+     * @return the derivative tensor
      */
     default Tensor derivative(Tensor input, Tensor output, Tensor gradOut) {
         int[] shape = input.shape();
-        
+
         if (input instanceof GpuTensor gpuInput) {
             Tensor derivative = computeGpu(gpuInput, "backward");
+
             return gradOut == null ? derivative : derivative.mul(gradOut);
         }
-        
+
         float[] inputData = input.data();
         float[] resultData = new float[inputData.length];
 
@@ -111,6 +125,7 @@ public interface Activation {
         }
 
         Tensor derivative = Tensors.create(shape, resultData);
+
         return gradOut == null ? derivative : gradOut.times(derivative);
     }
 

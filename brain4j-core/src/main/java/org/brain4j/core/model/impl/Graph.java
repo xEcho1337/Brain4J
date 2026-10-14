@@ -1,6 +1,15 @@
 package org.brain4j.core.model.impl;
 
-import org.brain4j.core.graph.GraphExporter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.IntStream;
+
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.layer.Node;
 import org.brain4j.core.model.Model;
@@ -9,9 +18,10 @@ import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.tensor.Tensor;
 
-import java.util.*;
-import java.util.stream.IntStream;
-
+/**
+ * Directed acyclic graph of layers with arbitrary topology.
+ * Use it for multi-input, multi-output or branching architectures.
+ */
 public class Graph implements Model {
 
     private final List<Node> input;
@@ -20,6 +30,13 @@ public class Graph implements Model {
     private final Device device;
     private final int seed;
 
+    /**
+     * Creates a graph ending at the given outputs on CPU.
+     *
+     * @param output the output nodes (not null)
+     * @param device the target device ({@code null} for CPU)
+     * @param seed the weight initialization seed
+     */
     protected Graph(List<Node> output, Device device, int seed) {
         this(output, device, seed, false);
     }
@@ -55,20 +72,38 @@ public class Graph implements Model {
         });
     }
 
+    /**
+     * Creates a graph ending at the given outputs with a default seed.
+     *
+     * @return a new graph on CPU
+     */
     public static Graph of(Node... output) {
         return new Graph(List.of(output), null, 42);
     }
 
+    /**
+     * Creates a graph ending at the given outputs with the given seed.
+     *
+     * @return a new graph on CPU
+     */
     public static Graph of(int seed, Node... output) {
         return new Graph(List.of(output), null, seed);
     }
 
+    /**
+     * Creates a graph ending at the given outputs on the given device.
+     *
+     * @param device the target device ({@code null} for CPU)
+     * @return a new graph
+     */
     public static Graph of(int seed, Device device, Node... output) {
         return new Graph(List.of(output), device, seed);
     }
 
     private void dfs(Node node, Set<Node> visited) {
-        if (visited.contains(node)) return;
+        if (visited.contains(node)) {
+            return;
+        }
 
         visited.add(node);
 
@@ -83,6 +118,9 @@ public class Graph implements Model {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor[] predict(StatesCache cache, Tensor... inputs) {
         if (input.size() != inputs.length) {
@@ -110,30 +148,45 @@ public class Graph implements Model {
         return finalOutputs.toArray(new Tensor[0]);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Device device() {
         return device;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void summary() {
         throw Commons.illegalState("summary() is not supported in Graph impl. Use export(GraphExporter) instead.");
     }
-    
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Graph fork(Device device) {
         Map<Node, Node> cache = new HashMap<>();
         List<Node> copy = output.stream().map(n -> n.copy(cache)).toList();
-        // Move all copied layers to the new device
+
         for (Node n : cache.values()) {
             n.layer().to(device);
         }
+
         return new Graph(copy, device, seed, true);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Graph to(Device device) {
-        if (Objects.equals(this.device, device)) return this;
+        if (Objects.equals(this.device, device)) {
+            return this;
+        }
 
         for (Node node : topology) {
             node.layer().to(device);
@@ -146,6 +199,9 @@ public class Graph implements Model {
         return new Graph(output, device, seed, true);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Graph copy() {
         Map<Node, Node> cache = new HashMap<>();
@@ -153,23 +209,46 @@ public class Graph implements Model {
         return new Graph(copy, device, seed, true);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Layer> getLayers() {
         return topology.stream().map(Node::layer).toList();
     }
-    
+
+    /**
+     * Returns the input nodes of this graph.
+     *
+     * @return the input nodes
+     */
     public List<Node> input() {
         return input;
     }
-    
+
+    /**
+     * Returns the output nodes of this graph.
+     *
+     * @return the output nodes
+     */
     public List<Node> output() {
         return output;
     }
-    
+
+    /**
+     * Returns the topologically sorted inner nodes.
+     *
+     * @return the topology nodes
+     */
     public List<Node> topology() {
         return topology;
     }
-    
+
+    /**
+     * Returns the weight initialization seed.
+     *
+     * @return the seed
+     */
     public int seed() {
         return seed;
     }

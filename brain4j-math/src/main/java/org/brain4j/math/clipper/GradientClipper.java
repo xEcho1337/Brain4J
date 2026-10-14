@@ -5,36 +5,37 @@ import org.brain4j.math.tensor.impl.CpuTensor;
 import org.brain4j.math.tensor.impl.GpuTensor;
 
 /**
- * Gradient clipping is a technique used to prevent the gradients
- * from exploding or vanishing during the training process.
- * @author xEcho1337
+ * Bounds gradients to keep training stable.
+ * Use it to prevent exploding or vanishing gradients.
  */
 public interface GradientClipper {
 
-    default void clip(Tensor grad) {
-       if (grad instanceof CpuTensor gradCpu) {
-           clipCpu(gradCpu);
-       }
-
-       if (grad instanceof GpuTensor gradGpu) {
-           clipGpu(gradGpu);
-       }
-    }
-    
     /**
-     * Clips the input gradient tensor in the CPU backend.
-     * @param grad the gradient tensor
+     * Clips the given gradient in place, dispatching by backend.
+     */
+    default void clip(Tensor grad) {
+        if (grad instanceof CpuTensor gradCpu) {
+            clipCpu(gradCpu);
+        }
+
+        if (grad instanceof GpuTensor gradGpu) {
+            clipGpu(gradGpu);
+        }
+    }
+
+    /**
+     * Clips a CPU gradient tensor in place.
      */
     void clipCpu(CpuTensor grad);
 
     /**
-     * Clips the input gradient tensor in the GPU backend.
-     * @param grad the gradient tensor
+     * Clips a GPU gradient tensor in place.
      */
     void clipGpu(GpuTensor grad);
 
     /**
-     * The name of the kernel of this gradient clip implementation.
+     * Returns the GPU kernel backing this clipper.
+     *
      * @return the kernel name
      */
     String kernelName();

@@ -1,33 +1,44 @@
 package org.brain4j.core.importing;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.brain4j.math.Tensors;
-import org.brain4j.math.commons.Commons;
-import org.brain4j.math.tensor.Tensor;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.charset.StandardCharsets;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import org.brain4j.math.Tensors;
+import org.brain4j.math.commons.Commons;
+import org.brain4j.math.tensor.Tensor;
+
 import static java.nio.channels.FileChannel.MapMode.READ_ONLY;
 import static java.nio.file.StandardOpenOption.READ;
-
 import static org.brain4j.core.importing.format.impl.BrainFormat.MAPPER;
 
+/**
+ * Encodes and decodes tensors in safetensors format.
+ * Use it for interoperable weight import and export.
+ */
 public class SafeTensors {
 
+    /**
+     * Native byte order used for the header length prefix.
+     */
     public static final ByteOrder NATIVE_ORDER = ByteOrder.nativeOrder();
 
+    /**
+     * Serializes weights into a safetensors payload.
+     *
+     * @param weights the named tensors (f32)
+     * @return the encoded bytes
+     */
     public static byte[] create(Map<String, Tensor> weights) {
         try {
             ObjectNode header = MAPPER.createObjectNode();
@@ -46,6 +57,7 @@ public class SafeTensors {
                 offsets.add(end);
 
                 ArrayNode shape = MAPPER.createArrayNode();
+
                 for (int dimension : weight.shape()) {
                     shape.add(dimension);
                 }
@@ -61,7 +73,6 @@ public class SafeTensors {
             byte[] headerJson = MAPPER.writeValueAsBytes(header);
 
             try (ByteArrayOutputStream stream = new ByteArrayOutputStream()) {
-
                 ByteBuffer buffer = ByteBuffer
                     .allocate(8)
                     .order(NATIVE_ORDER)
@@ -76,18 +87,31 @@ public class SafeTensors {
 
                 return stream.toByteArray();
             }
-
         } catch (IOException e) {
             throw new RuntimeException("Failed to create safetensors", e);
         }
     }
 
+    /**
+     * Loads weights from a safetensors file.
+     *
+     * @param path the source file
+     * @return the decoded named tensors
+     * @throws IOException if reading or parsing fails
+     */
     public static Map<String, Tensor> load(Path path) throws IOException {
         try (FileChannel channel = FileChannel.open(path, READ)) {
             return load(channel);
         }
     }
 
+    /**
+     * Loads weights from an in-memory safetensors payload.
+     *
+     * @param data the encoded bytes
+     * @return the decoded named tensors
+     * @throws IOException if parsing fails
+     */
     public static Map<String, Tensor> load(byte[] data) throws IOException {
         ByteBuffer buffer = ByteBuffer.wrap(data).order(NATIVE_ORDER);
         return load(buffer);
@@ -180,7 +204,9 @@ public class SafeTensors {
         header.fields().forEachRemaining(entry -> {
             String name = entry.getKey();
 
-            if (name.equals("__metadata__")) return;
+            if (name.equals("__metadata__")) {
+                return;
+            }
 
             JsonNode info = entry.getValue();
             int[] shape = parseShape(name, info.get("shape"));

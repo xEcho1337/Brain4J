@@ -1,34 +1,19 @@
 package org.brain4j.math.data;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+
 import org.brain4j.math.Tensors;
 import org.brain4j.math.commons.Batch;
 import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.impl.GpuTensor;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-
 /**
- * A data source implementation that manages a list of samples for training or evaluation
- * in machine learning contexts. It supports batching, optional shuffling, normalization,
- * and iteration over samples or batches.
- * <p>
- * This class partitions the underlying dataset into batches of fixed size,
- * provides functionality to iterate through batches sequentially,
- * and supports normalization of input features across the entire dataset.
- * <p>
- * It also supports cloning to create deep copies of the data source, preserving the sample data integrity.
- * <p>
- * Typical usage involves constructing the data source with a list of {@link Sample} objects,
- * optionally shuffling them, then iterating through batches during training.
- *
- * <p><b>Thread Safety:</b> This class is not thread-safe. Synchronization is required if accessed concurrently.
- *
- * @author xEcho1337
- * @author Adversing
+ * Splits samples into fixed-size batches for training or evaluation.
+ * Use it to iterate batches, optionally shuffled or normalized.
  */
 public class ListDataSource implements Cloneable, Iterable<Sample> {
 
@@ -42,12 +27,7 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
     protected int batchSize;
 
     /**
-     * Constructs a new ListDataSource from a given list of samples.
-     * Optionally shuffles the samples and partitions them into batches of the specified size.
-     *
-     * @param samples the list of samples to use as the dataset
-     * @param shuffle if true, the samples list will be shuffled before batching
-     * @param batchSize the size of each batch for iteration
+     * Creates a CPU-backed source, optionally shuffling before batching.
      */
     public ListDataSource(List<Sample> samples, boolean shuffle, int batchSize) {
         this.samples = samples;
@@ -62,7 +42,10 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
 
         computeBatches();
     }
-    
+
+    /**
+     * Creates a source staging batches on the given device.
+     */
     public ListDataSource(Device device, List<Sample> samples, boolean shuffle, int batchSize) {
         this.device = device;
         this.samples = samples;
@@ -77,10 +60,7 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
 
         computeBatches();
     }
-    
-    /**
-     * Copy constructor.
-     */
+
     private ListDataSource(List<Sample> samples, Device device, int batches, int cursor, int batchSize) {
         this.device = device;
         this.samples = samples;
@@ -89,44 +69,46 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
         this.cursor = cursor;
         this.batches = batches;
         this.batchSize = batchSize;
-        
+
         computeBatches();
     }
 
     /**
-     * Returns true if there are remaining batches to iterate over.
-     * @return true if more batches are available, false otherwise
+     * Checks whether more batches remain.
+     *
+     * @return true if another batch is available
      */
     public boolean hasNext() {
         return cursor < batches;
     }
 
     /**
-     * Resets the batch iteration cursor to the beginning.
+     * Resets iteration to the first batch.
      */
     public void reset() {
         cursor = 0;
     }
 
     /**
-     * Normalizes the input features of all samples by applying the z-score normalization.
-     * This operation modifies the samples in place and recomputes batches accordingly.
+     * Applies z-score normalization in place, then recomputes batches.
      *
-     * @return this ListDataSource instance after normalization
+     * @return this source after normalization
      */
     public ListDataSource normalize() {
-        if (samples.isEmpty()) return this;
+        if (samples.isEmpty()) {
+            return this;
+        }
 
         int numInputs = samples.getFirst().inputs().length;
         List<List<Tensor>> inputStreams = new ArrayList<>(numInputs);
-        
+
         for (int i = 0; i < numInputs; i++) {
             inputStreams.add(new ArrayList<>());
         }
 
         for (Sample sample : samples) {
             Tensor[] inputs = sample.inputs();
-            
+
             for (int i = 0; i < inputs.length; i++) {
                 inputStreams.get(i).add(inputs[i]);
             }
@@ -142,7 +124,7 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
             for (int f = 0; f < features; f++) {
                 double mean = 0;
                 double std = 0;
-                
+
                 for (Tensor tensor : tensors) {
                     float value = tensor.get(f);
                     mean += value;
@@ -173,12 +155,14 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
     }
 
     /**
-     * Retrieves the next batch of data (input and label tensors) and advances the cursor.
-     * @return a Pair containing input tensor and label tensor for the next batch,
-     *         or null if no more batches are available
+     * Returns the next batch and advances the cursor.
+     *
+     * @return the next batch, or {@code null} if exhausted
      */
     public Batch nextBatch() {
-        if (!hasNext()) return null;
+        if (!hasNext()) {
+            return null;
+        }
 
         Tensor[] input = batchedInputs.get(cursor);
         Tensor[] label = batchedLabels.get(cursor);
@@ -188,11 +172,6 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
         return new Batch(input, label);
     }
 
-    /**
-     * Computes batched inputs and labels by partitioning the samples list according
-     * to the batch size. Merges tensors within each batch for efficient processing.
-     * This method is called during construction and after normalization.
-     */
     private void computeBatches() {
         int size = getSize();
         int index = 0;
@@ -231,7 +210,6 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
             Tensor[] inputs = sample.inputs();
             Tensor[] labels = sample.labels();
 
-
             for (int i = 0; i < inputs.length; i++) {
                 mergedInputs.get(i).add(inputs[i]);
             }
@@ -258,6 +236,11 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
         return new Batch(batchedInputTensors, batchedLabelTensors);
     }
 
+    /**
+     * Returns a deep copy of this source.
+     *
+     * @return the cloned source
+     */
     @Override
     public ListDataSource clone() {
         try {
@@ -265,31 +248,38 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
 
             clone.samples = new ArrayList<>();
             clone.batchSize = batchSize;
-            
+
             for (Sample sample : samples) {
                 clone.samples.add(sample.copy());
             }
-            
+
             return clone;
         } catch (CloneNotSupportedException e) {
             throw new RuntimeException(e);
         }
     }
-    
+
+    /**
+     * Returns a copy staging batches on the given device.
+     *
+     * @return the device-backed source
+     */
     public ListDataSource to(Device device) {
         return new ListDataSource(samples, device, batches, cursor, batchSize);
     }
-    
+
     /**
-     * Returns the total number of samples in the data source.
-     * @return number of samples
+     * Returns the total sample count.
+     *
+     * @return the number of samples
      */
     public int getSize() {
         return samples.size();
     }
 
     /**
-     * Returns the underlying list of samples.
+     * Returns the underlying samples.
+     *
      * @return the samples list
      */
     public List<Sample> getSamples() {
@@ -297,16 +287,18 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
     }
 
     /**
-     * Returns the list of batched input tensors.
-     * @return list of input batches
+     * Returns the batched inputs.
+     *
+     * @return the input batches
      */
     public List<Tensor[]> getBatchedInputs() {
         return batchedInputs;
     }
 
     /**
-     * Returns the list of batched label tensors.
-     * @return list of label batches
+     * Returns the batched labels.
+     *
+     * @return the label batches
      */
     public List<Tensor[]> getBatchedLabels() {
         return batchedLabels;
@@ -314,37 +306,44 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
 
     /**
      * Returns the configured batch size.
-     * @return batch size
+     *
+     * @return the batch size
      */
     public int getBatchSize() {
         return batchSize;
     }
 
     /**
-     * Returns the total number of batches.
-     * @return number of batches
+     * Returns the total batch count.
+     *
+     * @return the number of batches
      */
     public int getBatches() {
         return batches;
     }
 
     /**
-     * Returns the current batch cursor index.
-     * @return current cursor position
+     * Returns the current batch cursor.
+     *
+     * @return the cursor position
      */
     public int getCursor() {
         return cursor;
     }
 
     /**
-     * Returns an iterator over the individual samples in the data source.
-     * @return an iterator of {@link Sample}
+     * {@inheritDoc}
      */
     @Override
     public Iterator<Sample> iterator() {
         return samples.iterator();
     }
 
+    /**
+     * Returns all batches as an iterable snapshot.
+     *
+     * @return the batches in order
+     */
     public Iterable<Batch> batchIterator() {
         List<Batch> result = new ArrayList<>();
         int cursor = 0;

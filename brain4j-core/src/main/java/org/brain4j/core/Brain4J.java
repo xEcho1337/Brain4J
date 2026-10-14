@@ -1,29 +1,17 @@
 package org.brain4j.core;
 
-import org.brain4j.math.gpu.device.Device;
-import org.brain4j.math.gpu.device.DeviceUtils;
-import org.brain4j.math.tensor.impl.GpuTensor;
-
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.brain4j.math.gpu.device.Device;
+import org.brain4j.math.gpu.device.DeviceUtils;
+import org.brain4j.math.tensor.impl.GpuTensor;
+
 /**
- * Entry point for the Brain4J machine learning framework.
- * <p>
- * The {@code Brain4J} class provides central static methods to access core functionalities
- * such as framework initialization, device discovery, and version management.
- * <p>
- * This class is designed to serve as the main API access point, and will be extended
- * in the future to include global configuration, logging, and other utilities.
- *
- * <p><b>Example usage:</b>
- * <pre>{@code
- * System.out.println("Brain4J version: " + Brain4J.version());
- * Brain4J.enableLogging();
- * System.out.println("Available devices: " + Brain4J.availableDevices());
- * }</pre>
+ * Entry point for framework setup and device discovery.
+ * Use it to configure logging and access GPU devices.
  *
  * @author xEcho1337
  * @author Adversing
@@ -34,28 +22,32 @@ public class Brain4J {
     private static boolean disableColors = false;
     private static boolean fixedOutStream = false;
     private static int decimalDigits = 4;
-    
+
     /**
-     * Returns the current version of the Brain4J framework.
+     * Returns the current framework version.
      *
-     * @return the version string (e.g. "3.0")
+     * @return the version string
      */
     public static String getVersion() {
         return "3.0";
     }
 
+    /**
+     * Forces UTF-8 console output once.
+     */
     public static void fixConsole() {
-        if (fixedOutStream) return;
-        
+        if (fixedOutStream) {
+            return;
+        }
+
         System.setOut(new PrintStream(System.out, true, StandardCharsets.UTF_8));
         fixedOutStream = true;
     }
-    
+
     /**
-     * Indicates whether training progress and system information
-     * are currently being logged to the console.
+     * Checks whether training progress is logged to the console.
      *
-     * @return {@code true} if logging is enabled; {@code false} by default
+     * @return {@code true} if logging is enabled
      */
     public static boolean isLogging() {
         fixConsole();
@@ -63,86 +55,64 @@ public class Brain4J {
     }
 
     /**
-     * Sets whether logging should be enabled or disabled during training sessions.
-     * <p>
-     * When enabled, Brain4J will print progress information such as epoch, current batch and performance evaluations.
-     * @param logging {@code true} to enable logging, {@code false} to disable it
+     * Enables or disables training progress logging.
      */
     public static void setLogging(boolean logging) {
         Brain4J.logging = logging;
     }
-    
+
     /**
-     * Indicates whether the ANSI color codes are active or not.
-     * @return {@code true} if the colors are disabled; {@code false} by default
+     * Checks whether ANSI colors are disabled.
+     *
+     * @return {@code true} if colors are disabled
      */
     public static boolean isDisableColors() {
         return disableColors;
     }
-    
+
     /**
-     * Sets whether the ANSI color codes should be active.
-     * @param disableColors the flag to enable/disable colors
+     * Enables or disables ANSI colors.
      */
     public static void setDisableColors(boolean disableColors) {
         Brain4J.disableColors = disableColors;
     }
-    
+
     /**
-     * Returns the numeric precision used when displaying
-     * loss or metric values during training.
+     * Returns the decimal precision used in logs.
      *
-     * @return the number of decimal digits displayed (default: 4)
+     * @return the displayed decimal digits
      */
     public static int getDecimalDigits() {
         return decimalDigits;
     }
 
     /**
-     * Sets the numeric precision used when printing loss values.
-     * <p>
-     * This affects how many decimal digits are shown in logs
-     * and formatted console outputs.
-     *
-     * @param decimalDigits the number of digits to display after the decimal point
+     * Replaces the decimal precision used in logs.
      */
     public static void setDecimalDigits(int decimalDigits) {
         Brain4J.decimalDigits = decimalDigits;
     }
 
     /**
-     * Returns a comma-separated list of all available GPU devices
-     * detected by the Silicon backend.
-     * <p>
-     * If no devices are available, an empty string is returned.
+     * Returns names of all detected GPU devices.
      *
-     * @return a comma-separated list of device names
+     * @return a comma-separated device list, or empty if none
      */
     public static String getAvailableDevices() {
         return String.join(", ", DeviceUtils.allDeviceNames());
     }
 
     /**
-     * Initializes GPU kernels on the specified device.
-     * <p>
-     * This method compiles and loads all GPU-side kernels used
-     * by {@link GpuTensor} operations. It should be called before
-     * performing any GPU computation if not done automatically.
-     *
-     * @param device the target GPU device to initialize
+     * Compiles GPU kernels on the given device.
      */
     public static void initKernels(Device device) {
         GpuTensor.initKernels(device);
     }
-    
+
     /**
-     * Returns the first available GPU device detected on the system.
-     * <p>
-     * This method is useful when the system contains a single GPU
-     * or when the default device is sufficient for computation.
+     * Returns the first available GPU device.
      *
-     * @return the first detected {@link Device}
-     * @throws IllegalStateException if no GPU devices are found
+     * @return the first device, or {@code null} if none found
      */
     public static Device firstDevice() {
         try {
@@ -154,7 +124,9 @@ public class Brain4J {
 
             Device device = DeviceUtils.findDevice(devices.getFirst());
 
-            if (device != null) Brain4J.initKernels(device);
+            if (device != null) {
+                Brain4J.initKernels(device);
+            }
 
             return device;
         } catch (IllegalStateException e) {
@@ -163,12 +135,9 @@ public class Brain4J {
     }
 
     /**
-     * Returns a list of all GPU devices available to the framework.
-     * <p>
-     * Each {@link Device} object represents a physical or logical
-     * compute device accessible through Silicon.
+     * Returns all available GPU devices.
      *
-     * @return a list of all available {@link Device} instances
+     * @return the detected devices
      */
     public static List<Device> getAllDevices() {
         List<Device> devices = new ArrayList<>();
@@ -181,13 +150,9 @@ public class Brain4J {
     }
 
     /**
-     * Finds a specific GPU device by its name.
-     * <p>
-     * The search is case-sensitive and matches the full name
-     * returned by {@link DeviceUtils#allDeviceNames()}.
+     * Finds a GPU device by name.
      *
-     * @param deviceName the name of the device to look for
-     * @return the corresponding {@link Device} instance, or {@code null} if not found
+     * @return the matching device, or {@code null} if not found
      */
     public static Device findDevice(String deviceName) {
         return DeviceUtils.findDevice(deviceName);

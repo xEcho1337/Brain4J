@@ -7,14 +7,9 @@ import org.brain4j.core.training.optimizer.impl.Lion;
 import org.brain4j.math.tensor.Tensor;
 
 /**
- * Base class for all gradient-based optimization algorithms.
- * <p>
- * An {@code Optimizer} defines how model parameters (weights) are updated
- * given their gradients after backpropagation. Concrete implementations
- * such as {@link GradientDescent}, {@link Adam}, {@link AdamW}, or {@link Lion}
- * implement different strategies to improve convergence speed, stability,
- * or generalization.
- * </p>
+ * Computes parameter updates from gradients.
+ * Use it to control convergence speed and stability during training.
+ *
  * @see GradientDescent
  * @see Adam
  * @see AdamW
@@ -23,61 +18,54 @@ import org.brain4j.math.tensor.Tensor;
 public abstract class Optimizer {
 
     private double learningRate;
-    
+
     /**
-     * Creates a new optimizer with the given learning rate.
-     * @param learningRate the step size used to scale gradient updates
+     * Creates an optimizer with the given learning rate.
      */
     public Optimizer(double learningRate) {
         this.learningRate = learningRate;
     }
-    
+
     /**
-     * Performs a single optimization step.
-     * <p>
-     * This method updates the provided weights based on the gradient tensor
-     * and the specific optimization algorithm implemented by the subclass.
-     * Note: this method delegates to {@link #step(Tensor, Tensor)} with the pre-calculated gradient.
+     * Applies one optimization step using the stored gradient.
      *
-     * @param weights the weights tensor
-     * @return the optimized weight tensor
+     * @return the optimized weights
      */
     public Tensor step(Tensor weights) {
         return step(weights, weights.grad());
     }
-    
+
     /**
-     * Performs a single optimization step.
-     * <p>
-     * This method updates the provided weights based on the gradient tensor
-     * and the specific optimization algorithm implemented by the subclass.
+     * Applies one optimization step using the given gradient.
      *
-     * @param weights the weights tensor
-     * @param gradient the gradient of the loss with respect to the weights
-     * @return the optimized weight tensor
+     * @return the optimized weights
      */
     public abstract Tensor step(Tensor weights, Tensor gradient);
-    
+
     /**
-     * Optional initialization hook for optimizers that require internal state.
-     * <p>Default implementation does nothing.
+     * Initializes internal optimizer state.
      */
     public void initialize() {
-        // Optional hook
-    }
-    
-    /**
-     * Optional hook executed after each training batch.
-     * <p>Default implementation does nothing.
-     */
-    public void postBatch() {
-        // Optional hook
     }
 
+    /**
+     * Runs a hook after each training batch.
+     */
+    public void postBatch() {
+    }
+
+    /**
+     * Returns the learning rate.
+     *
+     * @return the current learning rate
+     */
     public double getLearningRate() {
         return learningRate;
     }
 
+    /**
+     * Replaces the learning rate.
+     */
     public void setLearningRate(double learningRate) {
         this.learningRate = learningRate;
     }

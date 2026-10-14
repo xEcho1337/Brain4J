@@ -1,21 +1,17 @@
 package org.brain4j.core.training.updater;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.brain4j.core.training.updater.impl.NormalUpdater;
 import org.brain4j.core.training.updater.impl.StochasticUpdater;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.impl.GpuTensor;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
- * Abstract base class for implementing gradient-based weight updaters.
- * <p>
- * This class provides a common interface and core logic for accumulating gradients 
- * and applying weight updates to a model.
- * <p>
- * Subclasses should override {@link #postBatch} or {@link #postFit} as needed to update the weights.
+ * Accumulates gradients and applies them to weights.
+ * Use it to define when batched gradients update the model.
  *
  * @see StochasticUpdater
  * @see NormalUpdater
@@ -25,29 +21,24 @@ public abstract class Updater {
     protected final Map<Tensor, Tensor> weightsGradients = new HashMap<>();
 
     /**
-     * Reusable persistent (non-pooled) accumulation buffers, one per weight tensor.
-     * Created lazily on the first gradient and reused for the entire training run:
-     * re-allocating them on every {@code initialize()} would leak native GPU memory,
-     * because the old buffers can only be reclaimed by the garbage collector.
+     * Persistent GPU accumulation buffers reused across batches.
      */
     protected final Map<Tensor, Tensor> persistentStorage = new HashMap<>();
-    
+
     /**
-     * Applies the accumulated gradients to the model's weights.
-     * <p>
-     * Each weight tensor is updated in-place using the formula:
-     * <pre>
-     * {@code weights -= (gradient / samples) * learningRate}
-     * </pre>
+     * Applies accumulated gradients to weights in place.
      *
-     * @param samples the number of samples used to normalize the gradient
+     * @param learningRate the step size
+     * @param samples the sample count used to normalize gradients
      */
     public void updateWeights(double learningRate, int samples) {
         for (Map.Entry<Tensor, Tensor> entry : weightsGradients.entrySet()) {
             Tensor weights = entry.getKey();
             Tensor gradient = entry.getValue();
-            
-            if (gradient == null || weights == null) continue;
+
+            if (gradient == null || weights == null) {
+                continue;
+            }
 
             while (gradient.rank() > weights.rank()) {
                 gradient = gradient.sum(0, false);
@@ -58,19 +49,7 @@ public abstract class Updater {
     }
 
     /**
-     * Schedules a gradient update for the given weight tensor.
-     * <p>
-     * If a gradient is already scheduled for the specified weight tensor,
-     * the new gradient is added to the existing one.
-     * This allows accumulation of gradients across mini-batches or iterations.
-     * <p>
-     * Accumulated gradients may outlive the batch they were produced in, so on GPU
-     * they are always stored in persistent (non-pooled) buffers: pooled buffers are
-     * recycled by the device memory pool at the end of each batch, which would
-     * otherwise corrupt the accumulated value.
-     *
-     * @param weights the weight tensor to be updated
-     * @param gradient the gradient corresponding to the weight tensor
+     * Accumulates a gradient for the given weights.
      */
     public void change(Tensor weights, Tensor gradient) {
         if (!(gradient instanceof GpuTensor gpuGradient)) {
@@ -87,7 +66,7 @@ public abstract class Updater {
                 stored = GpuTensor.persistent(Tensors.zeros(gradient.shape()), gpuGradient.getDevice());
                 persistentStorage.put(weights, stored);
             } else {
-                // reuse the existing buffer: reset the accumulator in-place
+                // Reuse the buffer instead of leaking GPU memory.
                 stored.mul(0);
             }
         }
@@ -97,25 +76,27 @@ public abstract class Updater {
     }
 
     /**
-     * Resets all accumulated gradients and clears the internal state.
+     * Clears all accumulated gradients.
      */
     public void initialize() {
         weightsGradients.clear();
     }
 
     /**
-     * Optional hook called after training on an entire dataset (epoch).
-     * @param samples the number of training samples
+     * Runs a hook after training over the dataset.
+     *
+     * @param learningRate the step size
+     * @param samples the training sample count
      */
     public void postFit(double learningRate, int samples) {
-        // Overridden by subclasses
     }
 
     /**
-     * Optional hook called after processing a single mini-batch.
-     * @param samples      the number of samples in the current batch
+     * Runs a hook after each mini-batch.
+     *
+     * @param learningRate the step size
+     * @param samples the batch sample count
      */
     public void postBatch(double learningRate, int samples) {
-        // Overridden by subclasses
     }
 }

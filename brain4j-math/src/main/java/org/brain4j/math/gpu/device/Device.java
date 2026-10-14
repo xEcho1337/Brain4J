@@ -1,6 +1,9 @@
 package org.brain4j.math.gpu.device;
 
-import org.brain4j.math.tensor.TensorKey;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Supplier;
+
 import org.silicon.api.Silicon;
 import org.silicon.api.cache.MemoryPool;
 import org.silicon.api.cache.Pooled;
@@ -9,15 +12,11 @@ import org.silicon.api.device.ComputeContext;
 import org.silicon.api.device.ComputeDevice;
 import org.silicon.api.kernel.ComputeQueue;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Supplier;
+import org.brain4j.math.tensor.TensorKey;
 
 /**
  * GPU device backed by the Silicon compute API.
- *
- * <p>The historical Brain4J type name is preserved while the implementation no
- * longer exposes raw native handles.
+ * Use it to allocate buffers and run kernels on one GPU.
  */
 public class Device {
 
@@ -30,10 +29,16 @@ public class Device {
     private final int deviceIndex;
     private Thread threadContext;
 
+    /**
+     * Opens the default GPU (index 0).
+     */
     public Device() {
         this(0);
     }
 
+    /**
+     * Opens the GPU at the given index.
+     */
     public Device(int deviceIndex) {
         try {
             this.deviceIndex = deviceIndex;
@@ -51,12 +56,16 @@ public class Device {
 
     private void ensureSameThread() {
         Thread current = Thread.currentThread();
+
         if (current != threadContext) {
             context.syncThread();
             threadContext = current;
         }
     }
 
+    /**
+     * Waits for pending work, then releases pooled buffers.
+     */
     public synchronized void createResources() {
         ensureSameThread();
 
@@ -70,6 +79,11 @@ public class Device {
         }
     }
 
+    /**
+     * Returns a pooled buffer for the given key, allocating on a miss.
+     *
+     * @return the acquired buffer
+     */
     public synchronized ComputeBuffer acquire(TensorKey key, Supplier<ComputeBuffer> allocator) {
         ensureSameThread();
 
@@ -79,6 +93,11 @@ public class Device {
         return pooled.value();
     }
 
+    /**
+     * Allocates a GPU buffer initialized from the given data.
+     *
+     * @return the new buffer
+     */
     public ComputeBuffer createBuffer(float[] data) {
         ensureSameThread();
 
@@ -89,6 +108,11 @@ public class Device {
         }
     }
 
+    /**
+     * Allocates a GPU buffer initialized from the given data.
+     *
+     * @return the new buffer
+     */
     public ComputeBuffer createBuffer(int[] data) {
         ensureSameThread();
 
@@ -99,6 +123,11 @@ public class Device {
         }
     }
 
+    /**
+     * Allocates an uninitialized GPU buffer of the given byte size.
+     *
+     * @return the new buffer
+     */
     public ComputeBuffer createBuffer(long byteSize) {
         ensureSameThread();
 
@@ -109,30 +138,63 @@ public class Device {
         }
     }
 
+    /**
+     * Returns the buffer pool for tensor memory.
+     *
+     * @return the memory pool
+     */
     public MemoryPool<TensorKey> memoryPool() {
         return memoryPool;
     }
 
+    /**
+     * Returns the device display name.
+     *
+     * @return the device name
+     */
     public String name() {
         return name;
     }
 
+    /**
+     * Returns the device index.
+     *
+     * @return the index passed at construction
+     */
     public int deviceIndex() {
         return deviceIndex;
     }
 
+    /**
+     * Returns the underlying Silicon device.
+     *
+     * @return the compute device
+     */
     public ComputeDevice device() {
         return device;
     }
 
+    /**
+     * Returns the compute context for this device.
+     *
+     * @return the compute context
+     */
     public ComputeContext context() {
         return context;
     }
 
+    /**
+     * Returns the command queue for this device.
+     *
+     * @return the compute queue
+     */
     public ComputeQueue queue() {
         return queue;
     }
 
+    /**
+     * Waits for pending work, then frees the queue and pool.
+     */
     public synchronized void free() {
         ensureSameThread();
 
@@ -144,6 +206,9 @@ public class Device {
         memoryPool.free();
     }
 
+    /**
+     * Waits for pending work, then closes pooled buffers.
+     */
     public synchronized void closeResources() {
         ensureSameThread();
 
@@ -155,6 +220,9 @@ public class Device {
         pooledQueue.clear();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String toString() {
         return "Device{" +

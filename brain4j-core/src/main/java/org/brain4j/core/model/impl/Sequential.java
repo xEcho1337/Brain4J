@@ -1,5 +1,13 @@
 package org.brain4j.core.model.impl;
 
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.brain4j.core.Brain4J;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.layer.Node;
@@ -11,10 +19,10 @@ import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.tensor.Tensor;
 
-import java.text.DecimalFormat;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
-
+/**
+ * Linear stack of layers evaluated in order.
+ * Use it for feed-forward architectures built from {@link ModelSpecs}.
+ */
 public record Sequential(Graph graph, ModelSpecs specs, Device device, List<Layer> layers, int seed) implements Model, ModelBlock {
 
     public Sequential {
@@ -23,6 +31,13 @@ public record Sequential(Graph graph, ModelSpecs specs, Device device, List<Laye
         }
     }
 
+    /**
+     * Chains the specs layers and builds the backing graph.
+     *
+     * @param specs the compiled specs (not null)
+     * @param device the target device ({@code null} for CPU)
+     * @param seed the weight initialization seed
+     */
     public Sequential(ModelSpecs specs, Device device, int seed) {
         List<Layer> layers = specs.buildLayerList();
 
@@ -35,6 +50,9 @@ public record Sequential(Graph graph, ModelSpecs specs, Device device, List<Laye
         this(Graph.of(seed, lastNode), specs, device, specs.buildLayerList(), seed);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor[] predict(StatesCache cache, Tensor... inputs) {
         if (device != null && !cache.isTraining()) {
@@ -50,6 +68,9 @@ public record Sequential(Graph graph, ModelSpecs specs, Device device, List<Laye
         return out;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Sequential fork(Device device) {
         Graph newGraph = graph.fork(device);
@@ -57,9 +78,14 @@ public record Sequential(Graph graph, ModelSpecs specs, Device device, List<Laye
         return new Sequential(newGraph, specs.copy(), device, newLayers, graph.seed());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Sequential to(Device device) {
-        if (Objects.equals(this.device, device)) return this;
+        if (Objects.equals(this.device, device)) {
+            return this;
+        }
 
         for (Layer layer : layers) {
             layer.to(device);
@@ -68,11 +94,17 @@ public record Sequential(Graph graph, ModelSpecs specs, Device device, List<Laye
         return new Sequential(graph, specs, device, layers, seed);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Device device() {
         return device;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void summary() {
         Brain4J.fixConsole();
@@ -92,7 +124,7 @@ public record Sequential(Graph graph, ModelSpecs specs, Device device, List<Laye
 
         append(pattern, stats, format, totalParams, trainableParams);
 
-        byte floatSize = Float.BYTES; // 4 bytes
+        byte floatSize = Float.BYTES;
 
         long totalParameters = totalParams.get();
         long trainableParameters = trainableParams.get();
@@ -111,6 +143,9 @@ public record Sequential(Graph graph, ModelSpecs specs, Device device, List<Laye
         Arrays.stream(stats.toString().split("\n")).forEach(System.out::println);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Sequential copy() {
         Graph newGraph = graph.copy();
@@ -118,20 +153,36 @@ public record Sequential(Graph graph, ModelSpecs specs, Device device, List<Laye
         return new Sequential(newGraph, specs.copy(), device, newLayers, graph.seed());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void appendTo(List<Layer> layers) {
         layers.addAll(getLayers());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Layer> getLayers() {
         return Collections.unmodifiableList(layers);
     }
 
+    /**
+     * Returns the specs this model was compiled from.
+     *
+     * @return the model specs
+     */
     public ModelSpecs specs() {
         return specs;
     }
 
+    /**
+     * Returns the backing computation graph.
+     *
+     * @return the backing graph
+     */
     public Graph graph() {
         return graph;
     }

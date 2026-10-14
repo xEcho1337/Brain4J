@@ -1,5 +1,14 @@
 package org.brain4j.math;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
+import java.util.SplittableRandom;
+import java.util.concurrent.ForkJoinPool;
+import java.util.random.RandomGenerator;
+import java.util.stream.IntStream;
+
 import org.brain4j.math.commons.Range;
 import org.brain4j.math.convolution.im2col.Im2ColParams;
 import org.brain4j.math.convolution.im2col.Im2ColTask;
@@ -7,11 +16,6 @@ import org.brain4j.math.operations.ParallelConvolve;
 import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.impl.CpuTensor;
-
-import java.util.*;
-import java.util.concurrent.ForkJoinPool;
-import java.util.random.RandomGenerator;
-import java.util.stream.IntStream;
 
 /**
  * Static utility methods for creating, initializing and manipulating {@link Tensor} instances.
@@ -368,11 +372,11 @@ public class Tensors {
      */
     public static Tensor concatGrad(List<Tensor> tensors, int dim) {
         Tensor base = tensors.getFirst();
-        
+
         for (int i = 1; i < tensors.size(); i++) {
             base = base.concatGrad(tensors.get(i), dim);
         }
-        
+
         return base;
     }
 
@@ -581,19 +585,35 @@ public class Tensors {
             .toArray();
     }
 
+    /**
+     * Broadcasts two shapes following NumPy rules.
+     *
+     * @return the broadcast shape
+     * @throws IllegalArgumentException if shapes are incompatible
+     */
     public static int[] broadcastShapes(int[] a, int[] b) {
         int len = Math.max(a.length, b.length);
         int[] result = new int[len];
+
         for (int i = 0; i < len; i++) {
             int ai = i >= len - a.length ? a[i - (len - a.length)] : 1;
             int bi = i >= len - b.length ? b[i - (len - b.length)] : 1;
-            if (ai != bi && ai != 1 && bi != 1)
+
+            if (ai != bi && ai != 1 && bi != 1) {
                 throw new IllegalArgumentException("Incompatible dimensions for broadcasting");
+            }
+
             result[i] = Math.max(ai, bi);
         }
+
         return result;
     }
 
+    /**
+     * Maps an output index back to a broadcast input index.
+     *
+     * @return the index within the target shape
+     */
     public static int[] broadcastIndex(int[] outIdx, int[] outShape, int[] targetShape) {
         int offset = outShape.length - targetShape.length;
         int[] result = new int[targetShape.length];
@@ -604,7 +624,12 @@ public class Tensors {
 
         return result;
     }
-    
+
+    /**
+     * Flattens a multidimensional index using the given strides.
+     *
+     * @return the linear index
+     */
     public static int flattenIndex(int[] idx, int[] strides) {
         int sum = 0;
 
@@ -614,7 +639,12 @@ public class Tensors {
 
         return sum;
     }
-    
+
+    /**
+     * Computes row-major strides for the given shape.
+     *
+     * @return the stride array
+     */
     public static int[] computeStrides(int[] shape) {
         int[] strides = new int[shape.length];
         int prod = 1;
@@ -626,7 +656,12 @@ public class Tensors {
 
         return strides;
     }
-    
+
+    /**
+     * Converts a linear index into multidimensional indices.
+     *
+     * @return the indices within the given shape
+     */
     public static int[] unravelIndex(int linearIndex, int[] shape) {
         int[] indices = new int[shape.length];
 
@@ -638,6 +673,11 @@ public class Tensors {
         return indices;
     }
 
+    /**
+     * Returns the element count for the given shape.
+     *
+     * @return the total number of elements
+     */
     public static int computeSize(int[] shape) {
         int size = 1;
 
@@ -648,6 +688,13 @@ public class Tensors {
         return size;
     }
 
+    /**
+     * Returns the shape left after reducing one dimension.
+     *
+     * @param dim dimension to reduce, negative counts from the end
+     * @param keepDim true to keep the dimension with size 1
+     * @return the new shape
+     */
     public static int[] computeNewShape(int[] shape, int dim, boolean keepDim) {
         int[] newShape = keepDim ? Arrays.copyOf(shape, shape.length) : new int[shape.length - 1];
 

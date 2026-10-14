@@ -1,44 +1,34 @@
 package org.brain4j.core.model;
 
-import org.brain4j.core.importing.format.BinaryFormat;
-import org.brain4j.core.layer.Layer;
-import org.brain4j.math.Copyable;
-import org.brain4j.math.Tensors;
-import org.brain4j.math.commons.Batch;
-import org.brain4j.math.commons.Range;
-import org.brain4j.math.loss.LossFunction;
-import org.brain4j.core.training.wrappers.EvaluationResult;
-import org.brain4j.math.data.ListDataSource;
-import org.brain4j.math.data.StatesCache;
-import org.brain4j.math.gpu.device.Device;
-import org.brain4j.math.loss.impl.BinaryCrossEntropy;
-import org.brain4j.math.tensor.Tensor;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.brain4j.core.layer.Layer;
+import org.brain4j.core.training.wrappers.EvaluationResult;
+import org.brain4j.math.Copyable;
+import org.brain4j.math.Tensors;
+import org.brain4j.math.commons.Batch;
+import org.brain4j.math.commons.Range;
+import org.brain4j.math.data.ListDataSource;
+import org.brain4j.math.data.StatesCache;
+import org.brain4j.math.gpu.device.Device;
+import org.brain4j.math.loss.LossFunction;
+import org.brain4j.math.loss.impl.BinaryCrossEntropy;
+import org.brain4j.math.tensor.Tensor;
+
 /**
- * Represents a generic neural network model.
- * <p>
- * A {@code Model} defines the forward computation logic, device placement
- * and structural introspection capabilities (layers and specifications),
- * without prescribing a specific training implementation.
- * </p>
+ * Defines the forward computation and structural introspection of a neural network.
+ * Use it as the entry point for prediction, evaluation and device placement.
  *
  * @author xEcho1337
  */
 public interface Model extends Copyable<Model> {
-    
+
     /**
-     * Performs a full forward pass using a temporary {@link StatesCache}
-     * and returns the first output tensor.
-     * <p>
-     * This is a convenience method for single-input, single-output models.
-     * </p>
+     * Runs a forward pass and returns the first output tensor.
      *
-     * @param inputs the input tensors
      * @return the first output tensor produced by the model
      */
     default Tensor predict(Tensor... inputs) {
@@ -46,34 +36,23 @@ public interface Model extends Copyable<Model> {
     }
 
     /**
-     * Performs a full forward pass on the model using the provided cache.
-     * <p>
-     * The cache is used to store intermediate states required by certain
-     * layers (e.g. for training or recurrent architectures).
-     * </p>
+     * Runs a forward pass using the given cache for intermediate states.
      *
-     * @param cache  the cache used during this forward pass
-     * @param inputs one or more input tensors
-     * @return an array containing all output tensors of the model
+     * @return all output tensors of the model
      */
     Tensor[] predict(StatesCache cache, Tensor... inputs);
-    
+
     /**
-     * Returns the device on which the model parameters are currently stored.
-     * @return the device associated with this model
+     * Returns the device holding this model parameters.
+     *
+     * @return the associated device, or {@code null} for CPU
      */
     Device device();
 
     /**
-     * Evaluates the model on the given dataset.
-     * <p>
-     * This method runs inference over the entire dataset and computes
-     * task-specific evaluation metrics (e.g. accuracy, loss).
-     * </p>
+     * Evaluates the model over the given dataset.
      *
-     * @param dataSource the dataset to evaluate the model on
-     * @param lossFunction the loss function to use
-     * @return an {@link EvaluationResult} containing evaluation metrics
+     * @return an {@link EvaluationResult} containing loss and metrics
      */
     default EvaluationResult evaluate(ListDataSource dataSource, LossFunction lossFunction) {
         int classes = Math.max(2, dataSource.getSamples().getFirst().getLabel(0).elements());
@@ -96,16 +75,11 @@ public interface Model extends Copyable<Model> {
 
         return new EvaluationResult(totalLoss.get() / dataSource.getSize(), classes, classifications);
     }
-    
+
     /**
-     * Calculates the average loss on the given dataset.
-     * <p>
-     * This method works similarly to {@link Model#evaluate},
-     * but it's much less RAM consuming.
-     * </p>
-     * @param dataSource the dataset to evaluate the model on
-     * @param lossFunction the loss function to use
-     * @return a value representing the average loss on the entire dataset
+     * Computes the average loss over the given dataset.
+     *
+     * @return the average loss over all samples
      */
     default double loss(ListDataSource dataSource, LossFunction lossFunction) {
         Map<Integer, Tensor> classifications = new HashMap<>();
@@ -120,39 +94,33 @@ public interface Model extends Copyable<Model> {
 
         return totalLoss.get() / dataSource.getSize();
     }
-    
+
     /**
      * Prints a formatted summary of the model architecture to the console.
-     * <p>
-     * The summary typically includes:
-     * <ul>
-     *   <li>Layer types and order</li>
-     *   <li>Input and output shapes</li>
-     *   <li>Number of parameters per layer</li>
-     *   <li>Total number of trainable parameters</li>
-     * </ul>
      *
      * @throws IllegalStateException if the model has not been properly initialized
      */
     void summary();
-    
+
+    /**
+     * Creates an independent copy of this model on the given device.
+     *
+     * @param device the target device ({@code null} for CPU)
+     * @return an independent copy stored on the given device
+     */
     Model fork(Device device);
 
     /**
      * Moves this model to the given device and returns it for chaining.
-     * <p>
-     * Unlike {@link #fork(Device)}, which creates an independent copy,
-     * this method moves the parameters in place. Always use the returned
-     * instance going forward.
-     * </p>
      *
      * @param device the device to move the model to ({@code null} for CPU)
      * @return this model, now stored on the given device
      */
     Model to(Device device);
-    
+
     /**
-     * Returns an immutable view of the layers composing this object, in order.
+     * Returns the layers composing this model, in order.
+     *
      * @return an unmodifiable list of layers
      */
     List<Layer> getLayers();
@@ -168,7 +136,9 @@ public interface Model extends Copyable<Model> {
 
         Device device = device();
 
-        if (device != null) device.createResources();
+        if (device != null) {
+            device.createResources();
+        }
 
         StatesCache cache = new StatesCache(false);
         Tensor[] outputs = predict(cache, inputs);
@@ -177,8 +147,8 @@ public interface Model extends Copyable<Model> {
             int batchSize = input.shapeAt(0);
 
             for (int i = 0; i < outputs.length; i++) {
-                Tensor output = outputs[i].to(null); // GPU -> CPU
-                Tensor label = labels[i].to(null);   // GPU -> CPU
+                Tensor output = outputs[i].to(null);
+                Tensor label = labels[i].to(null);
 
                 for (int b = 0; b < batchSize; b++) {
                     Range range = Range.point(b);
@@ -207,6 +177,8 @@ public interface Model extends Copyable<Model> {
             }
         }
 
-        if (device != null) device.closeResources();
+        if (device != null) {
+            device.closeResources();
+        }
     }
 }

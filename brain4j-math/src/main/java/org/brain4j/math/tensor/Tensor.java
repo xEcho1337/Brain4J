@@ -1,5 +1,7 @@
 package org.brain4j.math.tensor;
 
+import java.util.function.Supplier;
+
 import org.brain4j.math.Copyable;
 import org.brain4j.math.activation.Activation;
 import org.brain4j.math.activation.impl.ReLU;
@@ -9,9 +11,22 @@ import org.brain4j.math.commons.D2DFunction;
 import org.brain4j.math.commons.Range;
 import org.brain4j.math.tensor.autograd.AutogradContext;
 import org.brain4j.math.tensor.autograd.Operation;
-import org.brain4j.math.tensor.autograd.impl.*;
-
-import java.util.function.Supplier;
+import org.brain4j.math.tensor.autograd.impl.ActivationOperation;
+import org.brain4j.math.tensor.autograd.impl.AddOperation;
+import org.brain4j.math.tensor.autograd.impl.ConcatOperation;
+import org.brain4j.math.tensor.autograd.impl.ConvolveOperation;
+import org.brain4j.math.tensor.autograd.impl.DivOperation;
+import org.brain4j.math.tensor.autograd.impl.GatherOperation;
+import org.brain4j.math.tensor.autograd.impl.LayerNormOperation;
+import org.brain4j.math.tensor.autograd.impl.MatMulOperation;
+import org.brain4j.math.tensor.autograd.impl.MaxPoolOperation;
+import org.brain4j.math.tensor.autograd.impl.MulOperation;
+import org.brain4j.math.tensor.autograd.impl.ReshapeOperation;
+import org.brain4j.math.tensor.autograd.impl.RMSNormOperation;
+import org.brain4j.math.tensor.autograd.impl.SliceOperation;
+import org.brain4j.math.tensor.autograd.impl.SqueezeOperation;
+import org.brain4j.math.tensor.autograd.impl.SubOperation;
+import org.brain4j.math.tensor.autograd.impl.TransposeOperation;
 
 /**
  * A multidimensional array that supports vectorized operations.
@@ -163,7 +178,7 @@ public interface Tensor extends Iterable<Float>, Copyable<Tensor> {
      * If the tensor is already on the target device, returns this tensor.
      * Otherwise creates a new tensor on the target device with a copy of the data.
      *
-     * @param device target device (Device, Device, or null for CPU)
+     * @param device target device (Device or null for CPU)
      * @return tensor on the target device
      */
     Tensor to(Object device);
@@ -751,10 +766,28 @@ public interface Tensor extends Iterable<Float>, Copyable<Tensor> {
      */
     Tensor matmulGrad(Tensor other);
 
+    /**
+     * Delegates to {@link #forward(Operation, Tensor)} using {@link LayerNormOperation}.
+     * @param weight the scale tensor
+     * @param bias the shift tensor
+     * @param epsilon small constant avoiding division by zero
+     * @return the resulting tensor from the operation
+     */
     Tensor layerNormGrad(Tensor weight, Tensor bias, double epsilon);
 
+    /**
+     * Delegates to {@link #forward(Operation, Tensor)} using {@link RMSNormOperation}.
+     * @param weight the scale tensor
+     * @param epsilon small constant avoiding division by zero
+     * @return the resulting tensor from the operation
+     */
     Tensor rmsNormGrad(Tensor weight, double epsilon);
 
+    /**
+     * Delegates to {@link #forward(Operation, Tensor)} using {@link GatherOperation}.
+     * @param table the embedding table to gather from
+     * @return the resulting tensor from the operation
+     */
     Tensor gatherGrad(Tensor table);
 
     /**
@@ -883,6 +916,10 @@ public interface Tensor extends Iterable<Float>, Copyable<Tensor> {
         return activateAuto(new Tanh());
     }
     
+    /**
+     * Moves this tensor back to CPU memory.
+     * @return the tensor on CPU
+     */
     default Tensor cpu() {
         return to(null);
     }
