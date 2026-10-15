@@ -38,7 +38,6 @@ public class MermaidExporter implements GraphExporter {
      * Create an exporter with the given layout and detail level.
      *
      * @param detailed include constant weights when {@code true}
-     * @return the new exporter
      */
     public MermaidExporter(Direction direction, boolean detailed) {
         this.direction = direction;

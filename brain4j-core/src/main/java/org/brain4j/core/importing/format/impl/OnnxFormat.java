@@ -432,8 +432,6 @@ public class OnnxFormat implements BinaryFormat<Graph> {
 
         /**
          * Create a layer for the given operation and wiring.
-         *
-         * @return the new layer
          */
         public OnnxOperationLayer(Operation op, List<String> inputNames, Map<String, Tensor> constants) {
             this.op = op;

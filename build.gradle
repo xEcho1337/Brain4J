@@ -85,6 +85,9 @@ subprojects {
         toolchain {
             languageVersion = JavaLanguageVersion.of(javaVersion)
         }
+
+        withSourcesJar()
+        withJavadocJar()
     }
 
     tasks.withType(JavaCompile).configureEach {
