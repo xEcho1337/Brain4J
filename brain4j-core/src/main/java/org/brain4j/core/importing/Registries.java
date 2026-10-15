@@ -3,11 +3,6 @@ package org.brain4j.core.importing;
 import org.brain4j.core.importing.format.GeneralRegistry;
 import org.brain4j.core.importing.onnx.ProtoOnnx.NodeProto;
 import org.brain4j.core.layer.Layer;
-import org.brain4j.math.loss.LossFunction;
-import org.brain4j.math.loss.impl.BinaryCrossEntropy;
-import org.brain4j.math.loss.impl.CrossEntropy;
-import org.brain4j.math.loss.impl.MeanAbsoluteError;
-import org.brain4j.math.loss.impl.MeanSquaredError;
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.core.training.optimizer.impl.Adam;
 import org.brain4j.core.training.optimizer.impl.AdamW;
@@ -17,17 +12,40 @@ import org.brain4j.core.training.updater.Updater;
 import org.brain4j.core.training.updater.impl.NormalUpdater;
 import org.brain4j.core.training.updater.impl.StochasticUpdater;
 import org.brain4j.math.activation.Activation;
-import org.brain4j.math.activation.impl.*;
+import org.brain4j.math.activation.impl.GELU;
+import org.brain4j.math.activation.impl.LeakyReLU;
+import org.brain4j.math.activation.impl.ReLU;
+import org.brain4j.math.activation.impl.Sigmoid;
+import org.brain4j.math.activation.impl.Softmax;
+import org.brain4j.math.activation.impl.Tanh;
 import org.brain4j.math.clipper.GradientClipper;
+import org.brain4j.math.loss.LossFunction;
+import org.brain4j.math.loss.impl.BinaryCrossEntropy;
+import org.brain4j.math.loss.impl.CrossEntropy;
+import org.brain4j.math.loss.impl.MeanAbsoluteError;
+import org.brain4j.math.loss.impl.MeanSquaredError;
 import org.brain4j.math.scaler.FeatureScaler;
 import org.brain4j.math.scaler.impl.MinMaxScaler;
 import org.brain4j.math.scaler.impl.ZScoreScaler;
 import org.brain4j.math.tensor.autograd.Operation;
-import org.brain4j.math.tensor.autograd.impl.*;
+import org.brain4j.math.tensor.autograd.impl.ActivationOperation;
+import org.brain4j.math.tensor.autograd.impl.AddOperation;
+import org.brain4j.math.tensor.autograd.impl.ConcatOperation;
+import org.brain4j.math.tensor.autograd.impl.DivOperation;
+import org.brain4j.math.tensor.autograd.impl.GemmOperation;
+import org.brain4j.math.tensor.autograd.impl.LayerNormOperation;
+import org.brain4j.math.tensor.autograd.impl.MatMulOperation;
+import org.brain4j.math.tensor.autograd.impl.MulOperation;
+import org.brain4j.math.tensor.autograd.impl.SqueezeOperation;
+import org.brain4j.math.tensor.autograd.impl.SubOperation;
 import org.brain4j.math.weightsinit.WeightInit;
 
+/**
+ * Holds shared registries for importable components.
+ * Use it to resolve operations, optimizers, losses and related types by id.
+ */
 public class Registries {
-    
+
     public static final GeneralRegistry<Operation, NodeProto> ONNX_OPERATIONS_REGISTRY = new GeneralRegistry<>();
     public static final GeneralRegistry<Optimizer, Object> OPTIMIZERS_REGISTRY = new GeneralRegistry<>();
     public static final GeneralRegistry<LossFunction, Object> LOSS_FUNCTION_REGISTRY = new GeneralRegistry<>();
@@ -70,34 +88,21 @@ public class Registries {
         ONNX_OPERATIONS_REGISTRY.register("Softmax", ActivationOperation.class);
         ONNX_OPERATIONS_REGISTRY.register("LayerNormalization", (node) -> {
             float epsilon = node.getAttribute(0).getF();
-            return new LayerNormOperation( epsilon);
+            return new LayerNormOperation(epsilon);
         });
-        
+
         OPTIMIZERS_REGISTRY.register("adam", Adam.class);
         OPTIMIZERS_REGISTRY.register("adamw", AdamW.class);
         OPTIMIZERS_REGISTRY.register("gradient_descent", GradientDescent.class);
         OPTIMIZERS_REGISTRY.register("lion", Lion.class);
-        
+
         UPDATERS_REGISTRY.register("stochastic", StochasticUpdater.class);
         UPDATERS_REGISTRY.register("normal", NormalUpdater.class);
-        
+
         LOSS_FUNCTION_REGISTRY.register("binary_cross_entropy", BinaryCrossEntropy.class);
         LOSS_FUNCTION_REGISTRY.register("cross_entropy", CrossEntropy.class);
         LOSS_FUNCTION_REGISTRY.register("mean_absolute_error", MeanAbsoluteError.class);
         LOSS_FUNCTION_REGISTRY.register("mean_squared_error", MeanSquaredError.class);
-
-//        LAYER_REGISTRY.register("dropout", DropoutLayer.class);
-//        LAYER_REGISTRY.register("lstm", LSTMLayer.class);
-//        LAYER_REGISTRY.register("recurrent", RecurrentLayer.class);
-//
-//        LAYER_REGISTRY.register("embedding", EmbeddingLayer.class);
-//        LAYER_REGISTRY.register("positional_encode", PosEncodeLayer.class);
-//        LAYER_REGISTRY.register("transformer_decoder", TransformerDecoder.class);
-//        LAYER_REGISTRY.register("transformer_encoder", TransformerEncoder.class);
-//
-//        LAYER_REGISTRY.register("activation", ActivationLayer.class);
-//        LAYER_REGISTRY.register("slice", SliceLayer.class);
-//        LAYER_REGISTRY.register("squeeze", SqueezeLayer.class);
 
         SCALER_REGISTRY.register("z_score", ZScoreScaler.class);
         SCALER_REGISTRY.register("min_max", MinMaxScaler.class);

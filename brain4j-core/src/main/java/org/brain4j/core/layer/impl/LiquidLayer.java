@@ -1,57 +1,65 @@
 package org.brain4j.core.layer.impl;
 
-import org.brain4j.core.layer.Layer;
-import org.brain4j.math.Tensors;
-import org.brain4j.math.activation.Activations;
-import org.brain4j.math.commons.Commons;
-import org.brain4j.math.commons.Range;
-import org.brain4j.math.data.StatesCache;
-import org.brain4j.math.gpu.device.Device;
-import org.brain4j.math.tensor.Shape;
-import org.brain4j.math.tensor.Tensor;
-import org.brain4j.math.tensor.impl.GpuTensor;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.random.RandomGenerator;
 
+import org.brain4j.core.layer.Layer;
+import org.brain4j.math.Tensors;
+import org.brain4j.math.activation.Activation;
+import org.brain4j.math.activation.Activations;
+import org.brain4j.math.commons.Commons;
+import org.brain4j.math.commons.Range;
+import org.brain4j.math.data.StatesCache;
+import org.brain4j.math.tensor.Shape;
+import org.brain4j.math.tensor.Tensor;
+import org.brain4j.math.tensor.impl.GpuTensor;
+
 /**
- * Liquid Time-Constant (LTC) recurrent layer.
- *
- * <p>Per timestep the hidden state evolves as:</p>
- * <blockquote><pre>
- *     h += (dt / tau) * (tanh(W_in x + b_in + W_rec h + b_rec) - h)
- *     tau = tauMin + softplus(W_tau x + b_tau)
- * </pre></blockquote>
- *
- * <p>Inputs: {@code x [batch, timesteps, features]}, optionally
- * {@code deltas [batch, timesteps]} with per-step time gaps (defaults to 1).
- * Output: {@code [batch, timesteps, hidden]} if {@code returnSequences},
- * otherwise {@code [batch, hidden]}.
+ * Integrates a liquid time-constant recurrent state over time steps.
+ * Use it for irregularly sampled sequences where adaptive dynamics help.
  */
 public class LiquidLayer extends Layer {
 
+    /**
+     * Holds hidden size, solver steps, minimum time constant and output mode.
+     */
     public record Config(int hiddenDimension, int solverSteps, double tauMin, boolean returnSequences) {}
 
     protected final Config config;
 
+    /**
+     * Create a layer with default solver settings.
+     */
     public LiquidLayer(int hiddenDimension) {
         this(hiddenDimension, 6, 0.5, true);
     }
 
+    /**
+     * Create a layer with the given solver steps and output mode.
+     */
     public LiquidLayer(int hiddenDimension, int solverSteps, boolean returnSequences) {
         this(hiddenDimension, solverSteps, 0.5, returnSequences);
     }
 
+    /**
+     * Create a layer with the given solver steps, time floor and output mode.
+     */
     public LiquidLayer(int hiddenDimension, int solverSteps, double tauMin, boolean returnSequences) {
         this(new Config(hiddenDimension, solverSteps, tauMin, returnSequences));
     }
 
+    /**
+     * Create a layer with the given config.
+     */
     public LiquidLayer(Config config) {
         this.config = config;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void build(List<Shape> inputShapes) {
         int features = inputShapes.getFirst().last();
@@ -65,6 +73,9 @@ public class LiquidLayer extends Layer {
         registerParam("bias_tau", Tensors.zeros(hidden));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void initWeights(List<Shape> inputShapes, RandomGenerator rng) {
         int features = inputShapes.getFirst().last();
@@ -75,6 +86,9 @@ public class LiquidLayer extends Layer {
         generateWeights("weights_tau", rng, features, hidden);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Shape> inferOutputShapes(List<Shape> inputShapes) {
         Shape first = inputShapes.getFirst();
@@ -93,6 +107,9 @@ public class LiquidLayer extends Layer {
         return List.of(Shape.of(config.hiddenDimension));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
         if (inputs.length < 1 || inputs.length > 2) {
@@ -139,13 +156,11 @@ public class LiquidLayer extends Layer {
         for (int t = 0; t < timesteps; t++) {
             Tensor xt = input.sliceGrad(Range.all(), Range.point(t), Range.all()).squeezeGrad(1);
 
-            // tau in (tauMin, +inf), fully differentiable (no hard clamp)
             Tensor tauAct = xt.matmulGrad(wTau).addGrad(bTau).activateGrad(softplus);
             Tensor tau = tauAct.addGrad(fullLike(xt, batch, hidden, (float) config.tauMin));
 
             Tensor proj = xt.matmulGrad(wIn).addGrad(bIn);
 
-            // Per-step time gaps, shared across substeps ([B, 1], no grad needed).
             Tensor dtCol = deltas == null ? null
                 : deltas.slice(Range.all(), Range.point(t));
 
@@ -167,7 +182,7 @@ public class LiquidLayer extends Layer {
 
     private Tensor eulerStep(Tensor h, Tensor proj, Tensor tau, Tensor dtCol,
                              int batch, int hidden, Tensor wRec, Tensor bRec,
-                             org.brain4j.math.activation.Activation tanh) {
+                             Activation tanh) {
         Tensor numer = fullLike(h, batch, hidden, (float) (1.0 / config.solverSteps));
 
         if (dtCol != null) {
@@ -193,13 +208,22 @@ public class LiquidLayer extends Layer {
         return full.plus(value);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Layer copy() {
         LiquidLayer copy = new LiquidLayer(config);
         copyParameters(copy);
+
         return copy;
     }
 
+    /**
+     * Return the layer config.
+     *
+     * @return the config
+     */
     public Config config() {
         return config;
     }

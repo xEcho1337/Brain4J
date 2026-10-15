@@ -1,5 +1,8 @@
 package org.brain4j.math.clipper.impl;
 
+import org.silicon.api.device.ComputeBuffer;
+import org.silicon.api.kernel.ComputeSize;
+
 import org.brain4j.math.clipper.GradientClipper;
 import org.brain4j.math.gpu.GpuContext;
 import org.brain4j.math.gpu.device.Device;
@@ -7,13 +10,17 @@ import org.brain4j.math.gpu.kernel.KernelFactory;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.impl.CpuTensor;
 import org.brain4j.math.tensor.impl.GpuTensor;
-import org.silicon.api.device.ComputeBuffer;
-import org.silicon.api.kernel.ComputeSize;
 
+/**
+ * Scales gradients exceeding an L2 threshold. Use it for stable large-batch training.
+ */
 public record L2Clipper(double scale) implements GradientClipper {
 
     private static final int REDUCTION_BLOCK_SIZE = 256;
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void clipCpu(CpuTensor grad) {
         double threshold = scale * Math.sqrt(grad.elements());
@@ -21,13 +28,18 @@ public record L2Clipper(double scale) implements GradientClipper {
 
         if (norm > threshold) {
             float scaleFactor = (float) (threshold / norm);
+
             grad.mul(scaleFactor);
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void clipGpu(GpuTensor grad) {
         int length = grad.size();
+
         if (length == 0) {
             return;
         }
@@ -62,11 +74,19 @@ public record L2Clipper(double scale) implements GradientClipper {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String kernelName() {
         return "l2_clip";
     }
 
+    /**
+     * Computes the L2 norm of the given tensor.
+     *
+     * @return the Euclidean norm
+     */
     public double sumOfSquares(Tensor input) {
         double sumOfSquares = 0.0;
 
@@ -107,6 +127,7 @@ public record L2Clipper(double scale) implements GradientClipper {
             .launch(queue.queue(), new ComputeSize(partialCount * REDUCTION_BLOCK_SIZE, 1, 1), localSize);
 
         int currentCount = partialCount;
+
         while (currentCount > REDUCTION_BLOCK_SIZE) {
             int nextCount = ceilDiv(currentCount, REDUCTION_BLOCK_SIZE);
             ComputeBuffer next = device.createBuffer(new float[nextCount]);

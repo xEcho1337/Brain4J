@@ -2,21 +2,34 @@ package org.brain4j.core.codec.layer;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import org.brain4j.core.codec.JsonCodec;
 import org.brain4j.core.layer.impl.LiquidLayer;
 
+/**
+ * Codec for {@link LiquidLayer}.
+ */
 public class LiquidCodec implements JsonCodec<LiquidLayer> {
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String type() {
         return "liquid";
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Class<LiquidLayer> targetClass() {
         return LiquidLayer.class;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void write(LiquidLayer layer, ObjectNode out) {
         LiquidLayer.Config config = layer.config();
@@ -26,6 +39,9 @@ public class LiquidCodec implements JsonCodec<LiquidLayer> {
         out.put("return_sequences", config.returnSequences());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public LiquidLayer parse(JsonNode in) {
         return new LiquidLayer(

@@ -1,12 +1,34 @@
 package org.brain4j.core.importing.format.impl;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.zip.Deflater;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.brain4j.core.importing.io.LayerIO;
+
 import org.brain4j.core.importing.SafeTensors;
 import org.brain4j.core.importing.format.BinaryFormat;
+import org.brain4j.core.importing.io.LayerIO;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.model.ModelSpecs;
 import org.brain4j.core.model.impl.Sequential;
@@ -14,45 +36,47 @@ import org.brain4j.math.commons.Commons;
 import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 
-import java.io.*;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.charset.StandardCharsets;
-import java.time.Instant;
-import java.util.*;
-import java.util.zip.Deflater;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
+import static org.brain4j.core.importing.Registries.LAYER_REGISTRY;
 
-import static org.brain4j.core.importing.Registries.*;
-
+/**
+ * Stores sequential models as a zip with JSON config and safetensors weights.
+ * Use it as the default native Brain4J file format.
+ */
 public class BrainFormat implements BinaryFormat<Sequential> {
 
     public static final ObjectMapper MAPPER = new ObjectMapper();
     public static final int FORMAT_VERSION = 1;
-    
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Sequential deserialize(File file) {
         Map<String, byte[]> files = readZip(file);
+
         return deserializeModel(files);
     }
-    
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void serialize(Sequential model, File file) {
-        if (model.device() != null) model = model.fork(null);
-        
+        if (model.device() != null) {
+            model = model.fork(null);
+        }
+
         Map<String, Tensor> weights = new HashMap<>();
-        
+
         byte[] config = buildConfig(model, weights);
         byte[] weightData = buildWeights(weights);
-        
+
         writeZip(file, Map.of(
             "config.json", config,
             "weights.safetensors", weightData
         ));
     }
-    
+
     private Sequential deserializeModel(Map<String, byte[]> files) {
         try {
             byte[] specsData = files.get("config.json");
@@ -84,10 +108,10 @@ public class BrainFormat implements BinaryFormat<Sequential> {
                     if (!element.isTextual()) {
                         throw Commons.illegalArgument("All weights must be strings");
                     }
-                    
+
                     ids.add(element.asText());
                 }
-                
+
                 layerWeights.put(index, ids);
             }
 
@@ -106,29 +130,30 @@ public class BrainFormat implements BinaryFormat<Sequential> {
             Layer[] layers = architectureMap.values().toArray(new Layer[0]);
             Sequential model = ModelSpecs.of(Shape.of(dims), layers).compile();
             List<Layer> compiledLayers = model.getLayers();
-            
+
             for (int i = 0; i < compiledLayers.size(); i++) {
                 Layer layer = compiledLayers.get(i);
                 Map<String, Tensor> params = layer.parameters();
                 List<String> ids = layerWeights.getOrDefault(i, Collections.emptyList());
-                
+
                 for (String id : ids) {
                     String[] parts = id.split("\\.", 3);
+
                     if (parts.length != 3) {
                         throw Commons.illegalArgument("Invalid weight id format: %s", id);
                     }
-                    
+
                     String name = parts[2];
                     Tensor param = weights.get(id);
-                    
+
                     if (param == null) {
                         throw Commons.illegalArgument("Missing tensor '%s' in safetensors payload", id);
                     }
-                    
+
                     params.put(name, param.withGrad());
                 }
             }
-            
+
             return model;
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -177,6 +202,7 @@ public class BrainFormat implements BinaryFormat<Sequential> {
             }
 
             root.set("architecture", architecture);
+
             return MAPPER.writeValueAsBytes(root);
         } catch (Exception e) {
             throw new RuntimeException("Failed to build config", e);
@@ -200,6 +226,7 @@ public class BrainFormat implements BinaryFormat<Sequential> {
                 ObjectNode info = MAPPER.createObjectNode();
 
                 ArrayNode shape = MAPPER.createArrayNode();
+
                 for (int d : tensor.shape()) {
                     shape.add(d);
                 }
@@ -240,38 +267,39 @@ public class BrainFormat implements BinaryFormat<Sequential> {
             }
 
             return result.array();
-
         } catch (Exception e) {
             throw new RuntimeException("Failed to build weights", e);
         }
     }
-            
+
     private Map<String, byte[]> readZip(File file) {
         Map<String, byte[]> result = new HashMap<>();
-        
+
         try (ZipInputStream zis = new ZipInputStream(new FileInputStream(file))) {
             ZipEntry entry;
             byte[] buffer = new byte[8192];
-            
+
             while ((entry = zis.getNextEntry()) != null) {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 int read;
+
                 while ((read = zis.read(buffer)) != -1) {
                     baos.write(buffer, 0, read);
                 }
+
                 result.put(entry.getName(), baos.toByteArray());
             }
         } catch (IOException e) {
             throw new RuntimeException("Failed to read model zip", e);
         }
-        
+
         return result;
     }
-    
+
     private void writeZip(File file, Map<String, byte[]> files) {
         try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(file))) {
             zos.setLevel(Deflater.BEST_SPEED);
-            
+
             for (var entry : files.entrySet()) {
                 ZipEntry ze = new ZipEntry(entry.getKey());
                 zos.putNextEntry(ze);

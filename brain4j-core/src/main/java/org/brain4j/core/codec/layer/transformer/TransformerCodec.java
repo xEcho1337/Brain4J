@@ -1,7 +1,10 @@
 package org.brain4j.core.codec.layer.transformer;
 
+import java.util.function.Supplier;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import org.brain4j.core.codec.JsonCodec;
 import org.brain4j.core.importing.io.LayerIO;
 import org.brain4j.core.layer.Layer;
@@ -12,12 +15,17 @@ import org.brain4j.math.activation.Activation;
 import org.brain4j.math.activation.impl.GELU;
 import org.brain4j.math.commons.Commons;
 
-import java.util.function.Supplier;
-
 import static org.brain4j.core.importing.format.impl.BrainFormat.MAPPER;
 
+/**
+ * JSON codec helpers for {@link Transformer} blocks.
+ * Shares config encoding between encoders and decoders.
+ */
 public interface TransformerCodec<T extends Transformer<?>> extends JsonCodec<T> {
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     default void write(T value, ObjectNode out) {
         Transformer.Config config = value.config();
@@ -31,6 +39,11 @@ public interface TransformerCodec<T extends Transformer<?>> extends JsonCodec<T>
         writeNorm(config, out);
     }
 
+    /**
+     * Rebuild transformer configuration from JSON.
+     *
+     * @return parsed configuration
+     */
     default Transformer.Config readConfig(JsonNode in) {
         int heads = in.get("num_heads").asInt();
         int dim = in.get("embedding_dim").asInt();
@@ -44,6 +57,11 @@ public interface TransformerCodec<T extends Transformer<?>> extends JsonCodec<T>
         return new Transformer.Config(dim, projDim, heads, dropout, gating, activation, normSupplier);
     }
 
+    /**
+     * Write an activation with its codec into JSON.
+     *
+     * @throws IllegalArgumentException if the activation type is unknown
+     */
     default void writeActivation(Activation activation, ObjectNode out) {
         JsonCodec<Activation> codec = (JsonCodec<Activation>) LayerIO.ACTIVATION_CODECS.get(activation.getClass());
 
@@ -65,12 +83,22 @@ public interface TransformerCodec<T extends Transformer<?>> extends JsonCodec<T>
         out.set("activation", node);
     }
 
+    /**
+     * Write the norm layer discriminator into JSON.
+     */
     default void writeNorm(Transformer.Config config, ObjectNode out) {
         Layer normInstance = config.normSupplier().get();
         JsonCodec<? extends Layer> codec = (JsonCodec<? extends Layer>) LayerIO.LAYER_CODECS.get(normInstance.getClass());
         out.put("norm", codec.type());
     }
 
+    /**
+     * Parse an activation from JSON, defaulting to GELU.
+     *
+     * @param node JSON node holding the activation, may be null
+     * @return parsed activation
+     * @throws IllegalArgumentException if the activation type is unknown
+     */
     default Activation parseActivation(JsonNode node) {
         if (node == null) {
             return new GELU();
@@ -97,6 +125,13 @@ public interface TransformerCodec<T extends Transformer<?>> extends JsonCodec<T>
         return codec.parse(config);
     }
 
+    /**
+     * Parse a norm supplier from JSON, defaulting to norm.
+     *
+     * @param node JSON node holding the norm discriminator, may be null
+     * @return norm supplier
+     * @throws IllegalArgumentException if the norm type is unknown
+     */
     default Supplier<Layer> parseNormSupplier(JsonNode node) {
         if (node == null) {
             return NormLayer::new;

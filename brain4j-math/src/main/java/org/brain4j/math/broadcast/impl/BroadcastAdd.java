@@ -2,13 +2,20 @@ package org.brain4j.math.broadcast.impl;
 
 import jdk.incubator.vector.FloatVector;
 import jdk.incubator.vector.VectorSpecies;
+
 import org.brain4j.math.broadcast.BaseBroadcast;
 import org.brain4j.math.tensor.Tensor;
 
+/**
+ * Broadcast addition. Use it to add tensors of compatible shapes in place.
+ */
 public class BroadcastAdd extends BaseBroadcast {
 
     private static final VectorSpecies<Float> SPECIES = FloatVector.SPECIES_PREFERRED;
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected void sameShape(float[] a, float[] b) {
         for (int i = 0; i < a.length; i++) {
@@ -16,6 +23,9 @@ public class BroadcastAdd extends BaseBroadcast {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected void sameShapeSimd(float[] a, float[] b) {
         int bound = SPECIES.loopBound(a.length);
@@ -33,6 +43,9 @@ public class BroadcastAdd extends BaseBroadcast {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected void rowWise(float[] a, float[] b, int batch, int dim) {
         for (int r = 0; r < batch; r++) {
@@ -44,6 +57,9 @@ public class BroadcastAdd extends BaseBroadcast {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected void rowWiseSimd(float[] a, float[] b, int batch, int dim) {
         int bound = SPECIES.loopBound(dim);
@@ -65,6 +81,9 @@ public class BroadcastAdd extends BaseBroadcast {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected void bias(Tensor output, Tensor biasTensor) {
         float[] out = output.data();
@@ -88,6 +107,9 @@ public class BroadcastAdd extends BaseBroadcast {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected void biasSimd(Tensor output, Tensor biasTensor) {
         float[] out = output.data();
@@ -119,6 +141,9 @@ public class BroadcastAdd extends BaseBroadcast {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected float scalar(float a, float b) {
         return a + b;

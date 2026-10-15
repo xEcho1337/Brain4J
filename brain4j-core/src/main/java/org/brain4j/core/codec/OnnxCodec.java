@@ -5,10 +5,7 @@ import org.brain4j.math.tensor.autograd.Operation;
 
 /**
  * ONNX specialization of {@link Codec} for {@link Operation}s.
- * The codec is responsible for translating an operation to/from ONNX {@code NodeProto} attributes.
- * <p>
- * The container ({@code OnnxFormat}) handles wiring of input/output tensor names;
- * the codec only adds/reads attributes and creates the operation instance.
+ * Translates operation attributes to and from ONNX {@code NodeProto} messages.
  *
  * @param <T> operation type
  */

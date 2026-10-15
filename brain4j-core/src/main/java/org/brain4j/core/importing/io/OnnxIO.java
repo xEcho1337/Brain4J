@@ -1,19 +1,55 @@
 package org.brain4j.core.importing.io;
 
-import org.brain4j.core.codec.OnnxCodec;
-import org.brain4j.core.codec.onnx.*;
-import org.brain4j.core.importing.onnx.ProtoOnnx.NodeProto;
-import org.brain4j.math.activation.Activation;
-import org.brain4j.math.activation.impl.*;
-import org.brain4j.math.commons.Commons;
-import org.brain4j.math.tensor.autograd.Operation;
-import org.brain4j.math.tensor.autograd.impl.ActivationOperation;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.brain4j.core.codec.OnnxCodec;
+import org.brain4j.core.codec.onnx.AddOnnxCodec;
+import org.brain4j.core.codec.onnx.ConcatOnnxCodec;
+import org.brain4j.core.codec.onnx.DivOnnxCodec;
+import org.brain4j.core.codec.onnx.EluOnnxCodec;
+import org.brain4j.core.codec.onnx.GeluOnnxCodec;
+import org.brain4j.core.codec.onnx.GemmOnnxCodec;
+import org.brain4j.core.codec.onnx.LayerNormOnnxCodec;
+import org.brain4j.core.codec.onnx.LeakyReluOnnxCodec;
+import org.brain4j.core.codec.onnx.LinearOnnxCodec;
+import org.brain4j.core.codec.onnx.MatMulOnnxCodec;
+import org.brain4j.core.codec.onnx.MishOnnxCodec;
+import org.brain4j.core.codec.onnx.MulOnnxCodec;
+import org.brain4j.core.codec.onnx.ReluOnnxCodec;
+import org.brain4j.core.codec.onnx.ReshapeOnnxCodec;
+import org.brain4j.core.codec.onnx.SigmoidOnnxCodec;
+import org.brain4j.core.codec.onnx.SliceOnnxCodec;
+import org.brain4j.core.codec.onnx.SoftPlusOnnxCodec;
+import org.brain4j.core.codec.onnx.SoftmaxOnnxCodec;
+import org.brain4j.core.codec.onnx.SqueezeOnnxCodec;
+import org.brain4j.core.codec.onnx.SubOnnxCodec;
+import org.brain4j.core.codec.onnx.SwishOnnxCodec;
+import org.brain4j.core.codec.onnx.TanhOnnxCodec;
+import org.brain4j.core.codec.onnx.TransposeOnnxCodec;
+import org.brain4j.core.importing.onnx.ProtoOnnx.NodeProto;
+import org.brain4j.math.activation.Activation;
+import org.brain4j.math.activation.impl.ELU;
+import org.brain4j.math.activation.impl.GELU;
+import org.brain4j.math.activation.impl.LeakyReLU;
+import org.brain4j.math.activation.impl.Linear;
+import org.brain4j.math.activation.impl.Mish;
+import org.brain4j.math.activation.impl.ReLU;
+import org.brain4j.math.activation.impl.Sigmoid;
+import org.brain4j.math.activation.impl.SoftPlus;
+import org.brain4j.math.activation.impl.Softmax;
+import org.brain4j.math.activation.impl.Swish;
+import org.brain4j.math.activation.impl.Tanh;
+import org.brain4j.math.commons.Commons;
+import org.brain4j.math.tensor.autograd.Operation;
+import org.brain4j.math.tensor.autograd.impl.ActivationOperation;
+
+/**
+ * Maps ONNX op types to codecs for import and export.
+ * Use it to decode nodes and encode operations.
+ */
 public final class OnnxIO {
 
     private static final Map<String, OnnxCodec<? extends Operation>> BY_TYPE = new HashMap<>();
@@ -34,21 +70,18 @@ public final class OnnxIO {
     );
 
     static {
-        // stateless
         register(new AddOnnxCodec());
         register(new SubOnnxCodec());
         register(new MulOnnxCodec());
         register(new DivOnnxCodec());
         register(new MatMulOnnxCodec());
         register(new GemmOnnxCodec());
-        // stateful
         register(new ConcatOnnxCodec());
         register(new SqueezeOnnxCodec());
         register(new LayerNormOnnxCodec());
         register(new ReshapeOnnxCodec());
         register(new TransposeOnnxCodec());
         register(new SliceOnnxCodec());
-        // activations (one codec per ONNX type, same targetClass)
         register(new ReluOnnxCodec());
         register(new SigmoidOnnxCodec());
         register(new TanhOnnxCodec());
@@ -62,38 +95,61 @@ public final class OnnxIO {
         register(new LinearOnnxCodec());
     }
 
-    private OnnxIO() {}
+    private OnnxIO() {
+    }
 
     private static void register(OnnxCodec<? extends Operation> codec) {
         if (BY_TYPE.put(codec.type(), codec) != null) {
             throw Commons.illegalState("Duplicate ONNX codec type: %s", codec.type());
         }
+
         ALL.add(codec);
     }
 
+    /**
+     * Find the codec for the given ONNX op type.
+     *
+     * @return the codec, or {@code null} if missing
+     */
     public static OnnxCodec<? extends Operation> get(String type) {
         return BY_TYPE.get(type);
     }
 
+    /**
+     * Decode a node into its operation.
+     *
+     * @param node the source node
+     * @return the operation, or {@code null} if unknown
+     */
     @SuppressWarnings("unchecked")
     public static Operation decode(NodeProto node) {
         OnnxCodec<? extends Operation> codec = BY_TYPE.get(node.getOpType());
 
-        if (codec == null) return null;
+        if (codec == null) {
+            return null;
+        }
 
         OnnxCodec<Operation> c = (OnnxCodec<Operation>) codec;
+
         return c.decode(node);
     }
 
+    /**
+     * Find the ONNX op type for the given operation.
+     *
+     * @return the op type, or {@code null} if missing
+     */
     public static String encodeType(Operation op) {
         if (op instanceof ActivationOperation(Activation activation)) {
             String t = ACTIVATION_TO_ONNX.get(activation.getClass());
-            if (t != null) return t;
+
+            if (t != null) {
+                return t;
+            }
         }
 
         for (OnnxCodec<? extends Operation> codec : ALL) {
             if (codec.targetClass().isInstance(op)) {
-                // For ActivationOperation, ensure the codec's type matches the activation
                 if (op instanceof ActivationOperation) {
                     continue;
                 }
@@ -102,18 +158,25 @@ public final class OnnxIO {
             }
         }
 
-        // Fallback for ActivationOperation if not found via map (should not happen)
         if (op instanceof ActivationOperation(Activation activation)) {
             return ACTIVATION_TO_ONNX.getOrDefault(activation.getClass(), null);
         }
+
         return null;
     }
 
+    /**
+     * Encode an operation into the given node builder.
+     *
+     * @param builder the target builder
+     */
     @SuppressWarnings("unchecked")
     public static void encode(Operation op, NodeProto.Builder builder) {
         OnnxCodec<? extends Operation> codec = findCodecForOp(op);
 
-        if (codec == null) return;
+        if (codec == null) {
+            return;
+        }
 
         OnnxCodec<Operation> c = (OnnxCodec<Operation>) codec;
         c.encode(op, builder);
@@ -122,16 +185,22 @@ public final class OnnxIO {
     private static OnnxCodec<? extends Operation> findCodecForOp(Operation op) {
         if (op instanceof ActivationOperation(Activation activation)) {
             String t = ACTIVATION_TO_ONNX.get(activation.getClass());
-            if (t != null) return BY_TYPE.get(t);
+
+            if (t != null) {
+                return BY_TYPE.get(t);
+            }
         }
 
         for (OnnxCodec<? extends Operation> codec : ALL) {
-            if (codec.targetClass().equals(op.getClass()))
+            if (codec.targetClass().equals(op.getClass())) {
                 return codec;
+            }
 
-            if (codec.targetClass().isInstance(op) && !(op instanceof ActivationOperation))
+            if (codec.targetClass().isInstance(op) && !(op instanceof ActivationOperation)) {
                 return codec;
+            }
         }
+
         return null;
     }
 }

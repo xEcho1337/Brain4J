@@ -5,18 +5,30 @@ import org.brain4j.core.importing.onnx.ProtoOnnx.AttributeProto;
 import org.brain4j.core.importing.onnx.ProtoOnnx.NodeProto;
 import org.brain4j.math.tensor.autograd.impl.ConcatOperation;
 
+/**
+ * ONNX codec for {@link ConcatOperation}.
+ */
 public class ConcatOnnxCodec implements OnnxCodec<ConcatOperation> {
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String type() {
         return "Concat";
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Class<ConcatOperation> targetClass() {
         return ConcatOperation.class;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void encode(ConcatOperation op, NodeProto.Builder builder) {
         builder.addAttribute(AttributeProto.newBuilder()
@@ -26,6 +38,9 @@ public class ConcatOnnxCodec implements OnnxCodec<ConcatOperation> {
             .build());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ConcatOperation decode(NodeProto node) {
         int axis = findInt(node, "axis", 0);
@@ -34,10 +49,17 @@ public class ConcatOnnxCodec implements OnnxCodec<ConcatOperation> {
 
     private static int findInt(NodeProto node, String name, int def) {
         for (AttributeProto attr : node.getAttributeList()) {
-            if (name.equals(attr.getName())) return (int) attr.getI();
+            if (name.equals(attr.getName())) {
+                return (int) attr.getI();
+            }
         }
+
         // fallback to first attribute for legacy files
-        if (node.getAttributeCount() > 0) return (int) node.getAttribute(0).getI();
+
+        if (node.getAttributeCount() > 0) {
+            return (int) node.getAttribute(0).getI();
+        }
+
         return def;
     }
 }

@@ -1,5 +1,8 @@
 package org.brain4j.core.layer.impl;
 
+import java.util.List;
+import java.util.random.RandomGenerator;
+
 import org.brain4j.core.layer.Layer;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.activation.Activation;
@@ -9,28 +12,44 @@ import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 
-import java.util.List;
-import java.util.random.RandomGenerator;
-
+/**
+ * Applies an affine projection with bias and activation.
+ * Use it as the standard fully connected block in MLPs and heads.
+ */
 public class DenseLayer extends Layer {
 
+    /**
+     * Holds the output size and activation.
+     */
     public record Config(int outDimension, Activation activation) {}
 
     protected final Config config;
 
+    /**
+     * Create a layer with linear activation.
+     */
     public DenseLayer(int outDimension) {
         this(new Config(outDimension, new Linear()));
     }
 
+    /**
+     * Create a layer with the given activation.
+     */
     public DenseLayer(int outDimension, Activation activation) {
         this(new Config(outDimension, activation));
     }
 
+    /**
+     * Create a layer with the given config.
+     */
     public DenseLayer(Config config) {
         super(config.activation);
         this.config = config;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void build(List<Shape> inputShapes) {
         Shape inputShape = inputShapes.getFirst();
@@ -42,11 +61,17 @@ public class DenseLayer extends Layer {
         registerParam("bias", bias);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void initWeights(List<Shape> inputShapes, RandomGenerator rng) {
         generateWeights("weights", rng, inputShapes.getFirst().last(), config.outDimension);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Shape> inferOutputShapes(List<Shape> inputShapes) {
         if (inputShapes.size() != 1) {
@@ -64,6 +89,9 @@ public class DenseLayer extends Layer {
         return List.of(Shape.of(outShape));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
         Tensor input = inputs[0];
@@ -72,21 +100,30 @@ public class DenseLayer extends Layer {
             throw Commons.illegalArgument("Dense requires tensors to be rank 2 or higher");
         }
 
-        Tensor W = getParam("weights");
-        Tensor B = getParam("bias");
+        Tensor w = getParam("weights");
+        Tensor b = getParam("bias");
 
-        Tensor proj = input.matmulGrad(W).addGrad(B);
+        Tensor proj = input.matmulGrad(w).addGrad(b);
 
         return tensors(proj.activateGrad(activation));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public DenseLayer copy() {
         DenseLayer copy = new DenseLayer(config);
         copyParameters(copy);
+
         return copy;
     }
 
+    /**
+     * Return the layer config.
+     *
+     * @return the config
+     */
     public Config config() {
         return config;
     }

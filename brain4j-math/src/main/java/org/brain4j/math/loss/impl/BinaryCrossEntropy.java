@@ -3,12 +3,21 @@ package org.brain4j.math.loss.impl;
 import org.brain4j.math.loss.LossFunction;
 import org.brain4j.math.tensor.Tensor;
 
+/**
+ * Binary cross-entropy with optional class weights. Use it for binary or multi-label classification.
+ */
 public record BinaryCrossEntropy(Tensor classWeights) implements LossFunction {
 
+    /**
+     * Creates an unweighted binary cross-entropy.
+     */
     public BinaryCrossEntropy() {
         this(null);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public double calculate(Tensor actual, Tensor predicted) {
         double loss = 0.0;
@@ -30,25 +39,31 @@ public record BinaryCrossEntropy(Tensor classWeights) implements LossFunction {
         return loss / actual.shapeAt(0);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor delta(Tensor output, Tensor target, Tensor derivative) {
         Tensor error = output.minus(target);
 
-        if (classWeights == null) return error;
+        if (classWeights == null) {
+            return error;
+        }
 
         float w0 = classWeights.get(0);
         float w1 = classWeights.get(1);
 
-        // W = y * w1 + (1 - y) * w0
         Tensor oneMinusTarget = target.mul(-1).plus(1);
         Tensor weightOne = target.times(w1);
         Tensor weightZero = oneMinusTarget.times(w0);
         Tensor W = weightOne.plus(weightZero);
 
-        // delta = error * W
         return error.mul(W);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean isRegression() {
         return false;

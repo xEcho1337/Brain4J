@@ -1,16 +1,21 @@
 package org.brain4j.math.operations.matmul.impl;
 
-import jdk.incubator.vector.FloatVector;
-import jdk.incubator.vector.VectorSpecies;
-import org.brain4j.math.operations.matmul.MatmulParameters;
-import org.brain4j.math.operations.matmul.MatmulProvider;
-import org.brain4j.math.tensor.Tensor;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveAction;
 
+import jdk.incubator.vector.FloatVector;
+import jdk.incubator.vector.VectorSpecies;
+
+import org.brain4j.math.operations.matmul.MatmulParameters;
+import org.brain4j.math.operations.matmul.MatmulProvider;
+import org.brain4j.math.tensor.Tensor;
+
+/**
+ * Multiplies matrices with SIMD vectors in parallel. Use it on platforms
+ * supporting the incubator vector API for faster products.
+ */
 public class SIMDMatMulProvider implements MatmulProvider {
 
     private static final VectorSpecies<Float> SPECIES = FloatVector.SPECIES_PREFERRED;
@@ -30,39 +35,50 @@ public class SIMDMatMulProvider implements MatmulProvider {
         return work > SPLIT_WORK_THRESHOLD && work * np > SPLIT_COMPLEXITY_THRESHOLD;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void multiply(Tensor a, Tensor b, Tensor c) {
         float[] A = a.data();
         float[] B = b.data();
         float[] C = c.data();
-        
+
         int rankA = a.rank();
         int rankB = b.rank();
-        
+
         int[] shapeA = a.shape();
         int[] shapeB = b.shape();
         int[] shapeC = c.shape();
-        
+
         int batchA = 1;
         int batchB = 1;
         int batch = 1;
-        
-        for (int i = 0; i < rankA - 2; i++) batchA *= shapeA[i];
-        for (int i = 0; i < rankB - 2; i++) batchB *= shapeB[i];
-        for (int i = 0; i < shapeC.length - 2; i++) batch *= shapeC[i];
-        
+
+        for (int i = 0; i < rankA - 2; i++) {
+            batchA *= shapeA[i];
+        }
+
+        for (int i = 0; i < rankB - 2; i++) {
+            batchB *= shapeB[i];
+        }
+
+        for (int i = 0; i < shapeC.length - 2; i++) {
+            batch *= shapeC[i];
+        }
+
         int m = shapeA[rankA - 2];
         int n = shapeA[rankA - 1];
         int p = shapeB[rankB - 1];
-        
+
         MatmulParameters parameters = new MatmulParameters(A, B, C, m, n, p, a.transposed(), b.transposed(), batchA, batchB);
-        
+
         int work = batch * m;
-        
+
         int mn = m * n;
         int np = n * p;
         int mp = m * p;
-        
+
         if (!isOverParallelThreshold(work, np)) {
             matmulBlock(A, B, C, 0, work, m, n, p, mn, np, mp, batchA, batchB,
                 parameters.transposedA(), parameters.transposedB());
@@ -79,6 +95,7 @@ public class SIMDMatMulProvider implements MatmulProvider {
             if (startIndex < endIndex) {
                 actions.add(new VectorAction(parameters, startIndex, endIndex));
             }
+
         }
 
         ForkJoinTask.invokeAll(actions);
@@ -115,14 +132,13 @@ public class SIMDMatMulProvider implements MatmulProvider {
             int rowC = offsetC + i * p;
 
             for (int t = 0; t < n; t++) {
-                // a[row][t]: row-major A is a[row * n + t], its transpose is a[t * m + i]
                 float aVal = transA ? a[offsetA + t * m + i] : a[offsetA + i * n + t];
 
                 if (transB) {
-                    // B is a transposed view: B[t][j] lives at raw index j * n + t
                     for (int j = 0; j < p; j++) {
                         c[rowC + j] += aVal * b[offsetB + j * n + t];
                     }
+
                 } else {
                     int colB = offsetB + t * p;
 
@@ -137,11 +153,15 @@ public class SIMDMatMulProvider implements MatmulProvider {
                     for (; j < p; j++) {
                         c[rowC + j] += aVal * b[colB + j];
                     }
+
                 }
+
             }
+
         }
+
     }
-    
+
     private void matmulGeneric(
         float[] a, float[] b, float[] c,
         int start, int end,
@@ -164,6 +184,7 @@ public class SIMDMatMulProvider implements MatmulProvider {
                     for (int j = 0; j < p; j++) {
                         c[rowC + j] += aVal * b[bj + j * n + t];
                     }
+
                 } else {
                     int colB = bj + t * p;
 
@@ -178,9 +199,13 @@ public class SIMDMatMulProvider implements MatmulProvider {
                     for (; j < p; j++) {
                         c[rowC + j] += aVal * b[colB + j];
                     }
+
                 }
+
             }
+
         }
+
     }
     
     private class VectorAction extends RecursiveAction {
@@ -195,11 +220,14 @@ public class SIMDMatMulProvider implements MatmulProvider {
             this.end = end;
         }
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         protected void compute() {
             int np = parameters.np();
             int work = end - start;
-            
+
             if (isOverSplitThreshold(work, np)) {
                 int mid = (start + end) >>> 1;
                 invokeAll(
@@ -216,6 +244,7 @@ public class SIMDMatMulProvider implements MatmulProvider {
                     parameters.transposedA(), parameters.transposedB()
                 );
             }
+
         }
     }
 }

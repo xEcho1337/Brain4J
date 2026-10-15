@@ -1,26 +1,38 @@
 package org.brain4j.core.codec.onnx;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.brain4j.core.codec.OnnxCodec;
 import org.brain4j.core.importing.onnx.ProtoOnnx.AttributeProto;
 import org.brain4j.core.importing.onnx.ProtoOnnx.NodeProto;
 import org.brain4j.math.commons.Range;
 import org.brain4j.math.tensor.autograd.impl.SliceOperation;
 
-import java.util.ArrayList;
-import java.util.List;
-
+/**
+ * ONNX codec for {@link SliceOperation}.
+ */
 public class SliceOnnxCodec implements OnnxCodec<SliceOperation> {
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String type() {
         return "Slice";
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Class<SliceOperation> targetClass() {
         return SliceOperation.class;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void encode(SliceOperation op, NodeProto.Builder builder) {
         Range[] ranges = op.ranges();
@@ -51,6 +63,9 @@ public class SliceOnnxCodec implements OnnxCodec<SliceOperation> {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public SliceOperation decode(NodeProto node) {
         List<Integer> starts = ints(node, "starts");
@@ -65,10 +80,15 @@ public class SliceOnnxCodec implements OnnxCodec<SliceOperation> {
         int rank = ends.isEmpty() ? starts.size() : Math.max(starts.size(), ends.size());
 
         if (axes.isEmpty()) {
-            for (int d = 0; d < rank; d++) axes.add(d);
+            for (int d = 0; d < rank; d++) {
+                axes.add(d);
+            }
         }
+
         if (steps.isEmpty()) {
-            for (int d = 0; d < rank; d++) steps.add(1);
+            for (int d = 0; d < rank; d++) {
+                steps.add(1);
+            }
         }
 
         Range[] ranges = new Range[rank];
@@ -87,9 +107,13 @@ public class SliceOnnxCodec implements OnnxCodec<SliceOperation> {
 
     private static List<Integer> ints(NodeProto node, String name) {
         List<Integer> values = new ArrayList<>();
+
         for (AttributeProto attr : node.getAttributeList()) {
-            if (name.equals(attr.getName())) values.add((int) attr.getI());
+            if (name.equals(attr.getName())) {
+                values.add((int) attr.getI());
+            }
         }
+
         return values;
     }
 }

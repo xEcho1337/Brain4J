@@ -2,27 +2,43 @@ package org.brain4j.core.codec.layer;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import org.brain4j.core.codec.JsonCodec;
 import org.brain4j.core.layer.impl.transformer.PosEncodeLayer;
 
+/**
+ * Codec for {@link PosEncodeLayer}.
+ */
 public class PosEncodeCodec implements JsonCodec<PosEncodeLayer> {
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String type() {
         return "pos_encode";
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Class<PosEncodeLayer> targetClass() {
         return PosEncodeLayer.class;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void write(PosEncodeLayer layer, ObjectNode out) {
         out.put("length", layer.config().length());
         out.put("dimension", layer.config().dimension());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public PosEncodeLayer parse(JsonNode in) {
         int length = in.get("length").asInt();

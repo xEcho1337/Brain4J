@@ -1,5 +1,11 @@
 package org.brain4j.core.layer.impl.transformer;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.random.RandomGenerator;
+
 import org.brain4j.core.layer.Layer;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.commons.Commons;
@@ -9,27 +15,39 @@ import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.impl.GpuTensor;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.random.RandomGenerator;
-
+/**
+ * Adds sinusoidal positional encodings to embeddings.
+ * Use it after embeddings to inject sequence order.
+ */
 public class PosEncodeLayer extends Layer {
 
+    /**
+     * Holds max length and embedding width.
+     */
     public record Config(int length, int dimension) {}
 
     private final Map<Integer, Tensor> embeddings = new HashMap<>();
     protected final Config config;
 
+    /**
+     * Create a layer with the given config.
+     */
     public PosEncodeLayer(Config config) {
         this.config = config;
     }
 
+    /**
+     * Create a layer with the given length and width.
+     */
     public PosEncodeLayer(int length, int dimension) {
         this(new Config(length, dimension));
     }
 
+    /**
+     * Create a layer initialized from the given weight table.
+     *
+     * @param weights the table with shape [length, dimension]
+     */
     public PosEncodeLayer(int length, int dimension, Tensor weights) {
         this.config = new Config(length, dimension);
 
@@ -39,10 +57,16 @@ public class PosEncodeLayer extends Layer {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void build(List<Shape> inputShapes) {
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void initWeights(List<Shape> inputShapes, RandomGenerator rng) {
         for (int i = 0; i < config.length; i++) {
@@ -50,6 +74,9 @@ public class PosEncodeLayer extends Layer {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Shape> inferOutputShapes(List<Shape> inputShapes) {
         if (inputShapes.size() != 1) {
@@ -70,6 +97,9 @@ public class PosEncodeLayer extends Layer {
         return List.of(inputShape);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
         Tensor input = inputs[0];
@@ -95,18 +125,30 @@ public class PosEncodeLayer extends Layer {
 
         Tensor output = input.addGrad(positional);
 
-        if (input instanceof GpuTensor gpuTensor) output = output.to(gpuTensor.getDevice());
+        if (input instanceof GpuTensor gpuTensor) {
+            output = output.to(gpuTensor.getDevice());
+        }
 
         return new Tensor[] { output };
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Layer copy() {
         PosEncodeLayer copy = new PosEncodeLayer(config);
         copy.embeddings.putAll(embeddings);
+
         return copy;
     }
 
+    /**
+     * Generate the sinusoidal encoding for one position.
+     *
+     * @param embeddingDim the encoding width, must be positive
+     * @return the encoding row with shape [1, embeddingDim]
+     */
     public Tensor generate(int position, int embeddingDim) {
         Tensor token = Tensors.zeros(embeddingDim);
 
@@ -122,10 +164,20 @@ public class PosEncodeLayer extends Layer {
         return token.reshape(1, embeddingDim);
     }
 
+    /**
+     * Return the layer config.
+     *
+     * @return the config
+     */
     public Config config() {
         return config;
     }
 
+    /**
+     * Return cached positional rows by index.
+     *
+     * @return the embeddings map
+     */
     public Map<Integer, Tensor> embeddings() {
         return embeddings;
     }

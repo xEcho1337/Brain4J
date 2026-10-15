@@ -1,23 +1,52 @@
 package org.brain4j.math.gpu.ops;
 
+import java.util.Arrays;
+
+import org.silicon.api.kernel.ComputeSize;
+
 import org.brain4j.math.gpu.GpuContext;
 import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.gpu.kernel.KernelFactory;
 import org.brain4j.math.tensor.impl.GpuTensor;
-import org.silicon.api.kernel.ComputeSize;
 
-import java.util.Arrays;
-
+/**
+ * Runs fused scaled dot-product attention on GPU. Use it for memory-efficient
+ * forward and backward attention without materializing the score matrix.
+ */
 public final class FlashAttention {
 
     private static final int TILE_SIZE = 16;
 
     private FlashAttention() {}
 
+    /**
+     * Holds forward output with per-row log-sum-exp. Use it when the backward
+     * pass needs rescaling statistics.
+     *
+     * @param output attention output
+     * @param lse log-sum-exp per query position
+     */
     public record ForwardResult(GpuTensor output, GpuTensor lse) {}
 
+    /**
+     * Holds gradients for query, key, and value. Use it to update attention inputs.
+     *
+     * @param dQ query gradient
+     * @param dK key gradient
+     * @param dV value gradient
+     */
     public record BackwardResult(GpuTensor dQ, GpuTensor dK, GpuTensor dV) {}
 
+    /**
+     * Run attention forward without returning statistics.
+     *
+     * @param query query tensor [batch, heads, seq, headDim]
+     * @param key key tensor with the query shape
+     * @param value value tensor with the query shape
+     * @param scale softmax scale
+     * @param causal whether to mask future positions
+     * @return attention output
+     */
     public static GpuTensor forward(
         GpuTensor query,
         GpuTensor key,
@@ -32,6 +61,16 @@ public final class FlashAttention {
         return output;
     }
 
+    /**
+     * Run attention forward and keep log-sum-exp.
+     *
+     * @param query query tensor [batch, heads, seq, headDim]
+     * @param key key tensor with the query shape
+     * @param value value tensor with the query shape
+     * @param scale softmax scale
+     * @param causal whether to mask future positions
+     * @return output and log-sum-exp
+     */
     public static ForwardResult forwardWithLse(
         GpuTensor query,
         GpuTensor key,
@@ -47,6 +86,16 @@ public final class FlashAttention {
         return new ForwardResult(output, lse);
     }
 
+    /**
+     * Run tiled attention forward for small head dimensions.
+     *
+     * @param query query tensor [batch, heads, seq, headDim]
+     * @param key key tensor with the query shape
+     * @param value value tensor with the query shape
+     * @param scale softmax scale
+     * @param causal whether to mask future positions
+     * @return output and log-sum-exp
+     */
     public static ForwardResult forwardTiled(
         GpuTensor query,
         GpuTensor key,
@@ -55,6 +104,7 @@ public final class FlashAttention {
         boolean causal
     ) {
         ShapeInfo shape = validateForwardInputs(query, key, value);
+
         if (shape.headDim > 64) {
             throw new IllegalArgumentException("Tiled FlashAttention supports headDim <= 64, got " + shape.headDim);
         }
@@ -66,6 +116,19 @@ public final class FlashAttention {
         return new ForwardResult(output, lse);
     }
 
+    /**
+     * Run attention backward.
+     *
+     * @param query forward query
+     * @param key forward key
+     * @param value forward value
+     * @param output forward output
+     * @param gradOutput upstream output gradient
+     * @param lse forward log-sum-exp
+     * @param scale softmax scale
+     * @param causal whether forward used a causal mask
+     * @return query, key, and value gradients
+     */
     public static BackwardResult backward(
         GpuTensor query,
         GpuTensor key,
@@ -88,6 +151,19 @@ public final class FlashAttention {
         return new BackwardResult(dQ, dK, dV);
     }
 
+    /**
+     * Run tiled attention backward.
+     *
+     * @param query forward query
+     * @param key forward key
+     * @param value forward value
+     * @param output forward output
+     * @param gradOutput upstream output gradient
+     * @param lse forward log-sum-exp
+     * @param scale softmax scale
+     * @param causal whether forward used a causal mask
+     * @return query, key, and value gradients
+     */
     public static BackwardResult backwardTiled(
         GpuTensor query,
         GpuTensor key,
@@ -150,6 +226,7 @@ public final class FlashAttention {
         boolean causal
     ) {
         Device device = query.getDevice();
+
         try (GpuContext.QueueHandle queue = GpuContext.getOrCreateQueue(device)) {
             KernelFactory kernel = KernelFactory.create(device, kernelName)
                 .buffer(query.getDataBuffer())
@@ -177,6 +254,7 @@ public final class FlashAttention {
             } else {
                 kernel.launch(queue.queue(), global(shape));
             }
+
         }
     }
 
@@ -195,6 +273,7 @@ public final class FlashAttention {
         boolean causal
     ) {
         Device device = query.getDevice();
+
         try (GpuContext.QueueHandle queue = GpuContext.getOrCreateQueue(device)) {
             KernelFactory.create(device, kernelName)
                 .buffer(query.getDataBuffer())
@@ -236,6 +315,7 @@ public final class FlashAttention {
         boolean causal
     ) {
         Device device = query.getDevice();
+
         try (GpuContext.QueueHandle queue = GpuContext.getOrCreateQueue(device)) {
             KernelFactory.create(device, kernelName)
                 .buffer(query.getDataBuffer())
@@ -328,6 +408,7 @@ public final class FlashAttention {
             if (!first.getDevice().equals(other.getDevice())) {
                 throw new IllegalArgumentException("All FlashAttention tensors must be on the same GPU device");
             }
+
         }
     }
 

@@ -1,10 +1,10 @@
 package org.brain4j.math;
 
-/*
- * All constants are calculated through default strictfp directive to avoid precision loss
+/**
+ * Shared math and training constants. Use it for colors, pi variants, and thresholds.
  */
 public final class Constants {
-    
+
     private Constants() {
     }
 
@@ -44,4 +44,4 @@ public final class Constants {
     public static final int MAX_WORKGROUP_SIZE = 1024;
     public static final int WORK_THRESHOLD = 1024;
     public static final double PRECISION_THRESHOLD = 1e-7;
-} 
+}

@@ -6,8 +6,17 @@ import org.brain4j.math.tensor.autograd.Operation;
 
 import java.util.Arrays;
 
+/**
+ * Concatenates two tensors along one dimension. Use it to record joins in the
+ * computation graph.
+ *
+ * @param dimension concatenation axis, -1 selects the last axis
+ */
 public record ConcatOperation(int dimension) implements Operation {
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor compute(Tensor... inputs) {
         if (dimension == -1) {
@@ -17,6 +26,9 @@ public record ConcatOperation(int dimension) implements Operation {
         return inputs[0].concat(inputs[1], dimension);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor[] backward(Tensor gradOutput, Tensor output, Tensor... inputs) {
         if (inputs.length != 2) {

@@ -3,8 +3,14 @@ package org.brain4j.math.broadcast.impl;
 import org.brain4j.math.broadcast.BaseBroadcast;
 import org.brain4j.math.tensor.Tensor;
 
+/**
+ * Broadcast power. Use it to raise tensors of compatible shapes in place.
+ */
 public class BroadcastPow extends BaseBroadcast {
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected void sameShape(float[] a, float[] b) {
         for (int i = 0; i < a.length; i++) {
@@ -12,11 +18,17 @@ public class BroadcastPow extends BaseBroadcast {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected void sameShapeSimd(float[] a, float[] b) {
         sameShape(a, b);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected void rowWise(float[] a, float[] b, int batch, int dim) {
         for (int r = 0; r < batch; r++) {
@@ -28,11 +40,17 @@ public class BroadcastPow extends BaseBroadcast {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected void rowWiseSimd(float[] a, float[] b, int batch, int dim) {
         rowWise(a, b, batch, dim);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected void bias(Tensor output, Tensor biasTensor) {
         float[] out = output.data();
@@ -56,11 +74,17 @@ public class BroadcastPow extends BaseBroadcast {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected void biasSimd(Tensor output, Tensor biasTensor) {
         bias(output, biasTensor);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected float scalar(float a, float b) {
         return (float) Math.pow(a, b);

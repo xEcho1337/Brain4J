@@ -2,17 +2,52 @@ package org.brain4j.core.importing.io;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import org.brain4j.core.codec.JsonCodec;
-import org.brain4j.core.codec.activation.*;
+import org.brain4j.core.codec.activation.ELUCodec;
+import org.brain4j.core.codec.activation.GELUCodec;
+import org.brain4j.core.codec.activation.LeakyReLUCodec;
+import org.brain4j.core.codec.activation.LinearCodec;
+import org.brain4j.core.codec.activation.MishCodec;
+import org.brain4j.core.codec.activation.ReLUCodec;
+import org.brain4j.core.codec.activation.SigmoidCodec;
+import org.brain4j.core.codec.activation.SoftPlusCodec;
+import org.brain4j.core.codec.activation.SoftmaxCodec;
+import org.brain4j.core.codec.activation.SwishCodec;
+import org.brain4j.core.codec.activation.TanhCodec;
 import org.brain4j.core.codec.clipper.HardClipperCodec;
 import org.brain4j.core.codec.clipper.L2ClipperCodec;
 import org.brain4j.core.codec.clipper.NoClipperCodec;
-import org.brain4j.core.codec.layer.*;
+import org.brain4j.core.codec.layer.ActivationCodec;
+import org.brain4j.core.codec.layer.ConcatCodec;
+import org.brain4j.core.codec.layer.ConvCodec;
+import org.brain4j.core.codec.layer.DenseCodec;
+import org.brain4j.core.codec.layer.DropoutCodec;
+import org.brain4j.core.codec.layer.EmbeddingCodec;
+import org.brain4j.core.codec.layer.LSTMCodec;
+import org.brain4j.core.codec.layer.LiquidCodec;
+import org.brain4j.core.codec.layer.MaskedMultiHeadAttentionCodec;
+import org.brain4j.core.codec.layer.MaxPoolCodec;
+import org.brain4j.core.codec.layer.MultiHeadAttentionCodec;
+import org.brain4j.core.codec.layer.NormCodec;
+import org.brain4j.core.codec.layer.OnnxOperationCodec;
+import org.brain4j.core.codec.layer.PosEncodeCodec;
+import org.brain4j.core.codec.layer.RMSNormCodec;
+import org.brain4j.core.codec.layer.ReshapeCodec;
+import org.brain4j.core.codec.layer.ScaleCodec;
+import org.brain4j.core.codec.layer.SelectCodec;
+import org.brain4j.core.codec.layer.SliceCodec;
+import org.brain4j.core.codec.layer.SqueezeCodec;
 import org.brain4j.core.codec.layer.transformer.TransformerDecoderCodec;
 import org.brain4j.core.codec.layer.transformer.TransformerEncoderCodec;
 import org.brain4j.core.codec.scaler.MinMaxScalerCodec;
 import org.brain4j.core.codec.scaler.ZScoreScalerCodec;
-import org.brain4j.core.codec.weightinit.*;
+import org.brain4j.core.codec.weightinit.LeCunInitCodec;
+import org.brain4j.core.codec.weightinit.NormalHeInitCodec;
+import org.brain4j.core.codec.weightinit.NormalInitCodec;
+import org.brain4j.core.codec.weightinit.NormalXavierInitCodec;
+import org.brain4j.core.codec.weightinit.UniformHeInitCodec;
+import org.brain4j.core.codec.weightinit.UniformXavierInitCodec;
 import org.brain4j.core.importing.Registries;
 import org.brain4j.core.importing.Registry;
 import org.brain4j.core.layer.Layer;
@@ -26,6 +61,10 @@ import static org.brain4j.core.importing.Registries.CLIPPERS_REGISTRY;
 import static org.brain4j.core.importing.Registries.WEIGHT_INIT_REGISTRY;
 import static org.brain4j.core.importing.format.impl.BrainFormat.MAPPER;
 
+/**
+ * Reads and writes layers with JSON codecs.
+ * Use it to serialize architectures for the native model format.
+ */
 public class LayerIO {
 
     public static final Registry<Layer> LAYER_CODECS = new Registry<>();
@@ -33,37 +72,43 @@ public class LayerIO {
     public static final Registry<WeightInit> WEIGHT_INIT_CODECS = new Registry<>();
     public static final Registry<GradientClipper> CLIPPER_CODECS = new Registry<>();
     public static final Registry<FeatureScaler> SCALER_CODECS = new Registry<>();
-    
+
     static {
         LAYER_CODECS.put(
             new DenseCodec(), new LiquidCodec(), new NormCodec(), new ReshapeCodec(), new ConvCodec(), new LSTMCodec(),
             new DropoutCodec(), new MaxPoolCodec(), new RMSNormCodec(), new SqueezeCodec(), new SliceCodec(), new SelectCodec(),
             new ConcatCodec(), new EmbeddingCodec(), new PosEncodeCodec(), new MultiHeadAttentionCodec(),
             new MaskedMultiHeadAttentionCodec(), new TransformerEncoderCodec(), new TransformerDecoderCodec(),
-            new ScaleCodec(), new ActivationCodec(), new org.brain4j.core.codec.layer.OnnxOperationCodec()
+            new ScaleCodec(), new ActivationCodec(), new OnnxOperationCodec()
         );
-        
+
         ACTIVATION_CODECS.put(
             new ELUCodec(), new LeakyReLUCodec(), new SoftmaxCodec(), new GELUCodec(), new LinearCodec(),
             new MishCodec(), new ReLUCodec(), new SigmoidCodec(), new SoftPlusCodec(), new SwishCodec(), new TanhCodec()
         );
-        
+
         WEIGHT_INIT_CODECS.put(
             new NormalInitCodec(), new NormalHeInitCodec(), new NormalXavierInitCodec(), new UniformHeInitCodec(),
             new UniformXavierInitCodec(), new LeCunInitCodec()
         );
-        
+
         CLIPPER_CODECS.put(new NoClipperCodec(), new HardClipperCodec(), new L2ClipperCodec());
         SCALER_CODECS.put(new ZScoreScalerCodec(), new MinMaxScalerCodec());
     }
-    
+
+    /**
+     * Parse a layer from its JSON node.
+     *
+     * @param node the node holding type, config and extras
+     * @return the parsed layer
+     */
     public static Layer parse(JsonNode node) {
         JsonNode config = node.get("config");
-        
+
         if (config == null || !config.isObject()) {
             throw Commons.illegalArgument("Layer config must be an object");
         }
-        
+
         String type = text(node.get("type"));
         JsonCodec<? extends Layer> codec = (JsonCodec<? extends Layer>) LAYER_CODECS.get(type);
 
@@ -92,8 +137,14 @@ public class LayerIO {
         return layer;
     }
 
+    /**
+     * Write a layer and its extras into the given container.
+     *
+     * @param container the target JSON object
+     */
     public static void write(Layer layer, ObjectNode container) {
         JsonCodec<Layer> codec = (JsonCodec<Layer>) layerCodec(layer);
+
         if (codec == null) {
             throw Commons.illegalArgument("Unexpected layer type: %s", layer.getClass().getName());
         }
@@ -204,31 +255,31 @@ public class LayerIO {
     private static <T> void writeInfo(String field, ObjectNode container, JsonCodec<T> codec, T value) {
         ObjectNode config = MAPPER.createObjectNode();
         codec.write(value, config);
-        
+
         if (config.isEmpty()) {
             container.put(field, codec.type());
             return;
         }
-        
+
         ObjectNode node = MAPPER.createObjectNode();
         node.put("type", codec.type());
         node.set("config", config);
-        
+
         container.set(field, node);
     }
-    
+
     private static JsonCodec<Layer> layerCodec(Layer layer) {
         return (JsonCodec<Layer>) LAYER_CODECS.get(layer.getClass());
     }
-    
+
     private static JsonCodec<Activation> activationCodec(Activation activation) {
         return (JsonCodec<Activation>) ACTIVATION_CODECS.get(activation.getClass());
     }
-    
+
     private static JsonCodec<WeightInit> weightInitCodec(WeightInit weightInit) {
         return (JsonCodec<WeightInit>) WEIGHT_INIT_CODECS.get(weightInit.getClass());
     }
-    
+
     private static JsonCodec<GradientClipper> clipperCodec(GradientClipper clipper) {
         return (JsonCodec<GradientClipper>) CLIPPER_CODECS.get(clipper.getClass());
     }

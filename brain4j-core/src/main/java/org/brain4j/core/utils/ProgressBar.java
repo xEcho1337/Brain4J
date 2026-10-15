@@ -1,9 +1,15 @@
 package org.brain4j.core.utils;
 
-import org.brain4j.math.commons.Commons;
-
 import java.util.Iterator;
 
+import org.brain4j.math.commons.Commons;
+
+/**
+ * Wraps an iterable with console progress reporting.
+ * Use it to display batch progress during training.
+ *
+ * @param <T> the iterated element type
+ */
 public class ProgressBar<T> implements Iterator<T>, Iterable<T> {
 
     private final Iterator<T> input;
@@ -14,6 +20,9 @@ public class ProgressBar<T> implements Iterator<T>, Iterable<T> {
     private long totalTime;
     private int current;
 
+    /**
+     * Create a bar for the given workload.
+     */
     public ProgressBar(Iterable<T> input, String taskName) {
         this.input = input.iterator();
         this.taskName = taskName;
@@ -21,11 +30,17 @@ public class ProgressBar<T> implements Iterator<T>, Iterable<T> {
         this.lastIteration = -1;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean hasNext() {
         return input.hasNext();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public T next() {
         if (current == 0) {
@@ -62,6 +77,9 @@ public class ProgressBar<T> implements Iterator<T>, Iterable<T> {
         return input.next();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Iterator<T> iterator() {
         return this;

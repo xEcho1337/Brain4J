@@ -1,10 +1,38 @@
 package org.brain4j.core.importing.format.impl;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.random.RandomGenerator;
+
 import com.google.protobuf.ByteString;
+
 import org.brain4j.core.Brain4J;
 import org.brain4j.core.importing.format.BinaryFormat;
 import org.brain4j.core.importing.io.OnnxIO;
-import org.brain4j.core.importing.onnx.ProtoOnnx.*;
+import org.brain4j.core.importing.onnx.ProtoOnnx.GraphProto;
+import org.brain4j.core.importing.onnx.ProtoOnnx.ModelProto;
+import org.brain4j.core.importing.onnx.ProtoOnnx.NodeProto;
+import org.brain4j.core.importing.onnx.ProtoOnnx.OperatorSetIdProto;
+import org.brain4j.core.importing.onnx.ProtoOnnx.TensorProto;
+import org.brain4j.core.importing.onnx.ProtoOnnx.TensorShapeProto;
+import org.brain4j.core.importing.onnx.ProtoOnnx.TypeProto;
+import org.brain4j.core.importing.onnx.ProtoOnnx.ValueInfoProto;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.layer.Node;
 import org.brain4j.core.model.impl.Graph;
@@ -16,18 +44,15 @@ import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.autograd.AutogradContext;
 import org.brain4j.math.tensor.autograd.Operation;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.file.Files;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.random.RandomGenerator;
-
+/**
+ * Imports and exports graph models in ONNX format.
+ * Use it to exchange models with external frameworks.
+ */
 public class OnnxFormat implements BinaryFormat<Graph> {
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Graph deserialize(File file) {
         try {
@@ -47,7 +72,9 @@ public class OnnxFormat implements BinaryFormat<Graph> {
             for (ValueInfoProto inputInfo : graphProto.getInputList()) {
                 String name = inputInfo.getName();
 
-                if (initializerMap.containsKey(name)) continue;
+                if (initializerMap.containsKey(name)) {
+                    continue;
+                }
 
                 TypeProto.Tensor tensorType = inputInfo.getType().getTensorType();
                 TensorShapeProto shapeProto = tensorType.getShape();
@@ -66,15 +93,15 @@ public class OnnxFormat implements BinaryFormat<Graph> {
                     layerShape = dims;
                 }
 
-                if (layerShape.length == 0)
+                if (layerShape.length == 0) {
                     layerShape = new int[]{1};
+                }
 
                 Node inputNode = Node.input(Shape.of(layerShape));
                 tensorToNode.put(name, inputNode);
             }
 
-            // ONNX does not guarantee a topological node order, so nodes whose inputs
-            // are not yet resolved are retried after the remaining nodes have been processed
+            // Retry nodes whose inputs are not resolved yet, since ONNX order is not guaranteed topological.
             List<NodeProto> pending = new ArrayList<>(graphProto.getNodeList());
 
             while (!pending.isEmpty()) {
@@ -154,15 +181,19 @@ public class OnnxFormat implements BinaryFormat<Graph> {
             }
 
             return Graph.of(outputNodes.toArray(Node[]::new));
-
         } catch (Exception e) {
             throw new RuntimeException("Failed to deserialize ONNX model", e);
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void serialize(Graph model, File file) {
-        if (model.device() != null) model = model.fork(null);
+        if (model.device() != null) {
+            model = model.fork(null);
+        }
 
         GraphProto.Builder graphBuilder = GraphProto.newBuilder();
 
@@ -173,6 +204,7 @@ public class OnnxFormat implements BinaryFormat<Graph> {
         addInitializers(model, graphBuilder, weightsMap);
 
         List<Node> inputNodes = model.input();
+
         if (inputNodes.isEmpty()) {
             throw Commons.illegalState("Graph has no input nodes, cannot export to ONNX");
         }
@@ -191,7 +223,7 @@ public class OnnxFormat implements BinaryFormat<Graph> {
             dummyInputsWithGrad.add(dummy.withGrad());
         }
 
-        // Small trick to get the computational graph
+        // Run a dummy forward pass to capture the autograd graph for export.
         Tensor[] outputs = model.predict(new StatesCache(true), dummyInputsWithGrad.toArray(Tensor[]::new));
 
         for (Tensor in : dummyInputsWithGrad) {
@@ -262,7 +294,9 @@ public class OnnxFormat implements BinaryFormat<Graph> {
             Tensor tensor = queue.poll();
             AutogradContext ctx = tensor.getAutogradContext();
 
-            if (ctx == null || ctx.operation() == null) continue;
+            if (ctx == null || ctx.operation() == null) {
+                continue;
+            }
 
             Operation op = ctx.operation();
             String opType = OnnxIO.encodeType(op);
@@ -275,23 +309,22 @@ public class OnnxFormat implements BinaryFormat<Graph> {
                 .setName(opType + "_" + Math.abs(UUID.randomUUID().hashCode()))
                 .setOpType(opType);
 
-            // Delegate attribute serialization to OnnxCodec
             OnnxIO.encode(op, nodeBuilder);
 
             for (Tensor in : ctx.inputs()) {
                 String inputName = generateName(counter, in, tensorNames, weightsMap);
                 nodeBuilder.addInput(inputName);
 
-                if (!visited.add(in)) continue;
+                if (!visited.add(in)) {
+                    continue;
+                }
 
                 AutogradContext inputCtx = in.getAutogradContext();
 
                 if (inputCtx != null && inputCtx.operation() != null) {
                     queue.add(in);
                 } else if (!graphInputs.contains(in) && !weightsMap.containsKey(in)) {
-                    // Leaf constant without autograd (e.g. positional tables):
-                    // emit it as a graph initializer so the deserializer can
-                    // resolve the tensor without a producer node.
+                    // Emit leaf constants as initializers so import can resolve them without a producer.
                     weightsMap.put(in, inputName);
                     graphBuilder.addInitializer(serializeTensor(inputName, in));
                 }
@@ -300,6 +333,7 @@ public class OnnxFormat implements BinaryFormat<Graph> {
             nodeBuilder.addOutput(generateName(counter, tensor, tensorNames, weightsMap));
             nodes.add(nodeBuilder.build());
         }
+
         return nodes;
     }
 
@@ -329,8 +363,9 @@ public class OnnxFormat implements BinaryFormat<Graph> {
         TypeProto.Tensor.Builder tensorProto = TypeProto.Tensor.newBuilder();
         TensorShapeProto.Builder shapeProto = TensorShapeProto.newBuilder();
 
-        for (int dim : shape)
+        for (int dim : shape) {
             shapeProto.addDim(TensorShapeProto.Dimension.newBuilder().setDimValue(dim));
+        }
 
         tensorProto.setElemType(TensorProto.DataType.FLOAT.getNumber()).setShape(shapeProto);
         proto.setName(generateName(counter, tensor, tensorNames, weightsMap))
@@ -342,10 +377,13 @@ public class OnnxFormat implements BinaryFormat<Graph> {
             .setName(name)
             .setDataType(TensorProto.DataType.FLOAT.getNumber());
 
-        for (long dim : tensor.shape())
+        for (long dim : tensor.shape()) {
             builder.addDims(dim);
-        for (float val : tensor.data())
+        }
+
+        for (float val : tensor.data()) {
             builder.addFloatData(val);
+        }
 
         return builder.build();
     }
@@ -362,8 +400,9 @@ public class OnnxFormat implements BinaryFormat<Graph> {
             ByteBuffer buffer = ByteBuffer.wrap(bytes)
                 .order(ByteOrder.LITTLE_ENDIAN);
 
-            for (int i = 0; i < data.length; i++)
+            for (int i = 0; i < data.length; i++) {
                 data[i] = buffer.getFloat();
+            }
 
             result = Tensors.create(shape, data);
         } else {
@@ -373,43 +412,79 @@ public class OnnxFormat implements BinaryFormat<Graph> {
             float[] data = result.data();
             int len = Math.min(data.length, rawList.size());
 
-            for (int i = 0; i < len; i++)
+            for (int i = 0; i < len; i++) {
                 data[i] = rawList.get(i);
+            }
         }
 
         return result;
     }
 
+    /**
+     * Wraps a single ONNX operation as a graph layer.
+     * Use it to import ONNX nodes that have no direct layer mapping.
+     */
     public static class OnnxOperationLayer extends Layer {
 
         private final Operation op;
         private final List<String> inputNames;
         private final Map<String, Tensor> constants;
 
+        /**
+         * Create a layer for the given operation and wiring.
+         *
+         * @return the new layer
+         */
         public OnnxOperationLayer(Operation op, List<String> inputNames, Map<String, Tensor> constants) {
             this.op = op;
             this.inputNames = List.copyOf(inputNames);
             this.constants = new HashMap<>(constants);
         }
 
+        /**
+         * Return the wrapped operation.
+         *
+         * @return the operation
+         */
         public Operation operation() {
             return op;
         }
 
+        /**
+         * Return the ONNX input names in order.
+         *
+         * @return the input names
+         */
         public List<String> inputNames() {
             return inputNames;
         }
 
+        /**
+         * Return constant tensors keyed by input name.
+         *
+         * @return the constants
+         */
         public Map<String, Tensor> constants() {
             return constants;
         }
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
-        public void build(List<Shape> inputShapes) {}
+        public void build(List<Shape> inputShapes) {
+        }
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
-        public void initWeights(List<Shape> inputShapes, RandomGenerator rng) {}
+        public void initWeights(List<Shape> inputShapes, RandomGenerator rng) {
+        }
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         public List<Shape> inferOutputShapes(List<Shape> inputShapes) {
             List<Tensor> dummies = new ArrayList<>();
@@ -427,8 +502,7 @@ public class OnnxFormat implements BinaryFormat<Graph> {
                     }
 
                     Shape s = inputShapes.get(idx++);
-                    // Graph's static shapes are without batch, but runtime tensors have batch dim 1.
-                    // Prepend batch 1 to all non-constant dummies so that ops like MatMul/Squeeze see correct rank.
+                    // Prepend batch 1 since runtime tensors carry a batch dim while static shapes do not.
                     int[] dims = s.dims();
                     int[] withBatch = new int[dims.length + 1];
                     withBatch[0] = 1;
@@ -438,15 +512,23 @@ public class OnnxFormat implements BinaryFormat<Graph> {
             }
 
             Tensor out = op.compute(dummies.toArray(Tensor[]::new));
-            // Strip batch dim again to keep Graph's shape convention (without batch)
+            // Strip the batch dim again to keep the graph convention without batch.
             int[] outShape = out.shape();
+
             if (outShape.length > 0 && outShape[0] == 1) {
                 outShape = Arrays.copyOfRange(outShape, 1, outShape.length);
-                if (outShape.length == 0) outShape = new int[]{1};
+
+                if (outShape.length == 0) {
+                    outShape = new int[]{1};
+                }
             }
+
             return List.of(Shape.of(outShape));
         }
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         public Tensor[] forward(StatesCache cache, Tensor... inputs) {
             Tensor[] full = new Tensor[inputNames.size()];
@@ -463,6 +545,7 @@ public class OnnxFormat implements BinaryFormat<Graph> {
                         throw Commons.illegalState("Missing input for ONNX op %s at position %d (name=%s)",
                             op.getClass().getSimpleName(), i, name);
                     }
+
                     full[i] = inputs[idx++];
                 }
             }
@@ -470,6 +553,9 @@ public class OnnxFormat implements BinaryFormat<Graph> {
             return new Tensor[]{ op.compute(full) };
         }
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         public Layer copy() {
             return new OnnxOperationLayer(op, inputNames, constants);

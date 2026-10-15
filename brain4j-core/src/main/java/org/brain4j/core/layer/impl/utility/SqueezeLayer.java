@@ -1,37 +1,59 @@
 package org.brain4j.core.layer.impl.utility;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.random.RandomGenerator;
+
 import org.brain4j.core.layer.Layer;
 import org.brain4j.math.commons.Commons;
 import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.random.RandomGenerator;
-
+/**
+ * Removes size-one dimensions from inputs.
+ * Use it to drop dummy axes before dense or loss layers.
+ */
 public class SqueezeLayer extends Layer {
 
+    /**
+     * Holds the dimension to squeeze, or -1 for all.
+     */
     public record Config(int dimension) {}
 
     protected final Config config;
 
+    /**
+     * Create a layer squeezing the given dimension.
+     */
     public SqueezeLayer(int dimension) {
         this(new Config(dimension));
     }
 
+    /**
+     * Create a layer with the given config.
+     */
     public SqueezeLayer(Config config) {
         this.config = config;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void build(List<Shape> inputShapes) {
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void initWeights(List<Shape> inputShapes, RandomGenerator rng) {
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Shape> inferOutputShapes(List<Shape> inputShapes) {
         if (inputShapes.isEmpty()) {
@@ -41,6 +63,9 @@ public class SqueezeLayer extends Layer {
         return inputShapes.stream().map(this::squeezeShape).toList();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
         Tensor[] results = new Tensor[inputs.length];
@@ -80,11 +105,19 @@ public class SqueezeLayer extends Layer {
         return results;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Layer copy() {
         return new SqueezeLayer(config);
     }
 
+    /**
+     * Return the layer config.
+     *
+     * @return the config
+     */
     public Config config() {
         return config;
     }
@@ -94,7 +127,9 @@ public class SqueezeLayer extends Layer {
             List<Integer> kept = new ArrayList<>();
 
             for (int dim : inputShape.dims()) {
-                if (dim != 1) kept.add(dim);
+                if (dim != 1) {
+                    kept.add(dim);
+                }
             }
 
             int[] out = new int[kept.size()];
@@ -121,7 +156,10 @@ public class SqueezeLayer extends Layer {
         int[] out = new int[dims.length - 1];
 
         for (int i = 0, j = 0; i < dims.length; i++) {
-            if (i == dimIndex) continue;
+            if (i == dimIndex) {
+                continue;
+            }
+
             out[j++] = dims[i];
         }
 

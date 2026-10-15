@@ -5,9 +5,17 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * JSON specialization of {@link Codec}.
- * Used for {@code BrainFormat} (config.json) and layer/activation/clipper serialization.
+ * Backs {@code BrainFormat} persistence of layers and helpers.
  */
 public interface JsonCodec<T> extends Codec<T> {
+    /**
+     * Serialize a value into JSON.
+     */
     void write(T value, ObjectNode out);
+    /**
+     * Deserialize a value from JSON.
+     *
+     * @return deserialized value
+     */
     T parse(JsonNode in);
 }

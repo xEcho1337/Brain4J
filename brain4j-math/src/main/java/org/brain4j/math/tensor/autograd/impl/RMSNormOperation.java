@@ -3,28 +3,37 @@ package org.brain4j.math.tensor.autograd.impl;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.autograd.Operation;
 
+/**
+ * Applies RMS normalization with a scale weight. Use it to record normalized
+ * transforms in the computation graph.
+ *
+ * @param epsilon stability term
+ */
 public record RMSNormOperation(double epsilon) implements Operation {
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor compute(Tensor... inputs) {
         Tensor rms = rmsOf(inputs[0].copy());
         return inputs[0].copy().divide(rms).times(inputs[1]);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor[] backward(Tensor gradOutput, Tensor output, Tensor... inputs) {
         Tensor x = inputs[0];
         Tensor w = inputs[1];
 
-        // Detached working copies.
         Tensor go = gradOutput.copy();
         Tensor rms = rmsOf(x.copy());
         Tensor xh = x.copy().divide(rms);
 
-        // dw = sum(go * x_hat) over normalized axes
         Tensor gradW = AddOperation.reduceTo(go.times(xh), w);
 
-        // dx = (go - x_hat * mean(go * x_hat)) * w / rms
         int features = x.shape()[x.rank() - 1];
         Tensor meanGoXh = go.times(xh).sum(-1, true).divide(features);
         Tensor dx = go.minus(xh.times(meanGoXh)).times(w).divide(rms);

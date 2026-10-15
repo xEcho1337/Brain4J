@@ -1,5 +1,11 @@
 package org.brain4j.math.tensor.autograd.impl;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.brain4j.math.Tensors;
 import org.brain4j.math.gpu.GpuContext;
 import org.brain4j.math.gpu.device.Device;
@@ -8,10 +14,15 @@ import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.autograd.Operation;
 import org.brain4j.math.tensor.impl.GpuTensor;
 
-import java.util.*;
-
+/**
+ * Gathers rows from an embedding table. Use it to record lookup operations in
+ * the computation graph.
+ */
 public class GatherOperation implements Operation {
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor compute(Tensor... inputs) {
         Device device = resolveDevice(inputs);
@@ -44,6 +55,9 @@ public class GatherOperation implements Operation {
         return output;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor[] backward(Tensor gradOutput, Tensor output, Tensor... inputs) {
         Device device = resolveDevice(gradOutput, inputs[0], inputs[1]);
@@ -132,6 +146,7 @@ public class GatherOperation implements Operation {
 
                 System.arraycopy(tableData, weightOffset, outData, outOffset, embeddingDim);
             }
+
         }
 
         return Tensors.create(new int[]{batchSize, seqLength, embeddingDim}, outData);
@@ -156,7 +171,9 @@ public class GatherOperation implements Operation {
                 for (int d = 0; d < embeddingDim; d++) {
                     tableGrad[dst + d] += gradData[src + d];
                 }
+
             }
+
         }
 
         Tensor gradTable = Tensors.create(Arrays.copyOf(tableShape, tableShape.length), tableGrad);
@@ -168,6 +185,7 @@ public class GatherOperation implements Operation {
             if (tensor instanceof GpuTensor gpu) {
                 return gpu.getDevice();
             }
+
         }
 
         return null;

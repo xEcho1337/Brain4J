@@ -1,14 +1,18 @@
 package org.brain4j.math.operations.matmul.impl;
 
-import org.brain4j.math.operations.matmul.MatmulParameters;
-import org.brain4j.math.operations.matmul.MatmulProvider;
-import org.brain4j.math.tensor.Tensor;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveAction;
 
+import org.brain4j.math.operations.matmul.MatmulParameters;
+import org.brain4j.math.operations.matmul.MatmulProvider;
+import org.brain4j.math.tensor.Tensor;
+
+/**
+ * Multiplies matrices with scalar loops in parallel. Use it as the portable
+ * fallback when SIMD execution is unavailable.
+ */
 public class NormalMatMulProvider implements MatmulProvider {
     
     private static final int PARALLELISM = Runtime.getRuntime().availableProcessors();
@@ -19,6 +23,9 @@ public class NormalMatMulProvider implements MatmulProvider {
         return work > WORK_THRESHOLD && work * np > COMPLEXITY_THRESHOLD;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void multiply(Tensor a, Tensor b, Tensor c) {
         float[] A = a.data();
@@ -36,9 +43,17 @@ public class NormalMatMulProvider implements MatmulProvider {
         int batchB = 1;
         int batch = 1;
 
-        for (int i = 0; i < rankA - 2; i++) batchA *= shapeA[i];
-        for (int i = 0; i < rankB - 2; i++) batchB *= shapeB[i];
-        for (int i = 0; i < shapeC.length - 2; i++) batch *= shapeC[i];
+        for (int i = 0; i < rankA - 2; i++) {
+            batchA *= shapeA[i];
+        }
+
+        for (int i = 0; i < rankB - 2; i++) {
+            batchB *= shapeB[i];
+        }
+
+        for (int i = 0; i < shapeC.length - 2; i++) {
+            batch *= shapeC[i];
+        }
 
         int m = shapeA[rankA - 2];
         int n = shapeA[rankA - 1];
@@ -57,7 +72,6 @@ public class NormalMatMulProvider implements MatmulProvider {
             return;
         }
 
-
         int step = work / PARALLELISM;
         List<ScalarAction> actions = new ArrayList<>();
 
@@ -68,6 +82,7 @@ public class NormalMatMulProvider implements MatmulProvider {
             if (startIndex < endIndex) {
                 actions.add(new ScalarAction(parameters, startIndex, endIndex));
             }
+
         }
 
         ForkJoinTask.invokeAll(actions);
@@ -97,10 +112,10 @@ public class NormalMatMulProvider implements MatmulProvider {
     ) {
         int offsetRowA = transposedA ? 1 : n;
         int offsetAccessA = transposedA ? m : 1;
-        
+
         int offsetRowB = transposedB ? 1 : p;
         int offsetAccessB = transposedB ? n : 1;
-        
+
         for (int r = start; r < end; r++) {
             int batch = r / m;
             int i = r % m;
@@ -109,18 +124,21 @@ public class NormalMatMulProvider implements MatmulProvider {
             int offsetC = batch * mp;
             int rowA = offsetA + i * offsetRowA;
             int rowC = offsetC + i * p;
-            
+
             for (int t = 0; t < n; t++) {
                 float aVal = a[rowA + t * offsetAccessA];
                 int colB = offsetB + t * offsetRowB;
-                
+
                 for (int j = 0; j < p; j++) {
                     c[rowC + j] += aVal * b[colB + j * offsetAccessB];
                 }
+
             }
+
         }
+
     }
-    
+
     private void matmulGeneric(
         float[] a, float[] b, float[] c,
         int start, int end,
@@ -131,10 +149,10 @@ public class NormalMatMulProvider implements MatmulProvider {
     ) {
         int offsetRowA = transposedA ? 1 : n;
         int offsetAccessA = transposedA ? m : 1;
-        
+
         int offsetRowB = transposedB ? 1 : p;
         int offsetAccessB = transposedB ? n : 1;
-        
+
         for (int r = start; r < end; r++) {
             int offsetA = (batchA == 1 ? 0 : r / m) * mn;
             int offsetB = (batchB == 1 ? 0 : r / m) * np;
@@ -150,10 +168,13 @@ public class NormalMatMulProvider implements MatmulProvider {
                 for (int j = 0; j < p; j++) {
                     c[rowC + j] += aVal * b[colB + j * offsetAccessB];
                 }
+
             }
+
         }
+
     }
-    
+
     private class ScalarAction extends RecursiveAction {
 
         private final MatmulParameters parameters;
@@ -165,6 +186,9 @@ public class NormalMatMulProvider implements MatmulProvider {
             this.end = end;
         }
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         protected void compute() {
             int np = parameters.np();
@@ -186,6 +210,7 @@ public class NormalMatMulProvider implements MatmulProvider {
                     parameters.transposedA(), parameters.transposedB()
                 );
             }
+
         }
     }
 }

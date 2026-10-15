@@ -2,6 +2,7 @@ package org.brain4j.core.codec.layer;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import org.brain4j.core.codec.JsonCodec;
 import org.brain4j.core.importing.format.impl.OnnxFormat;
 import org.brain4j.core.importing.io.OnnxIO;
@@ -9,18 +10,31 @@ import org.brain4j.math.tensor.Shape;
 
 import static org.brain4j.core.importing.format.impl.BrainFormat.MAPPER;
 
+/**
+ * Codec for {@link OnnxFormat.OnnxOperationLayer}.
+ * Persists the operation type, input names and constants to JSON.
+ */
 public class OnnxOperationCodec implements JsonCodec<OnnxFormat.OnnxOperationLayer> {
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String type() {
         return "onnx_operation";
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Class<OnnxFormat.OnnxOperationLayer> targetClass() {
         return OnnxFormat.OnnxOperationLayer.class;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void write(OnnxFormat.OnnxOperationLayer layer, ObjectNode out) {
         String opType = OnnxIO.encodeType(layer.operation());
@@ -37,6 +51,9 @@ public class OnnxOperationCodec implements JsonCodec<OnnxFormat.OnnxOperationLay
         out.set("constants", constants);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public OnnxFormat.OnnxOperationLayer parse(JsonNode node) {
         throw new UnsupportedOperationException(

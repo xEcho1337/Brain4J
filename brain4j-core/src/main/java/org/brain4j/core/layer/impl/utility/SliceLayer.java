@@ -1,5 +1,8 @@
 package org.brain4j.core.layer.impl.utility;
 
+import java.util.List;
+import java.util.random.RandomGenerator;
+
 import org.brain4j.core.layer.Layer;
 import org.brain4j.math.commons.Commons;
 import org.brain4j.math.commons.Range;
@@ -7,31 +10,50 @@ import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 
-import java.util.List;
-import java.util.random.RandomGenerator;
-
+/**
+ * Slices inputs along fixed ranges.
+ * Use it to extract crops or time windows from tensors.
+ */
 public class SliceLayer extends Layer {
 
+    /**
+     * Holds the slice ranges per dimension.
+     */
     public record Config(Range[] ranges) {}
 
     protected final Config config;
 
+    /**
+     * Create a layer with the given ranges.
+     */
     public SliceLayer(Range... ranges) {
         this(new Config(ranges));
     }
 
+    /**
+     * Create a layer with the given config.
+     */
     public SliceLayer(Config config) {
         this.config = config;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void build(List<Shape> inputShapes) {
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void initWeights(List<Shape> inputShapes, RandomGenerator rng) {
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Shape> inferOutputShapes(List<Shape> inputShapes) {
         if (inputShapes.isEmpty()) {
@@ -41,6 +63,9 @@ public class SliceLayer extends Layer {
         return inputShapes.stream().map(this::sliceShape).toList();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
         Tensor[] result = new Tensor[inputs.length];
@@ -65,15 +90,28 @@ public class SliceLayer extends Layer {
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Layer copy() {
         return new SliceLayer(config);
     }
 
+    /**
+     * Return the slice ranges.
+     *
+     * @return the ranges
+     */
     public Range[] ranges() {
         return config.ranges;
     }
 
+    /**
+     * Return the layer config.
+     *
+     * @return the config
+     */
     public Config config() {
         return config;
     }

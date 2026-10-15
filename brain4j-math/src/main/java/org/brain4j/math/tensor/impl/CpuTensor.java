@@ -1,5 +1,7 @@
 package org.brain4j.math.tensor.impl;
 
+import java.util.Arrays;
+
 import org.brain4j.math.Tensors;
 import org.brain4j.math.broadcast.TensorBroadcast;
 import org.brain4j.math.gpu.device.Device;
@@ -11,16 +13,20 @@ import org.brain4j.math.operations.matmul.impl.SIMDMatMulProvider;
 import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 
-import java.util.Arrays;
-
+/**
+ * Stores tensor data in heap memory. Use it for CPU execution with SIMD or
+ * scalar matmul kernels.
+ */
 public class CpuTensor extends BaseTensor {
 
     private static final MatmulProvider matmulProvider;
 
     static {
+
         if (DeviceUtils.isSimdAvailable()) {
             matmulProvider = new SIMDMatMulProvider();
         } else {
+
             System.err.println("The Vector incubator API is not available. It's recommended to use for better performance.");
             System.err.println("For more information consult this guide: https://github.com/brain4j-org/brain4j/wiki/Using-SIMD");
 
@@ -28,7 +34,14 @@ public class CpuTensor extends BaseTensor {
         }
     }
 
+    /**
+     * Create a CPU tensor with the given shape.
+     *
+     * @param shape tensor shape
+     * @param data initial data, or empty for zeros
+     */
     public CpuTensor(Shape shape, float... data) {
+
         if (data.length == 0) {
             data = new float[Tensors.computeSize(shape.dims())];
         }
@@ -38,7 +51,15 @@ public class CpuTensor extends BaseTensor {
         this.strides = Tensors.computeStrides(shape.dims());
     }
 
+    /**
+     * Create a CPU tensor with explicit strides.
+     *
+     * @param shape tensor shape
+     * @param strides stride per dimension
+     * @param data initial data, or empty for zeros
+     */
     public CpuTensor(Shape shape, int[] strides, float... data) {
+
         if (data.length == 0) {
             data = new float[Tensors.computeSize(shape.dims())];
         }
@@ -47,17 +68,23 @@ public class CpuTensor extends BaseTensor {
         this.shape = shape.dims();
         this.strides = strides;
     }
-    
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor transpose() {
         int rank = shape.length;
         return transpose(rank - 2, rank - 1);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor transpose(int dim1, int dim2) {
-        // Unfortunately, SIMD does not support non-contiguous data, therefore transposing
-        // the data in a contiguous space is required for SIMD matmul to work
+        // Transpose into contiguous memory because SIMD requires contiguous data.
+
         if (matmulProvider instanceof NormalMatMulProvider) {
             return super.transpose(dim1, dim2);
         }
@@ -90,7 +117,10 @@ public class CpuTensor extends BaseTensor {
         int[] loopShape = result.shape;
 
         int[] destToSrc = new int[rank];
-        for (int d = 0; d < rank; d++) destToSrc[d] = d;
+
+        for (int d = 0; d < rank; d++) {
+            destToSrc[d] = d;
+        }
 
         destToSrc[dim1] = dim2;
         destToSrc[dim2] = dim1;
@@ -111,6 +141,7 @@ public class CpuTensor extends BaseTensor {
         int[] destToSrc,
         int dim, int srcOffset, int dstOffset
     ) {
+
         if (dim == loopShape.length) {
             dst[dstOffset] = src[srcOffset];
             return;
@@ -122,6 +153,7 @@ public class CpuTensor extends BaseTensor {
 
         int s = srcOffset;
         int d = dstOffset;
+
         for (int i = 0; i < extent; i++) {
             transposeRecursive(src, dst, loopShape, srcStride, dstStride, destToSrc,
                 dim + 1, s, d);
@@ -130,8 +162,12 @@ public class CpuTensor extends BaseTensor {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor to(Object device) {
+
         switch (device) {
             case null -> {
                 return this;
@@ -145,8 +181,12 @@ public class CpuTensor extends BaseTensor {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor add(Tensor other) {
+
         if (!(other instanceof CpuTensor)) {
             return add(other.to(null));
         }
@@ -154,8 +194,12 @@ public class CpuTensor extends BaseTensor {
         return TensorBroadcast.add(this, other);
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor add(double value) {
+
         for (int i = 0; i < data.length; i++) {
             data[i] += (float) value;
         }
@@ -163,8 +207,12 @@ public class CpuTensor extends BaseTensor {
         return this;
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor sub(Tensor other) {
+
         if (!(other instanceof CpuTensor)) {
             return sub(other.to(null));
         }
@@ -172,8 +220,12 @@ public class CpuTensor extends BaseTensor {
         return TensorBroadcast.sub(this, other);
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor sub(double value) {
+
         for (int i = 0; i < data.length; i++) {
             data[i] -= (float) value;
         }
@@ -181,8 +233,12 @@ public class CpuTensor extends BaseTensor {
         return this;
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor mul(Tensor other) {
+
         if (!(other instanceof CpuTensor)) {
             return mul(other.to(null));
         }
@@ -190,8 +246,12 @@ public class CpuTensor extends BaseTensor {
         return TensorBroadcast.mul(this, other);
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor mul(double value) {
+
         for (int i = 0; i < data.length; i++) {
             data[i] *= (float) value;
         }
@@ -199,8 +259,12 @@ public class CpuTensor extends BaseTensor {
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor div(Tensor other) {
+
         if (!(other instanceof CpuTensor)) {
             return div(other.to(null));
         }
@@ -208,8 +272,12 @@ public class CpuTensor extends BaseTensor {
         return TensorBroadcast.div(this, other);
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor div(double value) {
+
         for (int i = 0; i < data.length; i++) {
             data[i] /= (float) value;
         }
@@ -217,8 +285,12 @@ public class CpuTensor extends BaseTensor {
         return this;
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor pow(Tensor other) {
+
         if (!(other instanceof CpuTensor)) {
             return pow(other.to(null));
         }
@@ -226,8 +298,12 @@ public class CpuTensor extends BaseTensor {
         return TensorBroadcast.pow(this, other);
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor pow(double value) {
+
         for (int i = 0; i < data.length; i++) {
             data[i] = (float) Math.pow(data[i], value);
         }
@@ -235,8 +311,12 @@ public class CpuTensor extends BaseTensor {
         return this;
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor sqrt() {
+
         for (int i = 0; i < data.length; i++) {
             data[i] = (float) Math.sqrt(data[i]);
         }
@@ -244,6 +324,9 @@ public class CpuTensor extends BaseTensor {
         return this;
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor matmul(Tensor other) {
         int[] shapeA = this.shape;
@@ -297,10 +380,12 @@ public class CpuTensor extends BaseTensor {
         return result;
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor copy() {
         return new CpuTensor(Shape.of(shape), strides.clone(), data.clone());
-//        return new CpuTensor(Shape.of(shape), contiguousData());
     }
 
     private float[] contiguousData() {

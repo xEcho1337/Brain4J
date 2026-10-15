@@ -1,20 +1,30 @@
 package org.brain4j.math.operations;
 
-import org.brain4j.math.commons.D2DFunction;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveAction;
 
+import org.brain4j.math.commons.D2DFunction;
+
+/**
+ * Applies an element-wise function in parallel. Use it to transform large
+ * float buffers with ForkJoin splitting.
+ */
 public class ParallelMap extends RecursiveAction {
-    
+
+    /**
+     * Carries the function and buffer shared by map tasks.
+     *
+     * @param function element-wise function
+     * @param data buffer transformed in place
+     */
     public record MapParameters(D2DFunction function, float[] data) { }
-    
+
     private static final int PARALLELISM = Runtime.getRuntime().availableProcessors();
     private static final int PARALLEL_WORK_THRESHOLD = PARALLELISM;
-    private static final int PARALLEL_COMPLEXITY_THRESHOLD = 1 << 12; // 4096
-    private static final int SPLIT_COMPLEXITY_THRESHOLD = 1 << 10; // 1024
+    private static final int PARALLEL_COMPLEXITY_THRESHOLD = 1 << 12;
+    private static final int SPLIT_COMPLEXITY_THRESHOLD = 1 << 10;
     
     private static boolean isOverParallelThreshold(int work) {
         return work > PARALLEL_WORK_THRESHOLD && work > PARALLEL_COMPLEXITY_THRESHOLD;
@@ -28,12 +38,22 @@ public class ParallelMap extends RecursiveAction {
     private final int start;
     private final int end;
 
+    /**
+     * Create a task covering an array range.
+     *
+     * @param parameters shared function and buffer
+     * @param start first index, inclusive
+     * @param end last index, exclusive
+     */
     public ParallelMap(MapParameters parameters, int start, int end) {
         this.parameters = parameters;
         this.start = start;
         this.end = end;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected void compute() {
         int work = end - start;
@@ -53,6 +73,12 @@ public class ParallelMap extends RecursiveAction {
         mapSection(function, start, end, data);
     }
 
+    /**
+     * Apply a function to every element, using ForkJoin when large.
+     *
+     * @param function element-wise function
+     * @param data buffer transformed in place
+     */
     public static void map(D2DFunction function, float[] data) {
         int start = 0;
         int end = data.length;
@@ -74,6 +100,7 @@ public class ParallelMap extends RecursiveAction {
             if (startIndex < endIndex) {
                 actions.add(new ParallelMap(params, startIndex, endIndex));
             }
+
         }
 
         ForkJoinTask.invokeAll(actions);
@@ -88,5 +115,6 @@ public class ParallelMap extends RecursiveAction {
         for (int i = start; i < end; i++) {
             data[i] = (float) function.apply(data[i]);
         }
+
     }
 }

@@ -1,5 +1,14 @@
 package org.brain4j.math.tensor.impl;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.function.Supplier;
+import java.util.stream.IntStream;
+
 import org.brain4j.math.Tensors;
 import org.brain4j.math.activation.Activation;
 import org.brain4j.math.commons.Commons;
@@ -15,19 +24,29 @@ import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.autograd.AutogradContext;
 import org.brain4j.math.tensor.autograd.Operation;
-import org.brain4j.math.tensor.autograd.impl.*;
-
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.function.Supplier;
-import java.util.stream.IntStream;
+import org.brain4j.math.tensor.autograd.impl.ActivationOperation;
+import org.brain4j.math.tensor.autograd.impl.AddOperation;
+import org.brain4j.math.tensor.autograd.impl.ConcatOperation;
+import org.brain4j.math.tensor.autograd.impl.ConvolveOperation;
+import org.brain4j.math.tensor.autograd.impl.DivOperation;
+import org.brain4j.math.tensor.autograd.impl.GatherOperation;
+import org.brain4j.math.tensor.autograd.impl.LayerNormOperation;
+import org.brain4j.math.tensor.autograd.impl.MatMulOperation;
+import org.brain4j.math.tensor.autograd.impl.MaxPoolOperation;
+import org.brain4j.math.tensor.autograd.impl.MulOperation;
+import org.brain4j.math.tensor.autograd.impl.RMSNormOperation;
+import org.brain4j.math.tensor.autograd.impl.ReshapeOperation;
+import org.brain4j.math.tensor.autograd.impl.SliceOperation;
+import org.brain4j.math.tensor.autograd.impl.SqueezeOperation;
+import org.brain4j.math.tensor.autograd.impl.SubOperation;
+import org.brain4j.math.tensor.autograd.impl.TransposeOperation;
 
 import static org.brain4j.math.Tensors.ones;
 
+/**
+ * Shares shape, stride, and autograd plumbing for tensors. Use it as the base
+ * for CPU and GPU implementations.
+ */
 public abstract class BaseTensor implements Tensor {
 
     protected AutogradContext autogradContext;
@@ -36,9 +55,19 @@ public abstract class BaseTensor implements Tensor {
     protected float[] data;
     protected boolean transposed;
 
+    /**
+     * Append a formatted tensor view to a builder.
+     *
+     * @param result builder receiving the text
+     * @param dim current dimension
+     * @param indices current indices
+     * @param format float format
+     */
     protected void appendTensor(StringBuilder result, int dim, int[] indices, String format) {
+
         if (dim == shape.length - 1) {
             result.append("[");
+
             for (int i = 0; i < shape[dim]; i++) {
                 indices[dim] = i;
 
@@ -49,9 +78,12 @@ public abstract class BaseTensor implements Tensor {
                     result.append(", ");
                 }
             }
+
             result.append("]");
         } else {
+
             result.append("[");
+
             for (int i = 0; i < shape[dim]; i++) {
                 indices[dim] = i;
                 appendTensor(result, dim + 1, indices, format);
@@ -66,6 +98,15 @@ public abstract class BaseTensor implements Tensor {
         }
     }
 
+    /**
+     * Copy a sliced region into a result tensor.
+     *
+     * @param result destination tensor
+     * @param ranges one range per dimension
+     * @param srcIndices current source indices
+     * @param dstIndices current destination indices
+     * @param dim current dimension
+     */
     protected void sliceCopy(
         Tensor result,
         Range[] ranges,
@@ -73,6 +114,7 @@ public abstract class BaseTensor implements Tensor {
         int[] dstIndices,
         int dim
     ) {
+
         if (dim == shape.length) {
             result.set(get(srcIndices), dstIndices);
             return;
@@ -109,6 +151,14 @@ public abstract class BaseTensor implements Tensor {
         }
     }
     
+    /**
+     * Apply softmax in place over one segment.
+     *
+     * @param data buffer to normalize
+     * @param offset segment start
+     * @param length segment length
+     * @param temperature softmax temperature, must be positive
+     */
     protected void softmax1D(float[] data, int offset, int length, double temperature) {
         float max = Float.NEGATIVE_INFINITY;
         
@@ -133,12 +183,24 @@ public abstract class BaseTensor implements Tensor {
         }
     }
     
+    /**
+     * Compute softmax over a flat tensor.
+     *
+     * @param temperature softmax temperature, must be positive
+     * @return normalized copy
+     */
     protected Tensor softmax1D(double temperature) {
         Tensor result = copy();
         softmax1D(result.data(), 0, result.elements(), temperature);
         return result;
     }
-    
+
+    /**
+     * Compute softmax over rows of a 2D tensor.
+     *
+     * @param temperature softmax temperature, must be positive
+     * @return normalized copy
+     */
     protected Tensor softmax2D(double temperature) {
         Tensor result = copy();
         
@@ -152,6 +214,12 @@ public abstract class BaseTensor implements Tensor {
         return result;
     }
     
+    /**
+     * Compute softmax over the last axis of a 3D tensor.
+     *
+     * @param temperature softmax temperature, must be positive
+     * @return normalized copy
+     */
     protected Tensor softmax3D(double temperature) {
         Tensor result = copy();
         
@@ -171,6 +239,12 @@ public abstract class BaseTensor implements Tensor {
         return result;
     }
     
+    /**
+     * Compute softmax over the last axis of an N-dimensional tensor.
+     *
+     * @param temperature softmax temperature, must be positive
+     * @return normalized copy
+     */
     protected Tensor softmaxND(double temperature) {
         Tensor result = copy();
         
@@ -191,8 +265,19 @@ public abstract class BaseTensor implements Tensor {
         return result;
     }
     
+    /**
+     * Write a slice recursively into this tensor.
+     *
+     * @param index current indices
+     * @param dim current dimension
+     * @param offset slice offset
+     * @param sliceSize slice length
+     * @param input source tensor
+     */
     protected void setSliceRecursive(int[] index, int dim, int offset, int sliceSize, Tensor input) {
+
         if (dim == index.length - 1) {
+
             for (int i = 0; i < sliceSize; i++) {
                 index[dim] = offset + i;
 
@@ -202,6 +287,7 @@ public abstract class BaseTensor implements Tensor {
                 float value = input.get(inputIndex);
                 this.set(value, index);
             }
+
             return;
         }
 
@@ -211,39 +297,60 @@ public abstract class BaseTensor implements Tensor {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int shapeAt(int index) {
         return shape[Math.floorMod(index, shape.length)];
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int[] shape() {
         return shape;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public float[] data() {
         return data;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int[] strides() {
         return strides;
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public byte[] toByteArray() {
         float[] data = data();
         
         ByteBuffer buffer = ByteBuffer.allocate(data.length * 4).order(ByteOrder.nativeOrder());
-        
-        for (float value : data) buffer.putFloat(value);
-        
+
+        for (float value : data) {
+            buffer.putFloat(value);
+        }
+
         return buffer.array();
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int linearIndex(int... indices) {
+
         if (indices.length != shape.length) {
             throw Commons.illegalArgument("Number of indices does not match tensor rank!");
         }
@@ -259,27 +366,42 @@ public abstract class BaseTensor implements Tensor {
         return Tensors.flattenIndex(indices, strides);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public float get(int... indices) {
         return data()[linearIndex(indices)];
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor set(float value, int... indices) {
         data[linearIndex(indices)] = value;
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int rank() {
         return shape.length;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int elements() {
         return data().length;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int argmax() {
         float[] data = data();
@@ -288,6 +410,7 @@ public abstract class BaseTensor implements Tensor {
         int maxIndex = 0;
 
         for (int i = 0; i < data.length; i++) {
+
             if (data[i] > max) {
                 max = data[i];
                 maxIndex = i;
@@ -297,23 +420,36 @@ public abstract class BaseTensor implements Tensor {
         return maxIndex;
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor flatten() {
         return reshape(elements());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor convolve(Tensor kernel) {
         return convolve(kernel, 1);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor convolve(Tensor kernel, int stride) {
         return Tensors.convolve(this, kernel, stride);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor layerNorm(double epsilon) {
+
         switch (rank()) {
             case 1 -> layerNorm1D(0, epsilon);
             case 2 -> layerNorm2D(epsilon);
@@ -390,11 +526,17 @@ public abstract class BaseTensor implements Tensor {
             .forEach(outer -> layerNorm1D(outer * lastDim, epsilon));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public double distance(Tensor other) {
         return Math.sqrt(distanceSquared(other));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public double distanceSquared(Tensor other) {
         double sum = 0;
@@ -408,12 +550,19 @@ public abstract class BaseTensor implements Tensor {
         return sum;
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor squeeze() {
         int count = 0;
         
         for (int dim : shape) {
-            if (dim != 1) count++;
+
+            if (dim != 1) {
+                count++;
+            }
+
         }
         
         if (count == rank()) {
@@ -424,6 +573,7 @@ public abstract class BaseTensor implements Tensor {
         int idx = 0;
         
         for (int dim : shape) {
+
             if (dim != 1) {
                 newShape[idx++] = dim;
             }
@@ -432,6 +582,9 @@ public abstract class BaseTensor implements Tensor {
         return reshape(newShape);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor squeeze(int dim) {
         dim = Commons.mod(dim, shape.length);
@@ -448,6 +601,7 @@ public abstract class BaseTensor implements Tensor {
         int idx = 0;
 
         for (int i = 0; i < shape.length; i++) {
+
             if (i != dim) {
                 newShape[idx++] = shape[i];
             }
@@ -456,13 +610,20 @@ public abstract class BaseTensor implements Tensor {
         return reshape(newShape);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor unsqueeze() {
         return unsqueeze(0);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor broadcast(int[] targetShape) {
+
         if (Arrays.equals(shape, targetShape)) {
             return this;
         }
@@ -473,10 +634,14 @@ public abstract class BaseTensor implements Tensor {
         int[] alignedSrcShape = new int[targetRank];
         int pad = targetRank - srcRank;
 
-        for (int i = 0; i < pad; i++) alignedSrcShape[i] = 1;
+        for (int i = 0; i < pad; i++) {
+            alignedSrcShape[i] = 1;
+        }
+
         System.arraycopy(shape, 0, alignedSrcShape, pad, srcRank);
 
         for (int d = 0; d < targetRank; d++) {
+
             if (alignedSrcShape[d] > targetShape[d]) {
                 throw new IllegalArgumentException("Cannot broadcast: source dimension " +
                     alignedSrcShape[d] + " > target dimension " + targetShape[d] + " at axis " + d);
@@ -494,14 +659,18 @@ public abstract class BaseTensor implements Tensor {
 
             for (int d = 0; d < targetRank; d++) {
                 int s = alignedSrcShape[d];
+
                 if (s == targetShape[d]) {
                     srcCoords[d] = coords[d];
                 } else if (s == 1) {
+
                     srcCoords[d] = 0;
                 } else {
+
                     if (coords[d] < s) {
                         srcCoords[d] = coords[d];
                     } else {
+
                         useZero = true;
                         break;
                     }
@@ -516,12 +685,16 @@ public abstract class BaseTensor implements Tensor {
         return out;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor broadcastLike(Tensor other) {
         return broadcast(other.shape());
     }
     
     public Tensor unsqueeze(int dim) {
+
         if (dim < 0) {
             dim = Commons.mod(dim, shape.length);
         }
@@ -533,9 +706,11 @@ public abstract class BaseTensor implements Tensor {
         int[] newShape = new int[shape.length + 1];
 
         for (int i = 0, j = 0; i < newShape.length; i++) {
+
             if (i == dim) {
                 newShape[i] = 1;
             } else {
+
                 newShape[i] = shape[j++];
             }
         }
@@ -546,12 +721,18 @@ public abstract class BaseTensor implements Tensor {
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor transpose() {
         int rank = shape.length;
         return transpose(rank - 2, rank - 1);
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor transpose(int dim1, int dim2) {
         int rank = shape.length;
@@ -574,11 +755,17 @@ public abstract class BaseTensor implements Tensor {
         return view;
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean transposed() {
         return transposed;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public double sum() {
         double sum = 0.0;
@@ -591,11 +778,17 @@ public abstract class BaseTensor implements Tensor {
         return sum;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public double mean() {
         return sum() / elements();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public double variance() {
         double mean = mean();
@@ -608,6 +801,9 @@ public abstract class BaseTensor implements Tensor {
         return variance / data.length;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public double max() {
         double max = Double.NEGATIVE_INFINITY;
@@ -619,6 +815,9 @@ public abstract class BaseTensor implements Tensor {
         return max;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public double min() {
         double min = Double.POSITIVE_INFINITY;
@@ -630,6 +829,9 @@ public abstract class BaseTensor implements Tensor {
         return min;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor sum(int dim, boolean keepDim) {
         dim = Commons.mod(dim, shape.length);
@@ -641,6 +843,9 @@ public abstract class BaseTensor implements Tensor {
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor mean(int dim, boolean keepDim) {
         dim = Commons.mod(dim, shape.length);
@@ -653,11 +858,17 @@ public abstract class BaseTensor implements Tensor {
         return result;
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor variance(int dim, boolean keepDim) {
         return variance(mean(dim, keepDim), dim, keepDim);
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor variance(Tensor mean, int dim, boolean keepDim) {
         dim = Commons.mod(dim, shape.length);
@@ -668,6 +879,9 @@ public abstract class BaseTensor implements Tensor {
         return meanFirstSquare.sub(meanSecondSquare);
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor sign() {
         Tensor result = Tensors.zeros(shape);
@@ -679,6 +893,9 @@ public abstract class BaseTensor implements Tensor {
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor reshape(int... newShape) {
         int newSize = Tensors.computeSize(newShape);
@@ -692,13 +909,18 @@ public abstract class BaseTensor implements Tensor {
         return Tensors.create(newShape, data());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor concat(Tensor other) {
+
         if (shape.length != other.shape().length) {
             throw new IllegalArgumentException("Concatenation is only supported for tensors with the same number of dimensions.");
         }
 
         for (int i = 0; i < shape.length - 1; i++) {
+
             if (shape[i] != other.shape()[i]) {
                 throw new IllegalArgumentException("Shapes must match on all dimensions except the last.");
             }
@@ -713,6 +935,7 @@ public abstract class BaseTensor implements Tensor {
         newShape[rank - 1] = concatLastDim;
 
         int outerSize = 1;
+
         for (int i = 0; i < rank - 1; i++) {
             outerSize *= shape[i];
         }
@@ -729,8 +952,12 @@ public abstract class BaseTensor implements Tensor {
         return Tensors.create(newShape, resultData);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor concat(Tensor other, int dimension) {
+
         if (shape.length != other.shape().length) {
             throw new IllegalArgumentException("Tensors must have the same rank.");
         }
@@ -744,6 +971,7 @@ public abstract class BaseTensor implements Tensor {
         }
 
         for (int i = 0; i < rank; i++) {
+
             if (i != dimension && shape[i] != other.shape()[i]) {
                 throw Commons.illegalArgument("Shapes must match in all dims except the concatenation one. " +
                     "Current: %s, Other: %s", Arrays.toString(shape), Arrays.toString(other.shape()));
@@ -756,8 +984,13 @@ public abstract class BaseTensor implements Tensor {
         int blockSize = 1;
         int numBlocks = 1;
 
-        for (int i = dimension + 1; i < rank; i++) blockSize *= shape[i];
-        for (int i = 0; i < dimension; i++) numBlocks *= shape[i];
+        for (int i = dimension + 1; i < rank; i++) {
+            blockSize *= shape[i];
+        }
+
+        for (int i = 0; i < dimension; i++) {
+            numBlocks *= shape[i];
+        }
 
         int thisDim = shape[dimension];
         int otherDim = other.shape()[dimension];
@@ -786,11 +1019,17 @@ public abstract class BaseTensor implements Tensor {
         return Tensors.create(newShape, result);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor activate(Activation activation) {
         return activation.activate(this);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor select(int dim, int index) {
         dim = Commons.mod(dim, shape.length);
@@ -812,8 +1051,12 @@ public abstract class BaseTensor implements Tensor {
         return slice(ranges).squeeze(dim);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor slice(Range... ranges) {
+
         if (ranges.length > shape.length) {
             throw new IllegalArgumentException("Too many ranges specified");
         }
@@ -836,20 +1079,30 @@ public abstract class BaseTensor implements Tensor {
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor map(D2DFunction function) {
         ParallelMap.map(function, data);
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor fill(float value) {
         Arrays.fill(data, value);
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor fill(Supplier<Double> supplier) {
+
         for (int i = 0; i < data.length; i++) {
             data[i] = supplier.get().floatValue();
         }
@@ -857,42 +1110,65 @@ public abstract class BaseTensor implements Tensor {
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public AutogradContext getAutogradContext() {
         return autogradContext;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void setAutogradContext(AutogradContext context) {
         this.autogradContext = context;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor withGrad() {
         this.autogradContext = new AutogradContext(this, true);
         return this;
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor noGrad() {
         this.autogradContext = null;
         return this;
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean usesGrad() {
         return autogradContext != null && autogradContext.requiresGrad();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void zeroGrad() {
+
         if (autogradContext != null) {
             autogradContext.zeroGrad();
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor grad() {
+
         if (autogradContext != null) {
             return autogradContext.getGrad();
         }
@@ -900,13 +1176,20 @@ public abstract class BaseTensor implements Tensor {
         return null;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void backward() {
         backward(ones(shape));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void backward(Tensor gradOutput) {
+
         if (autogradContext == null) {
             throw new IllegalArgumentException("Autograd is not enabled for this tensor");
         }
@@ -914,8 +1197,12 @@ public abstract class BaseTensor implements Tensor {
         autogradContext.backward(gradOutput);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor forward(Operation operation) {
+
         if (operation.requiredInputs() != 1) {
             throw new IllegalArgumentException(
                 "This operation requires " + operation.requiredInputs() + " inputs! Received 1 instead."
@@ -932,8 +1219,12 @@ public abstract class BaseTensor implements Tensor {
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor forward(Operation operation, Tensor other) {
+
         if (operation.requiredInputs() != 2) {
             throw new IllegalArgumentException(
                 "This operation requires " + operation.requiredInputs() + " inputs! Received 2 instead."
@@ -950,6 +1241,9 @@ public abstract class BaseTensor implements Tensor {
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor forward(Operation operation, Tensor... others) {
         List<Tensor> allInputs = new ArrayList<>();
@@ -973,8 +1267,12 @@ public abstract class BaseTensor implements Tensor {
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor addGrad(Tensor other) {
+
         if (!usesGrad()) {
             return plus(other);
         }
@@ -982,8 +1280,12 @@ public abstract class BaseTensor implements Tensor {
         return forward(new AddOperation(), other);
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor subGrad(Tensor other) {
+
         if (!usesGrad()) {
             return minus(other);
         }
@@ -991,8 +1293,12 @@ public abstract class BaseTensor implements Tensor {
         return forward(new SubOperation(), other);
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor mulGrad(Tensor other) {
+
         if (!usesGrad()) {
             return times(other);
         }
@@ -1000,8 +1306,12 @@ public abstract class BaseTensor implements Tensor {
         return forward(new MulOperation(), other);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor divGrad(Tensor other) {
+
         if (!usesGrad()) {
             return divide(other);
         }
@@ -1009,8 +1319,12 @@ public abstract class BaseTensor implements Tensor {
         return forward(new DivOperation(), other);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor sliceGrad(Range... ranges) {
+
         if (!usesGrad()) {
             return slice(ranges);
         }
@@ -1018,8 +1332,12 @@ public abstract class BaseTensor implements Tensor {
         return forward(new SliceOperation(ranges));
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor matmulGrad(Tensor other) {
+
         if (!usesGrad()) {
             return matmul(other);
         }
@@ -1027,13 +1345,20 @@ public abstract class BaseTensor implements Tensor {
         return forward(new MatMulOperation(), other);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor convolveGrad(Tensor other) {
         return convolveGrad(other, 1);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor convolveGrad(Tensor other, int stride) {
+
         if (!usesGrad()) {
             return convolve(other, stride);
         }
@@ -1041,8 +1366,12 @@ public abstract class BaseTensor implements Tensor {
         return forward(new ConvolveOperation(stride), other);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor layerNormGrad(Tensor weight, Tensor bias, double epsilon) {
+
         if (!usesGrad() && !weight.usesGrad() && !bias.usesGrad()) {
             return copy().layerNorm(epsilon).mul(weight).add(bias);
         }
@@ -1050,8 +1379,12 @@ public abstract class BaseTensor implements Tensor {
         return forward(new LayerNormOperation(epsilon), weight, bias);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor rmsNormGrad(Tensor weight, double epsilon) {
+
         if (!usesGrad() && !weight.usesGrad()) {
             Tensor owned = copy();
             int features = owned.shape()[owned.rank() - 1];
@@ -1062,13 +1395,20 @@ public abstract class BaseTensor implements Tensor {
         return forward(new RMSNormOperation(epsilon), weight);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor gatherGrad(Tensor table) {
         return forward(new GatherOperation(), table);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor maxPoolGrad(int stride, int windowHeight, int windowWidth) {
+
         if (!usesGrad()) {
             MaxPooling pooling = new MaxPooling(stride, windowHeight, windowWidth);
             return pooling.pool(this);
@@ -1077,8 +1417,12 @@ public abstract class BaseTensor implements Tensor {
         return forward(new MaxPoolOperation(stride, windowHeight, windowWidth));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor transposeGrad() {
+
         if (!usesGrad()) {
             return transpose();
         }
@@ -1087,8 +1431,12 @@ public abstract class BaseTensor implements Tensor {
         return forward(new TransposeOperation(rank - 2, rank - 1));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor transposeGrad(int dim1, int dim2) {
+
         if (!usesGrad()) {
             return transpose(dim1, dim2);
         }
@@ -1096,8 +1444,12 @@ public abstract class BaseTensor implements Tensor {
         return forward(new TransposeOperation(dim1, dim2));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor activateGrad(Activation activation) {
+
         if (!usesGrad()) {
             return activate(activation);
         }
@@ -1105,8 +1457,12 @@ public abstract class BaseTensor implements Tensor {
         return forward(new ActivationOperation(activation));
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor concatGrad(Tensor other, int dim) {
+
         if (!usesGrad()) {
             return concat(other, dim);
         }
@@ -1114,8 +1470,12 @@ public abstract class BaseTensor implements Tensor {
         return forward(new ConcatOperation(dim), other);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor reshapeGrad(int... newShape) {
+
         if (!usesGrad()) {
             return reshape(newShape);
         }
@@ -1123,8 +1483,12 @@ public abstract class BaseTensor implements Tensor {
         return forward(new ReshapeOperation(newShape));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor squeezeGrad() {
+
         if (!usesGrad()) {
             return squeeze();
         }
@@ -1132,8 +1496,12 @@ public abstract class BaseTensor implements Tensor {
         return forward(new SqueezeOperation());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor squeezeGrad(int dimension) {
+
         if (!usesGrad()) {
             return squeeze(dimension);
         }
@@ -1141,6 +1509,9 @@ public abstract class BaseTensor implements Tensor {
         return forward(new SqueezeOperation(dimension));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor flip() {
         Tensor result = Tensors.zeros(shape);
@@ -1164,11 +1535,17 @@ public abstract class BaseTensor implements Tensor {
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor softmax() {
         return softmax(1.0);
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor softmax(double temperature) {
         return switch (rank()) {
@@ -1179,8 +1556,12 @@ public abstract class BaseTensor implements Tensor {
         };
     }
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String toString(String format) {
+
         if (shape.length == 0) {
             return format.formatted(data[0]);
         }
@@ -1191,25 +1572,38 @@ public abstract class BaseTensor implements Tensor {
         return result.toString();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String toString() {
         return toString("%.3f");
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Iterator<Float> iterator() {
         return new Iterator<>() {
             private int currentIndex = 0;
 
+            /**
+             * {@inheritDoc}
+             */
             @Override
             public boolean hasNext() {
                 return currentIndex < data.length;
             }
 
+            /**
+             * {@inheritDoc}
+             */
             @Override
             public Float next() {
                 return data[currentIndex++];
             }
+
         };
     }
 }

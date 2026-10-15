@@ -2,19 +2,33 @@ package org.brain4j.math.convolution.im2col;
 
 import java.util.concurrent.RecursiveAction;
 
+/**
+ * Extracts image patches into row-major form in parallel. Use it through ForkJoin
+ * when lowering a convolution to a matrix multiplication.
+ */
 public class Im2ColTask extends RecursiveAction {
 
-    private static final int PARALLEL_THRESHOLD = 1 << 12; // 4096 patch
+    private static final int PARALLEL_THRESHOLD = 1 << 12;
     private final Im2ColParams params;
     private final int startPatch;
     private final int endPatch;
 
+    /**
+     * Create a task covering a patch range.
+     *
+     * @param params shared im2col buffers and geometry
+     * @param startPatch first patch index, inclusive
+     * @param endPatch last patch index, exclusive
+     */
     public Im2ColTask(Im2ColParams params, int startPatch, int endPatch) {
         this.params = params;
         this.startPatch = startPatch;
         this.endPatch = endPatch;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected void compute() {
         int patchSize = params.channelCount() * params.filterHeight() * params.filterWidth();
@@ -51,7 +65,10 @@ public class Im2ColTask extends RecursiveAction {
                     int destPos = channelOffsetResult + fh * params.filterWidth();
                     System.arraycopy(inputData, srcPos, resultData, destPos, params.filterWidth());
                 }
+
             }
+
         }
+
     }
 }

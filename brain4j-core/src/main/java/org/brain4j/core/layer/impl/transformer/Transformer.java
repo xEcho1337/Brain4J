@@ -1,5 +1,10 @@
 package org.brain4j.core.layer.impl.transformer;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.Supplier;
+import java.util.random.RandomGenerator;
+
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.layer.impl.DenseLayer;
 import org.brain4j.core.layer.impl.DropoutLayer;
@@ -16,11 +21,12 @@ import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.weightsinit.impl.UniformXavierInit;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.function.Supplier;
-import java.util.random.RandomGenerator;
-
+/**
+ * Combines attention with a feed-forward block and residuals.
+ * Use it as the base for encoder and decoder stacks.
+ *
+ * @param <T> the concrete transformer type
+ */
 public abstract class Transformer<T extends Transformer<T>> extends Layer {
 
     protected final Config config;
@@ -32,6 +38,9 @@ public abstract class Transformer<T extends Transformer<T>> extends Layer {
     protected Layer norm2;
     protected Layer attention;
 
+    /**
+     * Holds embedding width, FFN width, heads, dropout, gating and norms.
+     */
     public record Config(
         int embedDim,
         int projDim,
@@ -42,14 +51,23 @@ public abstract class Transformer<T extends Transformer<T>> extends Layer {
         Supplier<Layer> normSupplier
     ) {}
 
+    /**
+     * Create a block with GELU activation.
+     */
     public Transformer(int embedDim, int heads, double dropout) {
         this(embedDim, heads, dropout, new GELU());
     }
 
+    /**
+     * Create a block with the given activation.
+     */
     public Transformer(int embedDim, int heads, double dropout, Activation activation) {
         this(new Config(embedDim, 4 * embedDim, heads, dropout, false, activation, NormLayer::new));
     }
 
+    /**
+     * Create a block with the given config.
+     */
     public Transformer(Config config) {
         super(config.activation);
         this.config = config;
@@ -62,18 +80,37 @@ public abstract class Transformer<T extends Transformer<T>> extends Layer {
         this.downProj = new DenseLayer(config.embedDim);
         this.attention = getAttention();
 
-        if (config.gating)
+        if (config.gating) {
             this.gateProj = new DenseLayer(config.projDim);
+        }
     }
 
+    /**
+     * Create an empty copy with the same config.
+     *
+     * @return the new block
+     */
     protected abstract T getCopy();
 
+    /**
+     * Create the attention sublayer.
+     *
+     * @return the attention layer
+     */
     protected abstract Layer getAttention();
 
+    /**
+     * Return the block config.
+     *
+     * @return the config
+     */
     public Config config() {
         return config;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void build(List<Shape> inputShapes) {
         Shape inputShape = inputShapes.getFirst();
@@ -85,10 +122,14 @@ public abstract class Transformer<T extends Transformer<T>> extends Layer {
         downProj.build(List.of(projShape));
         attention.build(List.of(inputShape));
 
-        if (gateProj != null)
+        if (gateProj != null) {
             gateProj.build(List.of(inputShape));
+        }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void initWeights(List<Shape> inputShapes, RandomGenerator rng) {
         Shape inputShape = inputShapes.getFirst();
@@ -112,6 +153,9 @@ public abstract class Transformer<T extends Transformer<T>> extends Layer {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Shape> inferOutputShapes(List<Shape> inputShapes) {
         if (inputShapes.size() != 1) {
@@ -131,6 +175,9 @@ public abstract class Transformer<T extends Transformer<T>> extends Layer {
         return List.of(inputShape);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
         Tensor input = inputs[0];
@@ -169,14 +216,18 @@ public abstract class Transformer<T extends Transformer<T>> extends Layer {
 
         x = downProj.forward(cache, x);
 
-        if (cache.isTraining())
+        if (cache.isTraining()) {
             x = dropout.forward(cache, x);
+        }
 
         x = residual.addGrad(x);
 
         return new Tensor[] { x };
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void backward(Updater updater, Optimizer optimizer) {
         norm2.backward(updater, optimizer);
@@ -185,10 +236,14 @@ public abstract class Transformer<T extends Transformer<T>> extends Layer {
         norm1.backward(updater, optimizer);
         attention.backward(updater, optimizer);
 
-        if (gateProj != null)
+        if (gateProj != null) {
             gateProj.backward(updater, optimizer);
+        }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void resetGrad() {
         norm1.resetGrad();
@@ -197,10 +252,14 @@ public abstract class Transformer<T extends Transformer<T>> extends Layer {
         downProj.resetGrad();
         attention.resetGrad();
 
-        if (gateProj != null)
+        if (gateProj != null) {
             gateProj.resetGrad();
+        }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Layer freeze() {
         norm1.freeze();
@@ -209,12 +268,16 @@ public abstract class Transformer<T extends Transformer<T>> extends Layer {
         downProj.freeze();
         attention.freeze();
 
-        if (gateProj != null)
+        if (gateProj != null) {
             gateProj.freeze();
+        }
 
         return super.freeze();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Layer unfreeze() {
         norm1.unfreeze();
@@ -223,12 +286,16 @@ public abstract class Transformer<T extends Transformer<T>> extends Layer {
         downProj.unfreeze();
         attention.unfreeze();
 
-        if (gateProj != null)
+        if (gateProj != null) {
             gateProj.unfreeze();
+        }
 
         return super.unfreeze();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public T copy() {
         T copy = getCopy();
@@ -240,56 +307,95 @@ public abstract class Transformer<T extends Transformer<T>> extends Layer {
         copy.attention = attention.copy();
         copy.dropout = dropout.copy();
 
-        if (gateProj != null)
+        if (gateProj != null) {
             copy.gateProj = gateProj.copy();
+        }
 
         return copy;
     }
 
+    /**
+     * Encoder block with bidirectional attention.
+     * Use it to build transformer encoders.
+     */
     public static class Encoder extends Transformer<Encoder> {
 
+        /**
+         * Create a block with GELU activation.
+         */
         public Encoder(int embedDim, int heads, double dropout) {
             super(embedDim, heads, dropout);
         }
 
+        /**
+         * Create a block with the given activation.
+         */
         public Encoder(int embedDim, int heads, double dropout, Activation activation) {
             super(embedDim, heads, dropout, activation);
         }
 
+        /**
+         * Create a block with the given config.
+         */
         public Encoder(Config config) {
             super(config);
         }
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         protected Encoder getCopy() {
             return new Encoder(config);
         }
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         protected Layer getAttention() {
             return new MultiHeadAttention(config.heads, config.embedDim);
         }
     }
 
+    /**
+     * Decoder block with causal attention.
+     * Use it to build autoregressive transformers.
+     */
     public static class Decoder extends Transformer<Decoder> {
 
+        /**
+         * Create a block with GELU activation.
+         */
         public Decoder(int embedDim, int heads, double dropout) {
             super(embedDim, heads, dropout);
         }
 
+        /**
+         * Create a block with the given activation.
+         */
         public Decoder(int embedDim, int heads, double dropout, Activation activation) {
             super(embedDim, heads, dropout, activation);
         }
 
+        /**
+         * Create a block with the given config.
+         */
         public Decoder(Config config) {
             super(config);
         }
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         protected Decoder getCopy() {
             return new Decoder(config);
         }
 
+        /**
+         * {@inheritDoc}
+         */
         @Override
         protected Layer getAttention() {
             return new MaskedMultiHeadAttention(config.heads, config.embedDim);

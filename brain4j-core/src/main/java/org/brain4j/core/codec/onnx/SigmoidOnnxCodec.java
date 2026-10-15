@@ -5,20 +5,35 @@ import org.brain4j.core.importing.onnx.ProtoOnnx.NodeProto;
 import org.brain4j.math.activation.impl.Sigmoid;
 import org.brain4j.math.tensor.autograd.impl.ActivationOperation;
 
+/**
+ * ONNX codec for {@link ActivationOperation}.
+ */
 public class SigmoidOnnxCodec implements OnnxCodec<ActivationOperation> {
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String type() {
         return "Sigmoid";
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Class<ActivationOperation> targetClass() {
         return ActivationOperation.class;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void encode(ActivationOperation op, NodeProto.Builder builder) {}
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ActivationOperation decode(NodeProto node) {
         return new ActivationOperation(new Sigmoid());

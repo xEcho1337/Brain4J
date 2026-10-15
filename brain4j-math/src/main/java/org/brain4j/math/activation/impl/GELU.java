@@ -6,29 +6,47 @@ import org.brain4j.math.weightsinit.impl.NormalXavierInit;
 
 import static org.brain4j.math.Constants.PI;
 
+/**
+ * Gaussian error linear unit. Use it in transformers needing smooth gating.
+ */
 public class GELU implements Activation {
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public WeightInit defaultWeightInit() {
         return new NormalXavierInit();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public double activate(double input) {
         return 0.5 * input * (1 + Math.tanh(Math.sqrt(2 / PI) * (input + 0.044715 * Math.pow(input, 3))));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public double derivative(double input) {
         double tanhTerm = Math.tanh(Math.sqrt(2 / PI) * (input + 0.044715 * Math.pow(input, 3)));
         return 0.5 * (1 + tanhTerm) + 0.5 * input * (1 - Math.pow(tanhTerm, 2)) * Math.sqrt(2 / PI) * (1 + 3 * 0.044715 * Math.pow(input, 2));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getKernelPrefix() {
         return "gelu";
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int getActivationId() {
         return 7;

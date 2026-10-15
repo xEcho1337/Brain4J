@@ -7,16 +7,29 @@ import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.impl.GpuTensor;
 
+/**
+ * Applies causal multi-head attention with key-value caching.
+ * Use it in decoders for autoregressive generation.
+ */
 public class MaskedMultiHeadAttention extends MultiHeadAttention {
-    
+
+    /**
+     * Create attention without biases.
+     */
     public MaskedMultiHeadAttention(int headCount, int modelDimension) {
         super(headCount, modelDimension);
     }
 
+    /**
+     * Create attention with the given config.
+     */
     public MaskedMultiHeadAttention(Config config) {
         super(config);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
         Tensor input = inputs[0];
@@ -27,48 +40,54 @@ public class MaskedMultiHeadAttention extends MultiHeadAttention {
         Tensor outProj = getParam("out_proj");
         Tensor bias = getParam("bias");
         Tensor outBias = getParam("out_bias");
-        
+
         Range[] slicingRanges = {
             Range.all(), Range.point(seqLength - 1), Range.all()
         };
         Tensor cachedOutput = cache.get(outProj);
-        Tensor cachedQKV = cache.get(weights);
+        Tensor cachedQkv = cache.get(weights);
 
-        Tensor QKV = cachedProjection(cache, weights, slicingRanges, cachedQKV, input);
+        Tensor qkv = cachedProjection(cache, weights, slicingRanges, cachedQkv, input);
 
-        if (config.qkvBias()) QKV = QKV.addGrad(bias);
-        
-        int D = config.embedDim();
-        int H = config.heads();
+        if (config.qkvBias()) {
+            qkv = qkv.addGrad(bias);
+        }
+
         int d = headDim;
-        
+        int heads = config.heads();
+        int dim = config.embedDim();
+
         Range all = Range.all();
-        Tensor Q = QKV.sliceGrad(all, all, Range.interval(0, D));
-        Tensor K = QKV.sliceGrad(all, all, Range.interval(D, 2 * D));
-        Tensor V = QKV.sliceGrad(all, all, Range.interval(2 * D, 3 * D));
-        
-        Q = Q.reshapeGrad(batch, seqLength, H, d).transposeGrad(1, 2);
-        K = K.reshapeGrad(batch, seqLength, H, d).transposeGrad(1, 2);
-        V = V.reshapeGrad(batch, seqLength, H, d).transposeGrad(1, 2);
-        
+        Tensor q = qkv.sliceGrad(all, all, Range.interval(0, dim));
+        Tensor k = qkv.sliceGrad(all, all, Range.interval(dim, 2 * dim));
+        Tensor v = qkv.sliceGrad(all, all, Range.interval(2 * dim, 3 * dim));
+
+        q = q.reshapeGrad(batch, seqLength, heads, d).transposeGrad(1, 2);
+        k = k.reshapeGrad(batch, seqLength, heads, d).transposeGrad(1, 2);
+        v = v.reshapeGrad(batch, seqLength, heads, d).transposeGrad(1, 2);
+
         double normalizer = Math.sqrt(headDim);
-        
+
         Tensor mask = Tensors.triangularMask(seqLength, seqLength);
-        
-        if (input instanceof GpuTensor gpu) mask = mask.to(gpu.getDevice());
-        
-        Tensor K_T = K.transposeGrad();
-        Tensor scores = Q.matmulGrad(K_T).divGrad(Tensors.scalar(normalizer));
+
+        if (input instanceof GpuTensor gpu) {
+            mask = mask.to(gpu.getDevice());
+        }
+
+        Tensor kT = k.transposeGrad();
+        Tensor scores = q.matmulGrad(kT).divGrad(Tensors.scalar(normalizer));
         Tensor attentionMap = scores.addGrad(mask);
         Tensor probabilities = attentionMap.activateGrad(new Softmax());
-        Tensor context = probabilities.matmulGrad(V);
+        Tensor context = probabilities.matmulGrad(v);
         context = context.transposeGrad(1, 2);
-        
+
         Tensor output = context.reshapeGrad(batch, seqLength, config.embedDim());
         Tensor result = cachedProjection(cache, outProj, slicingRanges, cachedOutput, output);
 
-        if (config.outBias()) result = result.addGrad(outBias);
-        
+        if (config.outBias()) {
+            result = result.addGrad(outBias);
+        }
+
         return new Tensor[]{result};
     }
 
@@ -85,6 +104,7 @@ public class MaskedMultiHeadAttention extends MultiHeadAttention {
         }
 
         cache.set(weights, result);
+
         return result;
     }
 }

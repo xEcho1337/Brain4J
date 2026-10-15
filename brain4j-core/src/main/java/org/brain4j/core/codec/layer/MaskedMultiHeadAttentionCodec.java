@@ -2,23 +2,34 @@ package org.brain4j.core.codec.layer;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import org.brain4j.core.codec.JsonCodec;
 import org.brain4j.core.layer.impl.transformer.attention.MaskedMultiHeadAttention;
-import org.brain4j.core.layer.impl.transformer.attention.MultiHeadAttention;
-import org.brain4j.math.clipper.impl.HardClipper;
 
+/**
+ * Codec for {@link MaskedMultiHeadAttention}.
+ */
 public class MaskedMultiHeadAttentionCodec implements JsonCodec<MaskedMultiHeadAttention> {
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String type() {
         return "masked_multi_head_attention";
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Class<MaskedMultiHeadAttention> targetClass() {
         return MaskedMultiHeadAttention.class;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void write(MaskedMultiHeadAttention layer, ObjectNode out) {
         out.put("head_count", layer.config().heads());
@@ -27,6 +38,9 @@ public class MaskedMultiHeadAttentionCodec implements JsonCodec<MaskedMultiHeadA
         out.put("out_bias", layer.config().outBias());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public MaskedMultiHeadAttention parse(JsonNode in) {
         int heads = in.get("head_count").asInt();

@@ -1,5 +1,7 @@
 package org.brain4j.math.tensor.autograd.impl;
 
+import org.silicon.api.kernel.ComputeSize;
+
 import org.brain4j.math.Tensors;
 import org.brain4j.math.commons.Range;
 import org.brain4j.math.gpu.GpuContext;
@@ -8,19 +10,33 @@ import org.brain4j.math.gpu.kernel.KernelFactory;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.autograd.Operation;
 import org.brain4j.math.tensor.impl.GpuTensor;
-import org.silicon.api.kernel.ComputeSize;
 
+/**
+ * Runs 2D convolution with autograd. Use it to record strided filtering in the
+ * computation graph.
+ *
+ * @param stride step between filter positions
+ */
 public record ConvolveOperation(int stride) implements Operation {
 
+    /**
+     * Create a unit-stride convolution.
+     */
     public ConvolveOperation() {
         this(1);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor compute(Tensor... inputs) {
         return inputs[0].convolve(inputs[1], stride);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor[] backward(Tensor gradOutput, Tensor output, Tensor... inputs) {
         Tensor input = inputs[0];
@@ -31,7 +47,7 @@ public record ConvolveOperation(int stride) implements Operation {
         if (device == null) {
             return backwardCpu(gradOutput, input, filter);
         }
-        
+
         return backwardGpu(
             input.to(device),
             filter.to(device),
@@ -172,7 +188,9 @@ public record ConvolveOperation(int stride) implements Operation {
             if (tensor instanceof GpuTensor gpu) {
                 return gpu.getDevice();
             }
+
         }
+
         return null;
     }
 

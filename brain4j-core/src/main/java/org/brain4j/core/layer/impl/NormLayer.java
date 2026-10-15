@@ -1,5 +1,8 @@
 package org.brain4j.core.layer.impl;
 
+import java.util.List;
+import java.util.random.RandomGenerator;
+
 import org.brain4j.core.layer.Layer;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.commons.Commons;
@@ -7,27 +10,43 @@ import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 
-import java.util.List;
-import java.util.random.RandomGenerator;
-
+/**
+ * Normalizes inputs with learnable scale and shift.
+ * Use it to stabilize training in deep or transformer stacks.
+ */
 public class NormLayer extends Layer {
 
+    /**
+     * Holds the numerical stability term.
+     */
     public record Config(double epsilon) {}
 
     protected final Config config;
 
+    /**
+     * Create a layer with default epsilon.
+     */
     public NormLayer() {
         this(new Config(1e-5));
     }
 
+    /**
+     * Create a layer with the given epsilon.
+     */
     public NormLayer(double epsilon) {
         this(new Config(epsilon));
     }
 
+    /**
+     * Create a layer with the given config.
+     */
     public NormLayer(Config config) {
         this.config = config;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void build(List<Shape> inputShapes) {
         Shape inputShape = inputShapes.getFirst();
@@ -39,10 +58,16 @@ public class NormLayer extends Layer {
         registerParam("bias", bias);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void initWeights(List<Shape> inputShapes, RandomGenerator rng) {
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Shape> inferOutputShapes(List<Shape> inputShapes) {
         if (inputShapes.size() != 1) {
@@ -52,25 +77,37 @@ public class NormLayer extends Layer {
         return List.of(inputShapes.getFirst());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
         Tensor first = inputs[0];
 
-        Tensor W = getParam("weights");
-        Tensor B = getParam("bias");
+        Tensor w = getParam("weights");
+        Tensor b = getParam("bias");
 
-        Tensor result = first.layerNormGrad(W, B, config.epsilon);
+        Tensor result = first.layerNormGrad(w, b, config.epsilon);
 
         return new Tensor[] { result };
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Layer copy() {
         NormLayer copy = new NormLayer(config);
         copyParameters(copy);
+
         return copy;
     }
 
+    /**
+     * Return the layer config.
+     *
+     * @return the config
+     */
     public Config config() {
         return config;
     }

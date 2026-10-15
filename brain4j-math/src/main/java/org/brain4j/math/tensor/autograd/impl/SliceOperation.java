@@ -1,5 +1,7 @@
 package org.brain4j.math.tensor.autograd.impl;
 
+import org.silicon.api.device.ComputeBuffer;
+
 import org.brain4j.math.Tensors;
 import org.brain4j.math.commons.Range;
 import org.brain4j.math.gpu.GpuContext;
@@ -10,20 +12,34 @@ import org.brain4j.math.tensor.TensorKey;
 import org.brain4j.math.tensor.Usage;
 import org.brain4j.math.tensor.autograd.Operation;
 import org.brain4j.math.tensor.impl.GpuTensor;
-import org.silicon.api.device.ComputeBuffer;
 
+/**
+ * Slices a tensor with autograd. Use it to record sub-tensor views in the
+ * computation graph.
+ *
+ * @param ranges one range per sliced dimension
+ */
 public record SliceOperation(Range... ranges) implements Operation {
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int requiredInputs() {
         return 1;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor compute(Tensor... inputs) {
         return inputs[0].slice(ranges);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor[] backward(Tensor gradOutput, Tensor output, Tensor... inputs) {
         Tensor input = inputs[0];
@@ -70,6 +86,7 @@ public record SliceOperation(Range... ranges) implements Operation {
 
         int[] starts = new int[inputShape.length];
         int[] steps = new int[inputShape.length];
+
         for (int d = 0; d < inputShape.length; d++) {
             Range range = usedRanges[d];
             starts[d] = range == null ? 0 : range.start(inputShape[d]);
@@ -84,7 +101,8 @@ public record SliceOperation(Range... ranges) implements Operation {
         ComputeBuffer startsBuffer = device.acquire(startsKey, () -> device.createBuffer(starts));
         ComputeBuffer stepsBuffer = device.acquire(stepsKey, () -> device.createBuffer(steps));
 
-        int[] scatterStrides = org.brain4j.math.Tensors.computeStrides(inputShape);
+        int[] scatterStrides = Tensors.computeStrides(inputShape);
+
         try (GpuContext.QueueHandle queue = GpuContext.getOrCreateQueue(device)) {
             KernelFactory.create(device, "slice_backward_scatter")
                 .buffer(reshapedGradOutput.getDataBuffer())
@@ -103,18 +121,22 @@ public record SliceOperation(Range... ranges) implements Operation {
 
     private Range[] usedRanges(int[] inputShape) {
         Range[] usedRanges = new Range[inputShape.length];
+
         for (int d = 0; d < inputShape.length; d++) {
             usedRanges[d] = (d < ranges.length) ? ranges[d] : null;
         }
+
         return usedRanges;
     }
 
     private int[] expectedOutputShape(int[] inputShape, Range[] usedRanges) {
         int[] expectedShape = new int[inputShape.length];
+
         for (int d = 0; d < inputShape.length; d++) {
             Range used = usedRanges[d];
             expectedShape[d] = used != null ? used.size(inputShape[d]) : inputShape[d];
         }
+
         return expectedShape;
     }
 
@@ -156,6 +178,7 @@ public record SliceOperation(Range... ranges) implements Operation {
             for (int k = 0; k < blockLen; k++) {
                 gIn[offIn + k] += gOut[offOut + k];
             }
+
             return;
         }
 
@@ -164,5 +187,6 @@ public record SliceOperation(Range... ranges) implements Operation {
             dstIndices[dim] = j;
             sliceBackwardCopy(gradInput, gradOutput, ranges, srcIndices, dstIndices, dim + 1);
         }
+
     }
 }

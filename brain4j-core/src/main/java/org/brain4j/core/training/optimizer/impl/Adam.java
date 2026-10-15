@@ -1,17 +1,20 @@
 package org.brain4j.core.training.optimizer.impl;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.brain4j.core.training.optimizer.Optimizer;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.impl.GpuTensor;
 
-import java.util.HashMap;
-import java.util.Map;
-
+/**
+ * Applies adaptive updates with first and second moment estimates.
+ * Use it as the default optimizer for fast, stable convergence.
+ */
 public class Adam extends Optimizer {
 
-    // Momentum vectors
     protected Map<Tensor, Tensor> firstMomentum;
     protected Map<Tensor, Tensor> secondMomentum;
 
@@ -23,15 +26,21 @@ public class Adam extends Optimizer {
     protected float epsilon;
 
     protected int timestep = 1;
-    
+
     protected Adam() {
         super(0);
     }
-    
+
+    /**
+     * Create an optimizer with default betas and epsilon.
+     */
     public Adam(double learningRate) {
         this(learningRate, 0.9, 0.999, 1e-8);
     }
 
+    /**
+     * Create an optimizer with the given hyperparameters.
+     */
     public Adam(double learningRate, double beta1, double beta2, double epsilon) {
         super(learningRate);
         this.beta1 = (float) beta1;
@@ -39,6 +48,9 @@ public class Adam extends Optimizer {
         this.epsilon = (float) epsilon;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void initialize() {
         this.beta1Timestep = Math.pow(beta1, timestep);
@@ -47,6 +59,9 @@ public class Adam extends Optimizer {
         this.secondMomentum = new HashMap<>();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor step(Tensor weights, Tensor gradient) {
         Tensor first = firstMomentum.get(weights);
@@ -67,10 +82,10 @@ public class Adam extends Optimizer {
 
         first.mul(beta1);
         second.mul(beta2);
-        
+
         Tensor gradBeta1 = gradient.mul(1 - beta1);
         Tensor gradBeta2 = gradSquared.mul(1 - beta2);
-        
+
         first.add(gradBeta1.broadcastLike(first));
         second.add(gradBeta2.broadcastLike(second));
 
@@ -86,6 +101,9 @@ public class Adam extends Optimizer {
         return mHat.div(vHat.sqrt().add(epsilon));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void postBatch() {
         this.timestep++;
@@ -93,26 +111,50 @@ public class Adam extends Optimizer {
         this.beta2Timestep *= beta2;
     }
 
+    /**
+     * Return the first-moment decay.
+     *
+     * @return the beta1 value
+     */
     public double beta1() {
         return beta1;
     }
 
+    /**
+     * Replace the first-moment decay.
+     */
     public void setBeta1(double beta1) {
         this.beta1 = (float) beta1;
     }
 
+    /**
+     * Return the second-moment decay.
+     *
+     * @return the beta2 value
+     */
     public double beta2() {
         return beta2;
     }
 
+    /**
+     * Replace the second-moment decay.
+     */
     public void setBeta2(double beta2) {
         this.beta2 = (float) beta2;
     }
 
+    /**
+     * Return the numerical stability term.
+     *
+     * @return the epsilon value
+     */
     public double epsilon() {
         return epsilon;
     }
 
+    /**
+     * Replace the numerical stability term.
+     */
     public void setEpsilon(double epsilon) {
         this.epsilon = (float) epsilon;
     }

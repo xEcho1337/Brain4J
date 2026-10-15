@@ -3,31 +3,48 @@ package org.brain4j.core.codec.layer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import org.brain4j.core.codec.JsonCodec;
 import org.brain4j.core.layer.impl.ReshapeLayer;
 import org.brain4j.math.commons.Commons;
 import org.brain4j.math.tensor.Shape;
 
+/**
+ * Codec for {@link ReshapeLayer}.
+ */
 public class ReshapeCodec implements JsonCodec<ReshapeLayer> {
-    
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String type() {
         return "reshape";
     }
-    
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Class<ReshapeLayer> targetClass() {
         return ReshapeLayer.class;
     }
-    
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void write(ReshapeLayer reshapeLayer, ObjectNode out) {
         ArrayNode shape = out.putArray("shape");
+
         for (int dim : reshapeLayer.config().shape().dims()) {
             shape.add(dim);
         }
     }
-    
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ReshapeLayer parse(JsonNode in) {
         JsonNode shape = in.get("shape");

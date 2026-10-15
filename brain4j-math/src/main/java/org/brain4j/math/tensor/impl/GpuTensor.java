@@ -1,5 +1,13 @@
 package org.brain4j.math.tensor.impl;
 
+import java.util.Arrays;
+
+import org.silicon.api.backend.BackendType;
+import org.silicon.api.device.ComputeBuffer;
+import org.silicon.api.function.ComputeModule;
+import org.silicon.api.kernel.ComputeSize;
+import org.silicon.api.slang.SlangCompiler;
+
 import org.brain4j.math.Tensors;
 import org.brain4j.math.activation.Activation;
 import org.brain4j.math.commons.Commons;
@@ -11,16 +19,13 @@ import org.brain4j.math.tensor.Shape;
 import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.TensorKey;
 import org.brain4j.math.tensor.Usage;
-import org.silicon.api.backend.BackendType;
-import org.silicon.api.device.ComputeBuffer;
-import org.silicon.api.function.ComputeModule;
-import org.silicon.api.kernel.ComputeSize;
-import org.silicon.api.slang.SlangCompiler;
-
-import java.util.Arrays;
 
 import static java.util.Arrays.stream;
 
+/**
+ * Stores tensor data in GPU buffers. Use it for accelerated execution with
+ * Silicon kernels.
+ */
 public class GpuTensor extends BaseTensor {
 
     private static final int TILE_SIZE = 16;
@@ -31,17 +36,42 @@ public class GpuTensor extends BaseTensor {
     private final boolean persistent;
     private final int size;
 
+    /**
+     * Create a GPU tensor with computed strides.
+     *
+     * @param device target device
+     * @param shape tensor shape
+     * @param data initial data, or empty for zeros
+     */
     public GpuTensor(Device device, int[] shape, float... data) {
         this(device, false, shape, data);
     }
 
+    /**
+     * Create a GPU tensor with explicit strides.
+     *
+     * @param device target device
+     * @param shape tensor shape
+     * @param strides stride per dimension
+     * @param data initial data, or empty for zeros
+     */
     public GpuTensor(Device device, int[] shape, int[] strides, float... data) {
         this(device, shape, strides);
+
         if (data.length != 0) {
             getDataBuffer().write(data);
         }
+
     }
 
+    /**
+     * Create a GPU tensor, optionally bypassing the buffer pool.
+     *
+     * @param device target device
+     * @param persistent whether to bypass pooling
+     * @param shape tensor shape
+     * @param data initial data, or empty for zeros
+     */
     public GpuTensor(Device device, boolean persistent, int[] shape, float... data) {
         this.device = device;
         this.persistent = persistent;
@@ -53,20 +83,31 @@ public class GpuTensor extends BaseTensor {
         TensorKey dataKey = new TensorKey(Usage.DATA, shape);
 
         if (persistent) {
-            // Persistent tensors (e.g. model params, optimizer state) must not be returned to
-            // the batch-level pool, otherwise they can be reused while still logically alive
+            // Persistent tensors must bypass the batch pool to stay alive.
             this.stridesBuffer = device.createBuffer(strides);
             this.dataBuffer = device.createBuffer(data);
         } else {
+
             this.stridesBuffer = device.acquire(stridesKey, () -> device.createBuffer(strides));
             this.dataBuffer = device.acquire(dataKey, () -> {
                 float[] newData = data.length != 0 ? data : new float[size];
                 return device.createBuffer(newData);
             });
-            if (data.length != 0) this.dataBuffer.write(data);
+
+            if (data.length != 0) {
+                this.dataBuffer.write(data);
+            }
+
         }
     }
 
+    /**
+     * Share a buffer from another allocation.
+     *
+     * @param device target device
+     * @param shape tensor shape
+     * @param otherBuffer buffer to copy from
+     */
     public GpuTensor(Device device, int[] shape, ComputeBuffer otherBuffer) {
         this.device = device;
         this.persistent = false;
@@ -82,6 +123,13 @@ public class GpuTensor extends BaseTensor {
         otherBuffer.copyInto(dataBuffer);
     }
 
+    /**
+     * Create an empty GPU tensor with explicit strides.
+     *
+     * @param device target device
+     * @param shape tensor shape
+     * @param strides stride per dimension
+     */
     public GpuTensor(Device device, int[] shape, int[] strides) {
         this.device = device;
         this.persistent = false;
@@ -98,6 +146,12 @@ public class GpuTensor extends BaseTensor {
         this.dataBuffer = device.acquire(dataKey, () -> device.createBuffer(dataSize));
     }
 
+    /**
+     * Create a view sharing the reference buffer.
+     *
+     * @param reference tensor sharing its buffer
+     * @param newShape view shape
+     */
     public GpuTensor(GpuTensor reference, int[] newShape) {
         this.device = reference.device;
         this.persistent = false;
@@ -124,42 +178,83 @@ public class GpuTensor extends BaseTensor {
         this.dataBuffer = reference.dataBuffer;
     }
 
+    /**
+     * Copy a tensor into persistent GPU memory.
+     *
+     * @param first source tensor
+     * @param device target device
+     * @return persistent GPU tensor
+     */
     public static GpuTensor persistent(Tensor first, Device device) {
         return new GpuTensor(device, true, first.shape(), first.data());
     }
 
+    /**
+     * Check whether the buffer bypasses pooling.
+     *
+     * @return true when persistent
+     */
     public boolean isPersistent() {
         return persistent;
     }
 
+    /**
+     * Get the owning device.
+     *
+     * @return device
+     */
     public Device getDevice() {
         return device;
     }
 
+    /**
+     * Get the owning device.
+     *
+     * @return device
+     */
     public Device device() {
         return device;
     }
 
+    /**
+     * Get the data buffer.
+     *
+     * @return data buffer
+     */
     public ComputeBuffer getDataBuffer() {
         return dataBuffer;
     }
 
+    /**
+     * Get the strides buffer.
+     *
+     * @return strides buffer
+     */
     public ComputeBuffer getStridesBuffer() {
         return stridesBuffer;
     }
 
+    /**
+     * Get the element count.
+     *
+     * @return number of elements
+     */
     public int size() {
         return size;
     }
 
+    /**
+     * Compile and register all GPU kernels.
+     *
+     * @param device target device
+     */
     public static void initKernels(Device device) {
+
         try {
             SlangCompiler compiler = new SlangCompiler(device.context());
 
-            // TODO: hope that Slang devs wake up and fix this
             if (device.context().backendType() == BackendType.METAL) {
-                // Metal: per-kernel compilation avoids global buffer(>30) overflow
-                // Each file contains exactly one entry point -> bindings start at 0
+                // Per-kernel Metal compilation avoids the global buffer limit.
                 String[] activationKernels = {
                     "activation_forward", "activation_backward",
                     "elu_forward", "elu_backward", "gelu_forward", "gelu_backward",
@@ -169,6 +264,7 @@ public class GpuTensor extends BaseTensor {
                     "softplus_forward", "softplus_backward", "swish_forward", "swish_backward",
                     "tanh_forward", "tanh_backward"
                 };
+
                 for (String k : activationKernels) {
                     ComputeModule m = compiler.compileFromResource("shaders/activations/" + k + ".slang");
                     GpuContext.storeModule(device, "activations_" + k, m);
@@ -184,6 +280,7 @@ public class GpuTensor extends BaseTensor {
                     "concat_last_dim", "concat_copy_a", "concat_copy_b", "copy_strided",
                     "gather_forward", "gather_backward_grouped"
                 };
+
                 for (String k : tensorOpsKernels) {
                     ComputeModule m = compiler.compileFromResource("shaders/tensor_ops/" + k + ".slang");
                     GpuContext.storeModule(device, "tensor_ops_" + k, m);
@@ -194,6 +291,7 @@ public class GpuTensor extends BaseTensor {
                     "mask", "add_scalar", "sub_scalar", "mul_scalar",
                     "div_scalar", "pow_scalar", "sqrt_op", "fill_const"
                 };
+
                 for (String k : scalarKernels) {
                     ComputeModule m = compiler.compileFromResource("shaders/elementary_ops/" + k + ".slang");
                     GpuContext.storeModule(device, "elementary_ops_" + k, m);
@@ -205,6 +303,7 @@ public class GpuTensor extends BaseTensor {
                     "l2_norm_squared_reduce", "l2_sum_reduce", "l2_norm_squared_final",
                     "l2_norm_squared_single_block", "l2_norm_sqrt", "compute_l2_clip_scale"
                 };
+
                 for (String k : gradientClipKernels) {
                     ComputeModule m = compiler.compileFromResource("shaders/gradient_clippers/" + k + ".slang");
                     GpuContext.storeModule(device, "gradient_clippers_" + k, m);
@@ -215,6 +314,7 @@ public class GpuTensor extends BaseTensor {
                     "conv2d_nchw", "conv2d_nchw_shared", "conv2d_backward_input_nchw", "conv2d_backward_filter_nchw",
                     "convolve1d_direct", "convolve1d_fft", "convolve2d_direct", "convolve2d_fft_extract"
                 };
+
                 for (String k : convolutionKernels) {
                     ComputeModule m = compiler.compileFromResource("shaders/convolution/" + k + ".slang");
                     GpuContext.storeModule(device, "convolution_" + k, m);
@@ -230,6 +330,7 @@ public class GpuTensor extends BaseTensor {
                     "flash_attention_backward", "flash_attention_backward_dq",
                     "flash_attention_forward_tiled", "flash_attention_backward_tiled"
                 };
+
                 for (String k : flashAttentionKernels) {
                     ComputeModule m = compiler.compileFromResource("shaders/flash_attention/" + k + ".slang");
                     GpuContext.storeModule(device, "flash_attention_" + k, m);
@@ -237,11 +338,13 @@ public class GpuTensor extends BaseTensor {
                 }
 
                 String[] poolingKernels = { "max_pool_forward", "max_pool_backward" };
+
                 for (String k : poolingKernels) {
                     ComputeModule m = compiler.compileFromResource("shaders/pooling/" + k + ".slang");
                     GpuContext.storeModule(device, "pooling_" + k, m);
                     GpuContext.register(device, k, m);
                 }
+
                 return;
             }
 
@@ -319,17 +422,23 @@ public class GpuTensor extends BaseTensor {
             String[] poolingKernels = { "max_pool_forward", "max_pool_backward" };
             GpuContext.registerAll(device, poolingModule, poolingKernels);
         } catch (Throwable e) {
+
             throw new RuntimeException("Failed to initialize GPU kernels", e);
         }
     }
 
     private int roundUp(int globalSize) {
         int r = globalSize % TILE_SIZE;
-        if (r == 0) return globalSize;
+
+        if (r == 0) {
+            return globalSize;
+        }
+
         return globalSize + TILE_SIZE - r;
     }
 
     private Tensor launchScalarKernel(String kernelName, float value) {
+
         try (GpuContext.QueueHandle qh = GpuContext.getOrCreateQueue(device)) {
             int workSize = Math.max(1, size);
 
@@ -339,12 +448,15 @@ public class GpuTensor extends BaseTensor {
                 .intVal(size)
                 .launch(qh.queue(), workSize);
         } catch (Throwable e) {
+
             throw new RuntimeException("Failed to launch scalar kernel: " + kernelName, e);
         }
+
         return this;
     }
 
     private Tensor launchElementaryKernel(String kernelName, Tensor other) {
+
         if (!(other instanceof GpuTensor B)) {
             return launchElementaryKernel(kernelName, other.to(device));
         }
@@ -369,11 +481,14 @@ public class GpuTensor extends BaseTensor {
 
         for (int d = 0; d < rankA; d++) {
             int db = d - dimOffset;
+
             if (db < 0) {
                 bEffStrides[d] = 0;
             } else if (B.shape[db] == 1) {
+
                 bEffStrides[d] = 0;
             } else {
+
                 bEffStrides[d] = B.strides[db];
             }
         }
@@ -402,13 +517,19 @@ public class GpuTensor extends BaseTensor {
                 .intVal(sameShape)
                 .launch(qh.queue(), workSize);
         } catch (Throwable e) {
+
             throw new RuntimeException("Failed to launch elementary kernel: " + kernelName, e);
         }
+
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor to(Object deviceObj) {
+
         if (deviceObj == null) {
             Tensor result = new CpuTensor(Shape.of(shape), contiguousData());
             result.setAutogradContext(autogradContext);
@@ -416,6 +537,7 @@ public class GpuTensor extends BaseTensor {
         }
 
         if (deviceObj instanceof Device targetDevice) {
+
             if (targetDevice == device) {
                 return this;
             }
@@ -428,6 +550,9 @@ public class GpuTensor extends BaseTensor {
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor transpose(int dim1, int dim2) {
         int rank = shape.length;
@@ -450,58 +575,92 @@ public class GpuTensor extends BaseTensor {
         return view;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor add(Tensor other) {
         return launchElementaryKernel("add_op", other);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor add(double value) {
         return launchScalarKernel("add_scalar", (float) value);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor sub(Tensor other) {
         return launchElementaryKernel("sub_op", other);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor sub(double value) {
         return launchScalarKernel("sub_scalar", (float) value);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor mul(Tensor other) {
         return launchElementaryKernel("mul_op", other);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor mul(double value) {
         return launchScalarKernel("mul_scalar", (float) value);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor div(Tensor other) {
         return launchElementaryKernel("div_op", other);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor div(double value) {
         return launchScalarKernel("div_scalar", (float) value);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor pow(Tensor other) {
         return launchElementaryKernel("pow_op", other);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor pow(double value) {
         return launchScalarKernel("pow_scalar", (float) value);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor sqrt() {
+
         try (GpuContext.QueueHandle qh = GpuContext.getOrCreateQueue(device)) {
             int workSize = Math.max(1, size);
 
@@ -510,25 +669,32 @@ public class GpuTensor extends BaseTensor {
                 .intVal(size)
                 .launch(qh.queue(), workSize);
         } catch (Throwable e) {
+
             throw new RuntimeException("Failed to launch sqrt kernel", e);
         }
+
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor activate(Activation activation) {
         return super.activate(activation);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor matmul(Tensor other) {
+
         if (!(other instanceof GpuTensor B)) {
             return matmul(other.to(device));
         }
 
-        // Stride-aware matmul: the kernel resolves the real layout of A and B,
-        // so views (transposed, sliced) are read directly from their buffers —
-        // no materialization, no copies, identical semantics on every backend.
+        // Stride-aware matmul reads views directly without materialization.
         int[] shapeA = shape;
         int[] shapeB = B.shape;
 
@@ -551,6 +717,7 @@ public class GpuTensor extends BaseTensor {
 
         int[] aBatch = new int[maxBatchRank];
         int[] bBatch = new int[maxBatchRank];
+
         for (int i = 0; i < maxBatchRank; ++i) {
             int ai = i - (maxBatchRank - aBatchRank);
             int bi = i - (maxBatchRank - bBatchRank);
@@ -560,6 +727,7 @@ public class GpuTensor extends BaseTensor {
 
         int[] outBatch = new int[maxBatchRank];
         long batchCountLong = 1;
+
         for (int i = 0; i < maxBatchRank; ++i) {
             int da = aBatch[i];
             int db = bBatch[i];
@@ -567,6 +735,7 @@ public class GpuTensor extends BaseTensor {
             if (da == db || da == 1 || db == 1) {
                 outBatch[i] = Math.max(da, db);
             } else {
+
                 throw new IllegalArgumentException("Cannot broadcast batch dimension: " + Arrays.toString(aBatch) +
                     " vs " + Arrays.toString(bBatch));
             }
@@ -577,6 +746,7 @@ public class GpuTensor extends BaseTensor {
                 throw new IllegalArgumentException("Batch size too large");
             }
         }
+
         int batchCount = (int) batchCountLong;
 
         int[] outShape = new int[maxBatchRank + 2];
@@ -605,11 +775,13 @@ public class GpuTensor extends BaseTensor {
 
         for (int b = 0; b < batchCount; ++b) {
             int[] idx = new int[maxBatchRank];
+
             for (int i = 0; i < maxBatchRank; ++i) {
                 idx[i] = (b / outStrides[i]) % outBatch[i];
             }
 
             int linearA = 0;
+
             for (int i = 0; i < aBatchRank; ++i) {
                 int alignedPos = i + (maxBatchRank - aBatchRank);
                 int dimSizeA = shapeA[i];
@@ -618,6 +790,7 @@ public class GpuTensor extends BaseTensor {
             }
 
             int linearB = 0;
+
             for (int i = 0; i < bBatchRank; ++i) {
                 int alignedPos = i + (maxBatchRank - bBatchRank);
                 int dimSizeB = shapeB[i];
@@ -652,6 +825,7 @@ public class GpuTensor extends BaseTensor {
                     .intVal(P)
                     .launch(qh.queue(), globalSize, localSize);
             } else {
+
                 TensorKey memoryAKey = new TensorKey(Usage.OTHER, offsetsA);
                 TensorKey memoryBKey = new TensorKey(Usage.OTHER, offsetsB);
                 TensorKey memoryCKey = new TensorKey(Usage.OTHER, offsetsC);
@@ -671,19 +845,21 @@ public class GpuTensor extends BaseTensor {
                     .intVal(K)
                     .intVal(P)
                     .intVal(batchCount)
-//                    .intVal(0)
-//                    .intVal(0)
                     .intVal(transposed ? 1 : 0)
                     .intVal(other.transposed() ? 1 : 0)
                     .launch(qh.queue(), globalSize, localSize);
             }
         } catch (Throwable e) {
+
             throw new RuntimeException("Failed to launch matmul kernel", e);
         }
 
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor sum(int dim, boolean keepDim) {
         dim = Commons.mod(dim, shape.length);
@@ -696,10 +872,16 @@ public class GpuTensor extends BaseTensor {
         int reducedSize = shape[dim];
 
         int outerSize = 1;
-        for (int i = 0; i < dim; i++) outerSize *= shape[i];
+
+        for (int i = 0; i < dim; i++) {
+            outerSize *= shape[i];
+        }
 
         int innerSize = 1;
-        for (int i = dim + 1; i < shape.length; i++) innerSize *= shape[i];
+
+        for (int i = dim + 1; i < shape.length; i++) {
+            innerSize *= shape[i];
+        }
 
         GpuTensor result = new GpuTensor(device, newShape);
         result.setAutogradContext(autogradContext);
@@ -716,12 +898,16 @@ public class GpuTensor extends BaseTensor {
                 .intVal(innerSize)
                 .launch(qh.queue(), gx, gy);
         } catch (Throwable e) {
+
             throw new RuntimeException("Failed to launch sum_along_dim kernel", e);
         }
 
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor reshape(int... newShape) {
         int newSize = Tensors.computeSize(newShape);
@@ -739,8 +925,12 @@ public class GpuTensor extends BaseTensor {
         return new GpuTensor(this, newShape);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor concat(Tensor other) {
+
         if (!(other instanceof GpuTensor)) {
             other = other.to(device);
         }
@@ -750,7 +940,9 @@ public class GpuTensor extends BaseTensor {
         if (shape.length != B.shape.length) {
             throw new IllegalArgumentException("Concatenation is only supported for tensors with the same number of dimensions.");
         }
+
         for (int i = 0; i < shape.length - 1; i++) {
+
             if (shape[i] != B.shape[i]) {
                 throw new IllegalArgumentException("Shapes must match on all dimensions except the last.");
             }
@@ -783,14 +975,19 @@ public class GpuTensor extends BaseTensor {
                 .intVal(concatLast)
                 .launch(qh.queue(), workSize);
         } catch (Throwable e) {
+
             throw new RuntimeException("Failed to launch concat kernel", e);
         }
 
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor concat(Tensor other, int dimension) {
+
         if (!(other instanceof GpuTensor)) {
             other = other.to(device);
         }
@@ -803,11 +1000,13 @@ public class GpuTensor extends BaseTensor {
 
         int rank = rank();
         dimension = Math.floorMod(dimension, rank);
+
         if (dimension < 0 || dimension >= rank) {
             throw new IllegalArgumentException("Invalid dimension: " + dimension);
         }
 
         for (int i = 0; i < rank; i++) {
+
             if (i != dimension && shape[i] != B.shape[i]) {
                 throw new IllegalArgumentException("Shapes must match in all dimensions except the concatenation one.");
             }
@@ -851,14 +1050,19 @@ public class GpuTensor extends BaseTensor {
                 .intVal(blockSize)
                 .launch(qh.queue(), Math.max(1, totalB));
         } catch (Throwable e) {
+
             throw new RuntimeException("Failed to launch concat kernel", e);
         }
 
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor slice(Range... ranges) {
+
         if (ranges.length > shape.length) {
             throw new IllegalArgumentException("Too many ranges specified");
         }
@@ -866,9 +1070,11 @@ public class GpuTensor extends BaseTensor {
         int[] newShape = new int[shape.length];
 
         for (int i = 0; i < shape.length; i++) {
+
             if (i < ranges.length && ranges[i] != null) {
                 newShape[i] = ranges[i].size(shape[i]);
             } else {
+
                 newShape[i] = shape[i];
             }
         }
@@ -906,19 +1112,25 @@ public class GpuTensor extends BaseTensor {
                 .intVal(rank())
                 .launch(qh.queue(), workSize);
         } catch (Throwable e) {
+
             throw new RuntimeException("Failed to launch slice kernel", e);
         }
 
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor layerNorm(double epsilon) {
         int rank = shape.length;
         int featuresSize = shape[rank - 1];
         int batchSize = 1;
 
-        for (int i = 0; i < rank - 1; i++) batchSize *= shape[i];
+        for (int i = 0; i < rank - 1; i++) {
+            batchSize *= shape[i];
+        }
 
         try (GpuContext.QueueHandle qh = GpuContext.getOrCreateQueue(device)) {
             int workSize = Math.max(1, batchSize);
@@ -931,12 +1143,16 @@ public class GpuTensor extends BaseTensor {
                 .floatVal((float) epsilon)
                 .launch(qh.queue(), workSize);
         } catch (Throwable e) {
+
             throw new RuntimeException("Failed to launch layer_norm kernel", e);
         }
 
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public float[] data() {
         device.queue().await();
@@ -945,9 +1161,11 @@ public class GpuTensor extends BaseTensor {
         return buffer;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor set(float value, int... indices) {
-        // TODO: maybe make a proper kernel for this?
         device.queue().await();
 
         int offset = linearIndex(indices);
@@ -959,11 +1177,17 @@ public class GpuTensor extends BaseTensor {
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int elements() {
         return size;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor softmax(double temperature) {
         GpuTensor result = new GpuTensor(device, shape);
@@ -974,6 +1198,7 @@ public class GpuTensor extends BaseTensor {
         int lastStride = strides[rank - 1];
 
         int[] rowOffsets = new int[rows];
+
         if (rows > 1) {
             int outerRank = rank - 1;
             int acc = 1;
@@ -986,10 +1211,12 @@ public class GpuTensor extends BaseTensor {
 
             for (int row = 0; row < rows; row++) {
                 int base = 0;
+
                 for (int d = 0; d < outerRank; d++) {
                     int idx = (row / outerStrides[d]) % shape[d];
                     base += idx * strides[d];
                 }
+
                 rowOffsets[row] = base;
             }
         }
@@ -1009,19 +1236,27 @@ public class GpuTensor extends BaseTensor {
                 .floatVal((float) temperature)
                 .launch(qh.queue(), workSize);
         } catch (Throwable e) {
+
             throw new RuntimeException("Failed to launch softmax kernel", e);
         }
 
         return result;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor convolve(Tensor other) {
         return convolve(other, 1);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor convolve(Tensor other, int stride) {
+
         if (stride <= 0) {
             throw Commons.illegalArgument("Stride must be > 0. Got: %s", stride);
         }
@@ -1034,6 +1269,7 @@ public class GpuTensor extends BaseTensor {
         Tensor kernel4 = K;
 
         while (input4.rank() < 4) input4 = input4.unsqueeze();
+
         while (kernel4.rank() < 4) kernel4 = kernel4.unsqueeze();
 
         GpuTensor A = (GpuTensor) input4;
@@ -1111,14 +1347,19 @@ public class GpuTensor extends BaseTensor {
                 .intVal(outWidth)
                 .launch(qh.queue(), globalSize, localSize);
         } catch (Throwable e) {
+
             throw new RuntimeException("Failed to launch convolution kernel", e);
         }
 
         return out;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor broadcast(int[] targetShape) {
+
         if (Arrays.equals(shape, targetShape)) {
             return this;
         }
@@ -1137,6 +1378,7 @@ public class GpuTensor extends BaseTensor {
         int[] targetFlatStrides = Tensors.computeStrides(targetShape);
 
         int pad = targetRank - srcRank;
+
         for (int i = 0; i < pad; i++) {
             alignedSrcShape[i] = 1;
             alignedSrcStrides[i] = 0;
@@ -1148,6 +1390,7 @@ public class GpuTensor extends BaseTensor {
         }
 
         for (int d = 0; d < targetRank; d++) {
+
             if (alignedSrcShape[d] > targetShape[d]) {
                 throw new IllegalArgumentException(
                     "Cannot broadcast: source dimension " + alignedSrcShape[d] +
@@ -1181,12 +1424,16 @@ public class GpuTensor extends BaseTensor {
                 .intVal(totalElements)
                 .launch(qh.queue(), Math.max(1, totalElements));
         } catch (Throwable e) {
+
             throw new RuntimeException("Failed to launch broadcast kernel", e);
         }
 
         return out;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Tensor copy() {
         GpuTensor result = new GpuTensor(device, shape);
@@ -1212,6 +1459,7 @@ public class GpuTensor extends BaseTensor {
                 .intVal(size)
                 .launch(qh.queue(), Math.max(1, size));
         } catch (Throwable e) {
+
             throw new RuntimeException("Failed to copy tensor on the device", e);
         }
 
@@ -1235,6 +1483,7 @@ public class GpuTensor extends BaseTensor {
 
         for (int linear = 0; linear < size; linear++) {
             int offset = 0;
+
             for (int d = 0; d < rank; d++) {
                 offset += indices[d] * strides[d];
             }
@@ -1242,7 +1491,11 @@ public class GpuTensor extends BaseTensor {
             contiguous[linear] = raw[offset];
 
             for (int d = rank - 1; d >= 0; d--) {
-                if (++indices[d] < shape[d]) break;
+
+                if (++indices[d] < shape[d]) {
+                    break;
+                }
+
                 indices[d] = 0;
             }
         }
