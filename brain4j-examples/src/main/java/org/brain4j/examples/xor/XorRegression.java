@@ -5,7 +5,7 @@ import org.brain4j.core.model.impl.Sequential;
 import org.brain4j.math.activation.impl.ReLU;
 import org.brain4j.math.activation.impl.Sigmoid;
 import org.brain4j.math.loss.impl.BinaryCrossEntropy;
-import org.brain4j.core.model.ModelSpecs;
+import org.brain4j.core.model.ModelLayout;
 import org.brain4j.core.monitor.Monitor;
 import org.brain4j.core.monitor.impl.EvalMonitor;
 import org.brain4j.core.training.Trainer;
@@ -25,7 +25,7 @@ public class XorRegression {
         List<Sample> samples = getSamples();
         
         ListDataSource dataSource = new ListDataSource(samples, false, 1);
-        ModelSpecs specs = ModelSpecs.of(Shape.of(2),
+        ModelLayout layout = ModelLayout.of(Shape.of(2),
             new DenseLayer(16, new ReLU()),
             new DenseLayer(16, new ReLU()),
             new DenseLayer(1, new Sigmoid())

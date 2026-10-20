@@ -18,13 +18,12 @@ import org.brain4j.core.layer.impl.utility.SelectLayer;
 import org.brain4j.core.layer.impl.utility.SliceLayer;
 import org.brain4j.core.layer.impl.utility.SqueezeLayer;
 import org.brain4j.core.model.Model;
-import org.brain4j.core.model.ModelSpecs;
+import org.brain4j.core.model.ModelLayout;
 import org.brain4j.core.model.impl.Sequential;
 import org.brain4j.core.training.Trainer;
 import org.brain4j.core.training.TrainingConfig;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.activation.Activations;
-import org.brain4j.math.clipper.impl.HardClipper;
 import org.brain4j.math.data.ListDataSource;
 import org.brain4j.math.data.Sample;
 import org.brain4j.math.commons.Range;
@@ -44,11 +43,11 @@ public class TrainingTests {
     
     @Test
     void trainingRunsOnSimpleRegression() {
-        ModelSpecs specs = ModelSpecs.of(Shape.of(2),
+        ModelLayout layout = ModelLayout.of(Shape.of(2),
             new DenseLayer(1)
         );
         
-        Sequential model = specs.compile(42);
+        Sequential model = layout.compile(42);
         
         List<Sample> samples = new ArrayList<>();
         
@@ -75,14 +74,14 @@ public class TrainingTests {
     
     @Test
     void trainingRunsOnConvStack() {
-        ModelSpecs specs = ModelSpecs.of(Shape.of(1, 6, 6),
+        ModelLayout layout = ModelLayout.of(Shape.of(1, 6, 6),
             new ConvLayer(2, 3, 3, 1, Activations.RELU.function()),
             new MaxPoolLayer(2, 2, 2),
             new ReshapeLayer(Shape.of(8)),
             new DenseLayer(3, Activations.LINEAR.function())
         );
         
-        Model model = specs.compile(7);
+        Model model = layout.compile(7);
         
         List<Sample> samples = new ArrayList<>();
         
@@ -106,7 +105,7 @@ public class TrainingTests {
     
     @Test
     void trainingRunsOnUtilityStack() {
-        ModelSpecs specs = ModelSpecs.of(Shape.of(2, 3),
+        ModelLayout layout = ModelLayout.of(Shape.of(2, 3),
             new SliceLayer(Range.all(), Range.interval(0, 2)),
             new SqueezeLayer(-1),
             new ReshapeLayer(Shape.of(4)),
@@ -114,7 +113,7 @@ public class TrainingTests {
             new DenseLayer(2)
         );
         
-        Model model = specs.compile(9);
+        Model model = layout.compile(9);
         
         List<Sample> samples = new ArrayList<>();
         
@@ -138,14 +137,14 @@ public class TrainingTests {
     
     @Test
     void trainingRunsOnDualBranchSelect() {
-        ModelSpecs specs = ModelSpecs.of(Shape.of(4),
+        ModelLayout layout = ModelLayout.of(Shape.of(4),
             new DenseLayer(4),
             new DenseLayer(4),
             new SelectLayer(0),
             new DenseLayer(1)
         );
         
-        Model model = specs.compile(11);
+        Model model = layout.compile(11);
         
         List<Sample> samples = new ArrayList<>();
         
@@ -169,14 +168,14 @@ public class TrainingTests {
     
     @Test
     void trainingRunsOnNormStack() {
-        ModelSpecs specs = ModelSpecs.of(Shape.of(4),
+        ModelLayout layout = ModelLayout.of(Shape.of(4),
             new DenseLayer(4),
             new NormLayer(),
             new RMSNormLayer(),
             new DenseLayer(2)
         );
         
-        Model model = specs.compile(13);
+        Model model = layout.compile(13);
         
         List<Sample> samples = new ArrayList<>();
         
@@ -200,12 +199,12 @@ public class TrainingTests {
     
     @Test
     void trainingRunsOnTransformerEncoder() {
-        ModelSpecs specs = ModelSpecs.of(Shape.of(3, 4),
+        ModelLayout layout = ModelLayout.of(Shape.of(3, 4),
             new Transformer.Encoder(4, 2, 0.0),
             new DenseLayer(2)
         );
         
-        Model model = specs.compile(21);
+        Model model = layout.compile(21);
         
         List<Sample> samples = new ArrayList<>();
         
@@ -229,12 +228,12 @@ public class TrainingTests {
     
     @Test
     void trainingRunsOnTransformerDecoder() {
-        ModelSpecs specs = ModelSpecs.of(Shape.of(3, 4),
+        ModelLayout layout = ModelLayout.of(Shape.of(3, 4),
             new Transformer.Decoder(4, 2, 0.0),
             new DenseLayer(2)
         );
         
-        Model model = specs.compile(23);
+        Model model = layout.compile(23);
         
         List<Sample> samples = new ArrayList<>();
         
@@ -258,13 +257,13 @@ public class TrainingTests {
     
     @Test
     void trainingRunsOnEmbeddingAndPositional() {
-        ModelSpecs specs = ModelSpecs.of(Shape.of(5),
+        ModelLayout layout = ModelLayout.of(Shape.of(5),
             new EmbeddingLayer(10, 4),
             new PosEncodeLayer(32, 4),
             new DenseLayer(3)
         );
         
-        Model model = specs.compile(31);
+        Model model = layout.compile(31);
         
         List<Sample> samples = new ArrayList<>();
         
@@ -288,12 +287,12 @@ public class TrainingTests {
     
     @Test
     void trainingRunsOnLstm() {
-        ModelSpecs specs = ModelSpecs.of(Shape.of(3, 4),
+        ModelLayout layout = ModelLayout.of(Shape.of(3, 4),
             new LSTMLayer(5, true),
             new DenseLayer(2)
         );
         
-        Model model = specs.compile(51);
+        Model model = layout.compile(51);
         
         List<Sample> samples = new ArrayList<>();
         
@@ -317,12 +316,12 @@ public class TrainingTests {
     
     @Test
     void trainingRunsOnAttentionBlock() {
-        ModelSpecs specs = ModelSpecs.of(Shape.of(3, 4),
+        ModelLayout layout = ModelLayout.of(Shape.of(3, 4),
             new MultiHeadAttention(2, 4),
             new DenseLayer(2)
         );
         
-        Model model = specs.compile(61);
+        Model model = layout.compile(61);
         
         List<Sample> samples = new ArrayList<>();
         
@@ -346,12 +345,12 @@ public class TrainingTests {
     
     @Test
     void trainingRunsOnMaskedAttentionBlock() {
-        ModelSpecs specs = ModelSpecs.of(Shape.of(3, 4),
+        ModelLayout layout = ModelLayout.of(Shape.of(3, 4),
             new MaskedMultiHeadAttention(2, 4),
             new DenseLayer(2)
         );
         
-        Model model = specs.compile(71);
+        Model model = layout.compile(71);
         
         List<Sample> samples = new ArrayList<>();
         
@@ -375,14 +374,14 @@ public class TrainingTests {
     
     @Test
     void trainingRunsOnDropoutAndActivation() {
-        ModelSpecs specs = ModelSpecs.of(Shape.of(4),
+        ModelLayout layout = ModelLayout.of(Shape.of(4),
             new DenseLayer(4),
             new DropoutLayer(0.2),
             new ActivationLayer(Activations.RELU),
             new DenseLayer(1)
         );
         
-        Model model = specs.compile(41);
+        Model model = layout.compile(41);
         
         List<Sample> samples = new ArrayList<>();
         

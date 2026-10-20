@@ -6,7 +6,7 @@ import org.brain4j.core.layer.Layer;
 
 /**
  * Contributes layers to a model definition.
- * Use it for reusable architecture fragments assembled into {@link ModelSpecs}.
+ * Use it for reusable architecture fragments assembled into {@link ModelLayout}.
  */
 public interface ModelBlock {
     /**

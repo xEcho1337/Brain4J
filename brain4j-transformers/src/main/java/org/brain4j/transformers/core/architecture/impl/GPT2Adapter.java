@@ -10,7 +10,7 @@ import org.brain4j.core.layer.impl.transformer.attention.MaskedMultiHeadAttentio
 import org.brain4j.core.layer.impl.transformer.attention.MultiHeadAttention;
 import org.brain4j.core.layer.impl.transformer.PosEncodeLayer;
 import org.brain4j.core.model.Model;
-import org.brain4j.core.model.ModelSpecs;
+import org.brain4j.core.model.ModelLayout;
 import org.brain4j.transformers.core.architecture.ArchitectureAdapter;
 import org.brain4j.math.Tensors;
 import org.brain4j.math.commons.Commons;
@@ -51,7 +51,7 @@ public class GPT2Adapter implements ArchitectureAdapter {
         int context = config.get("n_ctx").asInt();
         int vocabSize = config.get("vocab_size").asInt();
         
-        ModelSpecs specs = ModelSpecs.of(Shape.of(-1));
+        ModelLayout.Builder layout = ModelLayout.stack(Shape.of(-1));
 
         Tensor embedding = findContaining("wte.weight", weights); // embedding  -> [vocab, dim]
         Tensor posEncode = findContaining("wpe.weight", weights); // pos encode -> [length, dim]
@@ -69,15 +69,15 @@ public class GPT2Adapter implements ArchitectureAdapter {
         vocabLayer.registerParam("weights", embedding.transpose());
         vocabLayer.registerParam("bias", Tensors.zeros(embedding.elements()));
 
-        specs.add(embeddingLayer.freeze());
-        specs.add(posEncodeLayer.freeze());
+        layout.add(embeddingLayer.freeze());
+        layout.add(posEncodeLayer.freeze());
         
         for (int i = 0; i < layers; i++) {
             String prefix = String.format("h.%s.", i);
             GPT2Decoder decoder = new GPT2Decoder(embeddingDim, heads, 0.0);
             decoder.loadWeights(prefix, weights);
 
-            specs.add(decoder.freeze());
+            layout.add(decoder.freeze());
         }
         
         TokenSelectionLayer selectionLayer = new TokenSelectionLayer();
@@ -89,11 +89,11 @@ public class GPT2Adapter implements ArchitectureAdapter {
         normLayer.registerParam("weights", lnGamma);
         normLayer.registerParam("bias", lnBeta);
         
-        specs.add(normLayer.freeze());
-        specs.add(vocabLayer.freeze());
-        specs.add(selectionLayer.freeze());
+        layout.add(normLayer.freeze());
+        layout.add(vocabLayer.freeze());
+        layout.add(selectionLayer.freeze());
 
-        return specs.compile();
+        return layout.build().compile();
     }
 
     private static class GPT2Decoder extends Transformer.Decoder {

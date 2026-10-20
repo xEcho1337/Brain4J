@@ -13,7 +13,7 @@ import org.brain4j.core.layer.Layer;
 import org.brain4j.core.layer.Node;
 import org.brain4j.core.model.Model;
 import org.brain4j.core.model.ModelBlock;
-import org.brain4j.core.model.ModelSpecs;
+import org.brain4j.core.model.ModelLayout;
 import org.brain4j.math.commons.Commons;
 import org.brain4j.math.data.StatesCache;
 import org.brain4j.math.gpu.device.Device;
@@ -21,9 +21,9 @@ import org.brain4j.math.tensor.Tensor;
 
 /**
  * Linear stack of layers evaluated in order.
- * Use it for feed-forward architectures built from {@link ModelSpecs}.
+ * Use it for feed-forward architectures built from {@link ModelLayout}.
  */
-public record Sequential(Graph graph, ModelSpecs specs, Device device, List<Layer> layers, int seed) implements Model, ModelBlock {
+public record Sequential(Graph graph, ModelLayout layout, Device device, List<Layer> layers, int seed) implements Model, ModelBlock {
 
     public Sequential {
         if (layers.isEmpty()) {
@@ -32,22 +32,22 @@ public record Sequential(Graph graph, ModelSpecs specs, Device device, List<Laye
     }
 
     /**
-     * Chains the specs layers and builds the backing graph.
+     * Chains the layout layers and builds the backing graph.
      *
-     * @param specs the compiled specs (not null)
+     * @param layout the compiled layout (not null)
      * @param device the target device ({@code null} for CPU)
      * @param seed the weight initialization seed
      */
-    public Sequential(ModelSpecs specs, Device device, int seed) {
-        List<Layer> layers = specs.buildLayerList();
+    public Sequential(ModelLayout layout, Device device, int seed) {
+        List<Layer> layers = layout.buildLayerList();
 
-        Node lastNode = Node.input(specs.inputShape());
+        Node lastNode = Node.input(layout.inputShape());
 
         for (Layer current : layers) {
             lastNode = current.apply(lastNode);
         }
 
-        this(Graph.of(seed, lastNode), specs, device, specs.buildLayerList(), seed);
+        this(Graph.of(seed, lastNode), layout, device, layout.buildLayerList(), seed);
     }
 
     /**
@@ -75,7 +75,7 @@ public record Sequential(Graph graph, ModelSpecs specs, Device device, List<Laye
     public Sequential fork(Device device) {
         Graph newGraph = graph.fork(device);
         List<Layer> newLayers = new ArrayList<>(newGraph.getLayers());
-        return new Sequential(newGraph, specs.copy(), device, newLayers, graph.seed());
+        return new Sequential(newGraph, layout.copy(), device, newLayers, graph.seed());
     }
 
     /**
@@ -91,7 +91,7 @@ public record Sequential(Graph graph, ModelSpecs specs, Device device, List<Laye
             layer.to(device);
         }
 
-        return new Sequential(graph, specs, device, layers, seed);
+        return new Sequential(graph, layout, device, layers, seed);
     }
 
     /**
@@ -117,7 +117,7 @@ public record Sequential(Graph graph, ModelSpecs specs, Device device, List<Laye
 
         stats.append(divider);
         stats.append(pattern.formatted("Index", "Layer Type", "Weights Shape", "Parameters", "Activation")).append("\n");
-        stats.append(pattern.formatted("-", "Input", Arrays.toString(specs.inputShape().dims()), "0", "-")).append("\n");
+        stats.append(pattern.formatted("-", "Input", Arrays.toString(layout.inputShape().dims()), "0", "-")).append("\n");
 
         AtomicLong totalParams = new AtomicLong(0);
         AtomicLong trainableParams = new AtomicLong(0);
@@ -150,7 +150,7 @@ public record Sequential(Graph graph, ModelSpecs specs, Device device, List<Laye
     public Sequential copy() {
         Graph newGraph = graph.copy();
         List<Layer> newLayers = new ArrayList<>(newGraph.getLayers());
-        return new Sequential(newGraph, specs.copy(), device, newLayers, graph.seed());
+        return new Sequential(newGraph, layout.copy(), device, newLayers, graph.seed());
     }
 
     /**
@@ -170,12 +170,12 @@ public record Sequential(Graph graph, ModelSpecs specs, Device device, List<Laye
     }
 
     /**
-     * Returns the specs this model was compiled from.
+     * Returns the layout this model was compiled from.
      *
-     * @return the model specs
+     * @return the model layout
      */
-    public ModelSpecs specs() {
-        return specs;
+    public ModelLayout layout() {
+        return layout;
     }
 
     /**

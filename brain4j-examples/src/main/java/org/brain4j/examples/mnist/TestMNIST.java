@@ -12,7 +12,7 @@ import org.brain4j.math.activation.impl.Softmax;
 import org.brain4j.math.data.Sample;
 import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.loss.impl.CrossEntropy;
-import org.brain4j.core.model.ModelSpecs;
+import org.brain4j.core.model.ModelLayout;
 import org.brain4j.core.monitor.Monitor;
 import org.brain4j.core.monitor.impl.EvalMonitor;
 import org.brain4j.core.training.Trainer;
@@ -41,13 +41,13 @@ public class TestMNIST {
             dataset = createDummyMnist(128, 0.8);
         }
 
-        Device device = Brain4J.firstDevice();
+        Device device = Brain4J.firstDevice().orElseThrow();
 
         ListDataSource trainSource = dataset.train().to(device);
         ListDataSource testSource = dataset.test().to(device);
 
-        ModelSpecs specs = getMLPSpecs();
-        Sequential model = specs.compile(42).to(device);
+        ModelLayout layout = getMLPSpecs();
+        Sequential model = layout.compile(42).to(device);
         model.summary(); // prints a summary of the architecture on the console
 
         TrainingConfig config = TrainingConfig.of(
@@ -66,12 +66,12 @@ public class TestMNIST {
         System.out.println(result.results());
     }
 
-    private ModelSpecs getMLPSpecs() {
-        return ModelSpecs.of(Shape.of(28 * 28),
-            new DenseLayer(128, new ReLU()),
-            new DenseLayer(64, new ReLU()),
-            new DenseLayer(10, new Softmax())
-        );
+    private ModelLayout getMLPSpecs() {
+        return ModelLayout.stack(Shape.of(28 * 28))
+            .add(new DenseLayer(128, new ReLU()))
+            .add(new DenseLayer(64, new ReLU()))
+            .add(new DenseLayer(10, new Softmax()))
+            .build();
     }
 
     private Dataset createDummyMnist(int batchSize, double split) {

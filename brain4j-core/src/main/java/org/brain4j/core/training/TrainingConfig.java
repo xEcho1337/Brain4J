@@ -5,6 +5,8 @@ import org.brain4j.core.training.updater.Updater;
 import org.brain4j.core.training.updater.impl.StochasticUpdater;
 import org.brain4j.math.loss.LossFunction;
 
+import java.util.Objects;
+
 /**
  * Groups loss, optimizer and updater for a training run.
  * Use it to configure a {@link Trainer}.
@@ -21,16 +23,8 @@ public record TrainingConfig(LossFunction loss, Optimizer optimizer, Updater upd
     }
 
     public TrainingConfig {
-        if (loss == null) {
-            throw new IllegalArgumentException("Loss cannot be null!");
-        }
-
-        if (optimizer == null) {
-            throw new IllegalArgumentException("Optimizer cannot be null!");
-        }
-
-        if (updater == null) {
-            throw new IllegalArgumentException("Updater cannot be null!");
-        }
+        Objects.requireNonNull(loss, "Loss cannot be null!");
+        Objects.requireNonNull(optimizer, "Optimizer cannot be null!");
+        Objects.requireNonNull(updater, "Updater cannot be null!");
     }
 }

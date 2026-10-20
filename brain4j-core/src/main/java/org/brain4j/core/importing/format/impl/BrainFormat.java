@@ -30,7 +30,7 @@ import org.brain4j.core.importing.SafeTensors;
 import org.brain4j.core.importing.format.BinaryFormat;
 import org.brain4j.core.importing.io.LayerIO;
 import org.brain4j.core.layer.Layer;
-import org.brain4j.core.model.ModelSpecs;
+import org.brain4j.core.model.ModelLayout;
 import org.brain4j.core.model.impl.Sequential;
 import org.brain4j.math.commons.Commons;
 import org.brain4j.math.tensor.Shape;
@@ -128,7 +128,7 @@ public class BrainFormat implements BinaryFormat<Sequential> {
             }
 
             Layer[] layers = architectureMap.values().toArray(new Layer[0]);
-            Sequential model = ModelSpecs.of(Shape.of(dims), layers).compile();
+            Sequential model = ModelLayout.of(Shape.of(dims), layers).compile();
             List<Layer> compiledLayers = model.getLayers();
 
             for (int i = 0; i < compiledLayers.size(); i++) {
@@ -168,7 +168,7 @@ public class BrainFormat implements BinaryFormat<Sequential> {
 
             ArrayNode inputShape = MAPPER.createArrayNode();
 
-            for (int dim : model.specs().inputShape().dims()) {
+            for (int dim : model.layout().inputShape().dims()) {
                 inputShape.add(dim);
             }
 

@@ -3,7 +3,7 @@ package org.brain4j.examples.emotion;
 import org.brain4j.core.layer.impl.DenseLayer;
 import org.brain4j.math.loss.impl.MeanSquaredError;
 import org.brain4j.core.model.Model;
-import org.brain4j.core.model.ModelSpecs;
+import org.brain4j.core.model.ModelLayout;
 import org.brain4j.core.training.Trainer;
 import org.brain4j.core.training.TrainingConfig;
 import org.brain4j.core.training.optimizer.impl.Adam;
@@ -60,7 +60,7 @@ public class PADEmotionalModeler {
         int inputSize = trainingFeatures.getFirst().elements();
         int outputSize = 3; // for P, A, D
 
-        ModelSpecs specs = ModelSpecs.of(Shape.of(inputSize),
+        ModelLayout layout = ModelLayout.of(Shape.of(inputSize),
             new DenseLayer(64, Activations.RELU.function()),
             new DenseLayer(32, Activations.RELU.function()),
             new DenseLayer(outputSize, Activations.TANH.function())

@@ -14,7 +14,7 @@ public class TensorTest {
     private final Device device;
 
     public TensorTest() {
-        this.device = Brain4J.firstDevice();
+        this.device = Brain4J.firstDevice().orElseThrow();
     }
 
     @Test

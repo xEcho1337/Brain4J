@@ -4,6 +4,7 @@ import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.brain4j.math.gpu.device.Device;
 import org.brain4j.math.gpu.device.DeviceUtils;
@@ -112,23 +113,24 @@ public class Brain4J {
     /**
      * Returns the first available GPU device.
      *
-     * @return the first device, or {@code null} if none found
+     * @return the first device, or an empty optional if none is available
      */
-    public static Device firstDevice() {
+    public static Optional<Device> firstDevice() {
         try {
             List<String> devices = DeviceUtils.allDeviceNames();
 
             if (devices.isEmpty()) {
-                return null;
+                return Optional.empty();
             }
 
             Device device = DeviceUtils.findDevice(devices.getFirst());
 
-            if (device != null) {
-                Brain4J.initKernels(device);
+            if (device == null) {
+                return Optional.empty();
             }
 
-            return device;
+            Brain4J.initKernels(device);
+            return Optional.of(device);
         } catch (IllegalStateException e) {
             throw new RuntimeException(e);
         }
