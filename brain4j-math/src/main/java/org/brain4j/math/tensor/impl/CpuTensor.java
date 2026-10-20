@@ -41,7 +41,6 @@ public class CpuTensor extends BaseTensor {
      * @param data initial data, or empty for zeros
      */
     public CpuTensor(Shape shape, float... data) {
-
         if (data.length == 0) {
             data = new float[Tensors.computeSize(shape.dims())];
         }
@@ -59,7 +58,6 @@ public class CpuTensor extends BaseTensor {
      * @param data initial data, or empty for zeros
      */
     public CpuTensor(Shape shape, int[] strides, float... data) {
-
         if (data.length == 0) {
             data = new float[Tensors.computeSize(shape.dims())];
         }
@@ -141,7 +139,6 @@ public class CpuTensor extends BaseTensor {
         int[] destToSrc,
         int dim, int srcOffset, int dstOffset
     ) {
-
         if (dim == loopShape.length) {
             dst[dstOffset] = src[srcOffset];
             return;
@@ -167,7 +164,6 @@ public class CpuTensor extends BaseTensor {
      */
     @Override
     public Tensor to(Object device) {
-
         switch (device) {
             case null -> {
                 return this;
@@ -186,7 +182,6 @@ public class CpuTensor extends BaseTensor {
      */
     @Override
     public Tensor add(Tensor other) {
-
         if (!(other instanceof CpuTensor)) {
             return add(other.to(null));
         }
@@ -199,7 +194,6 @@ public class CpuTensor extends BaseTensor {
      */
     @Override
     public Tensor add(double value) {
-
         for (int i = 0; i < data.length; i++) {
             data[i] += (float) value;
         }
@@ -212,7 +206,6 @@ public class CpuTensor extends BaseTensor {
      */
     @Override
     public Tensor sub(Tensor other) {
-
         if (!(other instanceof CpuTensor)) {
             return sub(other.to(null));
         }
@@ -225,7 +218,6 @@ public class CpuTensor extends BaseTensor {
      */
     @Override
     public Tensor sub(double value) {
-
         for (int i = 0; i < data.length; i++) {
             data[i] -= (float) value;
         }
@@ -238,7 +230,6 @@ public class CpuTensor extends BaseTensor {
      */
     @Override
     public Tensor mul(Tensor other) {
-
         if (!(other instanceof CpuTensor)) {
             return mul(other.to(null));
         }
@@ -251,7 +242,6 @@ public class CpuTensor extends BaseTensor {
      */
     @Override
     public Tensor mul(double value) {
-
         for (int i = 0; i < data.length; i++) {
             data[i] *= (float) value;
         }
@@ -264,7 +254,6 @@ public class CpuTensor extends BaseTensor {
      */
     @Override
     public Tensor div(Tensor other) {
-
         if (!(other instanceof CpuTensor)) {
             return div(other.to(null));
         }
@@ -277,7 +266,6 @@ public class CpuTensor extends BaseTensor {
      */
     @Override
     public Tensor div(double value) {
-
         for (int i = 0; i < data.length; i++) {
             data[i] /= (float) value;
         }
@@ -290,7 +278,6 @@ public class CpuTensor extends BaseTensor {
      */
     @Override
     public Tensor pow(Tensor other) {
-
         if (!(other instanceof CpuTensor)) {
             return pow(other.to(null));
         }
@@ -303,7 +290,6 @@ public class CpuTensor extends BaseTensor {
      */
     @Override
     public Tensor pow(double value) {
-
         for (int i = 0; i < data.length; i++) {
             data[i] = (float) Math.pow(data[i], value);
         }
@@ -316,7 +302,6 @@ public class CpuTensor extends BaseTensor {
      */
     @Override
     public Tensor sqrt() {
-
         for (int i = 0; i < data.length; i++) {
             data[i] = (float) Math.sqrt(data[i]);
         }

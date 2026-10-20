@@ -249,7 +249,6 @@ public class GpuTensor extends BaseTensor {
      * @param device target device
      */
     public static void initKernels(Device device) {
-
         try {
             SlangCompiler compiler = new SlangCompiler(device.context());
 
@@ -438,7 +437,6 @@ public class GpuTensor extends BaseTensor {
     }
 
     private Tensor launchScalarKernel(String kernelName, float value) {
-
         try (GpuContext.QueueHandle qh = GpuContext.getOrCreateQueue(device)) {
             int workSize = Math.max(1, size);
 
@@ -456,7 +454,6 @@ public class GpuTensor extends BaseTensor {
     }
 
     private Tensor launchElementaryKernel(String kernelName, Tensor other) {
-
         if (!(other instanceof GpuTensor B)) {
             return launchElementaryKernel(kernelName, other.to(device));
         }
@@ -529,7 +526,6 @@ public class GpuTensor extends BaseTensor {
      */
     @Override
     public Tensor to(Object deviceObj) {
-
         if (deviceObj == null) {
             Tensor result = new CpuTensor(Shape.of(shape), contiguousData());
             result.setAutogradContext(autogradContext);
@@ -660,7 +656,6 @@ public class GpuTensor extends BaseTensor {
      */
     @Override
     public Tensor sqrt() {
-
         try (GpuContext.QueueHandle qh = GpuContext.getOrCreateQueue(device)) {
             int workSize = Math.max(1, size);
 
@@ -689,7 +684,6 @@ public class GpuTensor extends BaseTensor {
      */
     @Override
     public Tensor matmul(Tensor other) {
-
         if (!(other instanceof GpuTensor B)) {
             return matmul(other.to(device));
         }
@@ -930,7 +924,6 @@ public class GpuTensor extends BaseTensor {
      */
     @Override
     public Tensor concat(Tensor other) {
-
         if (!(other instanceof GpuTensor)) {
             other = other.to(device);
         }
@@ -987,7 +980,6 @@ public class GpuTensor extends BaseTensor {
      */
     @Override
     public Tensor concat(Tensor other, int dimension) {
-
         if (!(other instanceof GpuTensor)) {
             other = other.to(device);
         }
@@ -1062,7 +1054,6 @@ public class GpuTensor extends BaseTensor {
      */
     @Override
     public Tensor slice(Range... ranges) {
-
         if (ranges.length > shape.length) {
             throw new IllegalArgumentException("Too many ranges specified");
         }
@@ -1256,7 +1247,6 @@ public class GpuTensor extends BaseTensor {
      */
     @Override
     public Tensor convolve(Tensor other, int stride) {
-
         if (stride <= 0) {
             throw Commons.illegalArgument("Stride must be > 0. Got: %s", stride);
         }
@@ -1359,7 +1349,6 @@ public class GpuTensor extends BaseTensor {
      */
     @Override
     public Tensor broadcast(int[] targetShape) {
-
         if (Arrays.equals(shape, targetShape)) {
             return this;
         }

@@ -17,7 +17,6 @@ public class RungeKuttaSolver implements NumericalSolver {
     @Override
     public Tensor update(Tensor deltaTimestep, Tensor tauT, Tensor projInput,
                          Tensor hidden, Function<Tensor, Tensor> hiddenFunction) {
-
         Tensor alpha = deltaTimestep.broadcastLike(tauT).divGrad(tauT);
         Tensor k1 = computeF(hidden, projInput, hiddenFunction);
         Tensor k2 = computeF(hidden.addGrad(alpha.times(k1).times(0.5f)),

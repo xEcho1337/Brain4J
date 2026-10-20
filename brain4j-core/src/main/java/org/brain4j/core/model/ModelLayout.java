@@ -8,7 +8,6 @@ import java.util.Objects;
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.model.impl.Sequential;
 import org.brain4j.math.Copyable;
-import org.brain4j.math.commons.Commons;
 import org.brain4j.math.tensor.Shape;
 
 /**
@@ -21,11 +20,7 @@ public class ModelLayout implements ModelBlock, Copyable<ModelLayout> {
     private final List<ModelBlock> components = new ArrayList<>();
 
     private ModelLayout(Shape inputShape) {
-        if (inputShape == null) {
-            throw Commons.illegalArgument("Input shape must not be null!");
-        }
-
-        this.inputShape = inputShape;
+        this.inputShape = Objects.requireNonNull(inputShape, "Input shape must not be null!");
     }
 
     /**
@@ -45,9 +40,7 @@ public class ModelLayout implements ModelBlock, Copyable<ModelLayout> {
      * @return a new model layout instance
      */
     public static ModelLayout of(Shape inputShape, List<ModelBlock> components) {
-        if (components == null) {
-            throw Commons.illegalArgument("Component list must not be null!");
-        }
+        Objects.requireNonNull(components, "Component list must not be null!");
 
         ModelLayout layout = new ModelLayout(inputShape);
         layout.components.addAll(components);
@@ -56,15 +49,13 @@ public class ModelLayout implements ModelBlock, Copyable<ModelLayout> {
     }
 
     /**
-     * Creates specs from the given input shape and components.
+     * Creates a layout from the given input shape and components.
      *
      * @param inputShape the model input shape (not null)
-     * @return a new mutable specs instance
+     * @return a new mutable layout instance
      */
     public static ModelLayout of(Shape inputShape, ModelBlock... components) {
-        if (components == null) {
-            throw Commons.illegalArgument("Component list must not be null!");
-        }
+        Objects.requireNonNull(components, "Component list must not be null!");
 
         return of(inputShape, List.of(components));
     }
@@ -89,7 +80,7 @@ public class ModelLayout implements ModelBlock, Copyable<ModelLayout> {
     }
 
     /**
-     * Compiles these specs into a model with a random seed.
+     * Compiles these components into a model with a random seed.
      *
      * @return the compiled model
      */
@@ -98,7 +89,7 @@ public class ModelLayout implements ModelBlock, Copyable<ModelLayout> {
     }
 
     /**
-     * Compiles these specs into a model with the given seed.
+     * Compiles these components into a model with the given seed.
      *
      * @return the compiled model
      */
@@ -180,8 +171,8 @@ public class ModelLayout implements ModelBlock, Copyable<ModelLayout> {
         }
 
         /**
-         * Compiles the builder into an immutable specs instance.
-         * @return the compiled specs
+         * Compiles the builder into an immutable layout instance.
+         * @return the compiled layout
          */
         public ModelLayout build() {
             return ModelLayout.of(inputShape, components);

@@ -66,7 +66,7 @@ public class PADEmotionalModeler {
             new DenseLayer(outputSize, Activations.TANH.function())
         );
 
-        Model model = specs.compile();
+        Model model = layout.compile();
         TrainingConfig config = TrainingConfig.of(new MeanSquaredError(), new Adam(0.001));
         
         int epochs = 100;

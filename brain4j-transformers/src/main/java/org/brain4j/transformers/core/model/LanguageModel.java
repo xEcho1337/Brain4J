@@ -20,6 +20,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import java.util.function.Consumer;
@@ -121,8 +122,8 @@ public class LanguageModel implements InferenceProvider {
 
     @Override
     public LanguageModel fork(Device device) {
-        if (model == null) throw new NullPointerException("Model has not been compiled!");
-        if (device == null) throw new NullPointerException("Device cannot be null!");
+        Objects.requireNonNull(model, "Model has not been compiled!");
+        Objects.requireNonNull(device, "Device cannot be null!");
 
         LanguageModel languageModel = new LanguageModel(id, info, files, config);
         languageModel.model = model.fork(device);

@@ -3,6 +3,7 @@ package org.brain4j.core.training;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.brain4j.core.layer.Layer;
 import org.brain4j.core.model.Model;
@@ -49,13 +50,8 @@ public final class DefaultTrainer implements Trainer {
     private volatile int totalBatches = -1;
 
     DefaultTrainer(Model model, TrainingConfig config, List<Monitor> monitors) {
-        if (model == null) {
-            throw new IllegalArgumentException("Model cannot be null!");
-        }
-
-        if (config == null) {
-            throw new IllegalArgumentException("Config cannot be null!");
-        }
+        Objects.requireNonNull(model, "Model cannot be null!");
+        Objects.requireNonNull(config, "Config cannot be null!");
 
         config.optimizer().initialize();
         config.updater().initialize();
@@ -118,9 +114,7 @@ public final class DefaultTrainer implements Trainer {
     }
 
     private void checkAndSync(ListDataSource dataSource, int epochs) {
-        if (dataSource == null) {
-            throw new IllegalArgumentException("Data source cannot be null!");
-        }
+        Objects.requireNonNull(dataSource, "Data source cannot be null!");
 
         if (epochs <= 0) {
             throw new IllegalArgumentException("Epochs must be greater than 0. Got: " + epochs);

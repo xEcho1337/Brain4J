@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 import java.util.Optional;
 
 public class HuggingFaceClient implements AutoCloseable {
@@ -129,14 +130,18 @@ public class HuggingFaceClient implements AutoCloseable {
     }
 
     private void validateDatasetId(String datasetId) {
-        if (datasetId == null || datasetId.trim().isEmpty()) {
-            throw new IllegalArgumentException("Dataset ID cannot be null or empty");
+        Objects.requireNonNull(datasetId, "Dataset ID cannot be null");
+
+        if (datasetId.trim().isEmpty()) {
+            throw new IllegalArgumentException("Dataset ID cannot be empty");
         }
     }
 
     private void validateFilename(String filename) {
-        if (filename == null || filename.trim().isEmpty()) {
-            throw new IllegalArgumentException("Filename cannot be null or empty");
+        Objects.requireNonNull(filename, "Filename cannot be null");
+
+        if (filename.trim().isEmpty()) {
+            throw new IllegalArgumentException("Filename cannot be empty");
         }
     }
 

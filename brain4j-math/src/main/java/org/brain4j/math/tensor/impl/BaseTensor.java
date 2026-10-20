@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
@@ -64,7 +65,6 @@ public abstract class BaseTensor implements Tensor {
      * @param format float format
      */
     protected void appendTensor(StringBuilder result, int dim, int[] indices, String format) {
-
         if (dim == shape.length - 1) {
             result.append("[");
 
@@ -114,7 +114,6 @@ public abstract class BaseTensor implements Tensor {
         int[] dstIndices,
         int dim
     ) {
-
         if (dim == shape.length) {
             result.set(get(srcIndices), dstIndices);
             return;
@@ -275,7 +274,6 @@ public abstract class BaseTensor implements Tensor {
      * @param input source tensor
      */
     protected void setSliceRecursive(int[] index, int dim, int offset, int sliceSize, Tensor input) {
-
         if (dim == index.length - 1) {
 
             for (int i = 0; i < sliceSize; i++) {
@@ -350,7 +348,6 @@ public abstract class BaseTensor implements Tensor {
      */
     @Override
     public int linearIndex(int... indices) {
-
         if (indices.length != shape.length) {
             throw Commons.illegalArgument("Number of indices does not match tensor rank!");
         }
@@ -449,7 +446,6 @@ public abstract class BaseTensor implements Tensor {
      */
     @Override
     public Tensor layerNorm(double epsilon) {
-
         switch (rank()) {
             case 1 -> layerNorm1D(0, epsilon);
             case 2 -> layerNorm2D(epsilon);
@@ -623,7 +619,6 @@ public abstract class BaseTensor implements Tensor {
      */
     @Override
     public Tensor broadcast(int[] targetShape) {
-
         if (Arrays.equals(shape, targetShape)) {
             return this;
         }
@@ -694,7 +689,6 @@ public abstract class BaseTensor implements Tensor {
     }
     
     public Tensor unsqueeze(int dim) {
-
         if (dim < 0) {
             dim = Commons.mod(dim, shape.length);
         }
@@ -914,7 +908,6 @@ public abstract class BaseTensor implements Tensor {
      */
     @Override
     public Tensor concat(Tensor other) {
-
         if (shape.length != other.shape().length) {
             throw new IllegalArgumentException("Concatenation is only supported for tensors with the same number of dimensions.");
         }
@@ -957,7 +950,6 @@ public abstract class BaseTensor implements Tensor {
      */
     @Override
     public Tensor concat(Tensor other, int dimension) {
-
         if (shape.length != other.shape().length) {
             throw new IllegalArgumentException("Tensors must have the same rank.");
         }
@@ -1056,7 +1048,6 @@ public abstract class BaseTensor implements Tensor {
      */
     @Override
     public Tensor slice(Range... ranges) {
-
         if (ranges.length > shape.length) {
             throw new IllegalArgumentException("Too many ranges specified");
         }
@@ -1102,7 +1093,6 @@ public abstract class BaseTensor implements Tensor {
      */
     @Override
     public Tensor fill(Supplier<Double> supplier) {
-
         for (int i = 0; i < data.length; i++) {
             data[i] = supplier.get().floatValue();
         }
@@ -1157,7 +1147,6 @@ public abstract class BaseTensor implements Tensor {
      */
     @Override
     public void zeroGrad() {
-
         if (autogradContext != null) {
             autogradContext.zeroGrad();
         }
@@ -1168,7 +1157,6 @@ public abstract class BaseTensor implements Tensor {
      */
     @Override
     public Tensor grad() {
-
         if (autogradContext != null) {
             return autogradContext.getGrad();
         }
@@ -1189,11 +1177,7 @@ public abstract class BaseTensor implements Tensor {
      */
     @Override
     public void backward(Tensor gradOutput) {
-
-        if (autogradContext == null) {
-            throw new IllegalArgumentException("Autograd is not enabled for this tensor");
-        }
-
+        Objects.requireNonNull(autogradContext, "Autograd is not enabled for this tensor");
         autogradContext.backward(gradOutput);
     }
 
@@ -1202,7 +1186,6 @@ public abstract class BaseTensor implements Tensor {
      */
     @Override
     public Tensor forward(Operation operation) {
-
         if (operation.requiredInputs() != 1) {
             throw new IllegalArgumentException(
                 "This operation requires " + operation.requiredInputs() + " inputs! Received 1 instead."
@@ -1224,7 +1207,6 @@ public abstract class BaseTensor implements Tensor {
      */
     @Override
     public Tensor forward(Operation operation, Tensor other) {
-
         if (operation.requiredInputs() != 2) {
             throw new IllegalArgumentException(
                 "This operation requires " + operation.requiredInputs() + " inputs! Received 2 instead."
@@ -1272,7 +1254,6 @@ public abstract class BaseTensor implements Tensor {
      */
     @Override
     public Tensor addGrad(Tensor other) {
-
         if (!usesGrad()) {
             return plus(other);
         }
@@ -1285,7 +1266,6 @@ public abstract class BaseTensor implements Tensor {
      */
     @Override
     public Tensor subGrad(Tensor other) {
-
         if (!usesGrad()) {
             return minus(other);
         }
@@ -1298,7 +1278,6 @@ public abstract class BaseTensor implements Tensor {
      */
     @Override
     public Tensor mulGrad(Tensor other) {
-
         if (!usesGrad()) {
             return times(other);
         }
@@ -1311,7 +1290,6 @@ public abstract class BaseTensor implements Tensor {
      */
     @Override
     public Tensor divGrad(Tensor other) {
-
         if (!usesGrad()) {
             return divide(other);
         }
@@ -1324,7 +1302,6 @@ public abstract class BaseTensor implements Tensor {
      */
     @Override
     public Tensor sliceGrad(Range... ranges) {
-
         if (!usesGrad()) {
             return slice(ranges);
         }
@@ -1337,7 +1314,6 @@ public abstract class BaseTensor implements Tensor {
      */
     @Override
     public Tensor matmulGrad(Tensor other) {
-
         if (!usesGrad()) {
             return matmul(other);
         }
@@ -1358,7 +1334,6 @@ public abstract class BaseTensor implements Tensor {
      */
     @Override
     public Tensor convolveGrad(Tensor other, int stride) {
-
         if (!usesGrad()) {
             return convolve(other, stride);
         }
@@ -1371,7 +1346,6 @@ public abstract class BaseTensor implements Tensor {
      */
     @Override
     public Tensor layerNormGrad(Tensor weight, Tensor bias, double epsilon) {
-
         if (!usesGrad() && !weight.usesGrad() && !bias.usesGrad()) {
             return copy().layerNorm(epsilon).mul(weight).add(bias);
         }
@@ -1384,7 +1358,6 @@ public abstract class BaseTensor implements Tensor {
      */
     @Override
     public Tensor rmsNormGrad(Tensor weight, double epsilon) {
-
         if (!usesGrad() && !weight.usesGrad()) {
             Tensor owned = copy();
             int features = owned.shape()[owned.rank() - 1];
@@ -1408,7 +1381,6 @@ public abstract class BaseTensor implements Tensor {
      */
     @Override
     public Tensor maxPoolGrad(int stride, int windowHeight, int windowWidth) {
-
         if (!usesGrad()) {
             MaxPooling pooling = new MaxPooling(stride, windowHeight, windowWidth);
             return pooling.pool(this);
@@ -1422,7 +1394,6 @@ public abstract class BaseTensor implements Tensor {
      */
     @Override
     public Tensor transposeGrad() {
-
         if (!usesGrad()) {
             return transpose();
         }
@@ -1436,7 +1407,6 @@ public abstract class BaseTensor implements Tensor {
      */
     @Override
     public Tensor transposeGrad(int dim1, int dim2) {
-
         if (!usesGrad()) {
             return transpose(dim1, dim2);
         }
@@ -1449,7 +1419,6 @@ public abstract class BaseTensor implements Tensor {
      */
     @Override
     public Tensor activateGrad(Activation activation) {
-
         if (!usesGrad()) {
             return activate(activation);
         }
@@ -1462,7 +1431,6 @@ public abstract class BaseTensor implements Tensor {
      */
     @Override
     public Tensor concatGrad(Tensor other, int dim) {
-
         if (!usesGrad()) {
             return concat(other, dim);
         }
@@ -1475,7 +1443,6 @@ public abstract class BaseTensor implements Tensor {
      */
     @Override
     public Tensor reshapeGrad(int... newShape) {
-
         if (!usesGrad()) {
             return reshape(newShape);
         }
@@ -1488,7 +1455,6 @@ public abstract class BaseTensor implements Tensor {
      */
     @Override
     public Tensor squeezeGrad() {
-
         if (!usesGrad()) {
             return squeeze();
         }
@@ -1501,7 +1467,6 @@ public abstract class BaseTensor implements Tensor {
      */
     @Override
     public Tensor squeezeGrad(int dimension) {
-
         if (!usesGrad()) {
             return squeeze(dimension);
         }
@@ -1561,7 +1526,6 @@ public abstract class BaseTensor implements Tensor {
      */
     @Override
     public String toString(String format) {
-
         if (shape.length == 0) {
             return format.formatted(data[0]);
         }

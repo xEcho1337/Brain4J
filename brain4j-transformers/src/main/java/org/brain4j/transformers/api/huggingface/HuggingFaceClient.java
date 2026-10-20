@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.Objects;
 
 public class HuggingFaceClient implements AutoCloseable {
 
@@ -81,14 +82,18 @@ public class HuggingFaceClient implements AutoCloseable {
     }
 
     private void validateId(String id) {
-        if (id == null || id.isBlank()) {
-            throw new IllegalArgumentException("Model ID cannot be null or empty");
+        Objects.requireNonNull(id, "Model ID cannot be null");
+
+        if (id.isBlank()) {
+            throw new IllegalArgumentException("Model ID cannot be empty");
         }
     }
 
     private void validateFilename(String name) {
-        if (name == null || name.isBlank()) {
-            throw new IllegalArgumentException("Filename cannot be null or empty");
+        Objects.requireNonNull(name, "Filename cannot be null");
+
+        if (name.isBlank()) {
+            throw new IllegalArgumentException("Filename cannot be empty");
         }
     }
 

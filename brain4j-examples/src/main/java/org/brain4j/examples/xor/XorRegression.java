@@ -31,7 +31,7 @@ public class XorRegression {
             new DenseLayer(1, new Sigmoid())
         );
         
-        Sequential model = specs.compile(42);
+        Sequential model = layout.compile(42);
         model.summary();
         
         TrainingConfig config = TrainingConfig.of(
