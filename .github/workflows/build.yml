@@ -2,8 +2,10 @@ name: Build
 
 on:
   push:
-    branches:
-      - "3.0"
+    branches: ["3.0", "main"]
+
+permissions:
+  contents: read
 
 jobs:
   build:
@@ -16,29 +18,61 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          distribution: 'corretto'
-          java-version: '22'
+          distribution: corretto
+          java-version: "22"
+          cache: gradle
 
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
-      - name: Build with Gradle (ShadowJar)
+      - name: Build shadow jars
         run: ./gradlew buildAll
 
-      - name: Archive build core artifact
+      - name: Collect artifacts
+        run: |
+          mkdir -p release
+          find brain4j-core brain4j-math brain4j-datasets brain4j-dashboard \
+            -path '*/build/libs/*.jar' -type f \
+            ! -name '*-sources.jar' ! -name '*-javadoc.jar' \
+            -exec cp -v {} release/ \;
+          test -n "$(ls -A release)"
+          ls -la release/
+
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: brain4j-core-artifact
-          path: brain4j-core/build/libs/*.jar
-      
-      - name: Archive build math artifact
-        uses: actions/upload-artifact@v4
+          name: continuous-build
+          path: release/*
+          if-no-files-found: error
+
+  release:
+    needs: [build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
         with:
-          name: brain4j-math-artifact
-          path: brain4j-math/build/libs/*.jar
-      
-      - name: Archive build datasets artifact
-        uses: actions/upload-artifact@v4
+          name: continuous-build
+          path: release
+
+      - name: Create or update continuous release
+        uses: ncipollo/release-action@v1
         with:
-          name: brain4j-datasets-artifact
-          path: brain4j-datasets/build/libs/*.jar
+          tag: continuous
+          commit: ${{ github.sha }}
+          name: Continuous build
+          body: |
+            Automatic build from `${{ github.ref_name }}` at `${{ github.sha }}`.
+
+            - Commit: ${{ github.sha }}
+            - Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          artifacts: "release/*"
+          artifactErrorsFailBuild: true
+          allowUpdates: true
+          removeArtifacts: true
+          replacesArtifacts: true
+          prerelease: true
+          makeLatest: false

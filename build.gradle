@@ -137,6 +137,14 @@ gradle.projectsEvaluated {
                 }
             }
         }
+
+        def jarTask = sub.tasks.findByName('jar')
+        def shadowJarTask = sub.tasks.findByName('shadowJar')
+
+        // jar and shadowJar share the same archive name in some modules.
+        if (jarTask != null && shadowJarTask != null) {
+            shadowJarTask.mustRunAfter(jarTask)
+        }
     }
 }
 
