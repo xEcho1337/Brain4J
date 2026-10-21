@@ -21,7 +21,7 @@ public record Sample(Tensor[] inputs, Tensor[] labels) implements Copyable<Sampl
      *
      * @return the requested input tensor
      */
-    public Tensor getInput(int index) {
+    public Tensor input(int index) {
         return inputs[index];
     }
 
@@ -30,7 +30,7 @@ public record Sample(Tensor[] inputs, Tensor[] labels) implements Copyable<Sampl
      *
      * @return the requested label tensor
      */
-    public Tensor getLabel(int index) {
+    public Tensor label(int index) {
         return labels[index];
     }
 

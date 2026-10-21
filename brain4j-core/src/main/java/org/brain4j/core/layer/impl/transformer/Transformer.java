@@ -78,7 +78,7 @@ public abstract class Transformer<T extends Transformer<T>> extends Layer {
         this.norm2 = config.normSupplier.get();
         this.upProj = new DenseLayer(config.projDim);
         this.downProj = new DenseLayer(config.embedDim);
-        this.attention = getAttention();
+        this.attention = attention();
 
         if (config.gating) {
             this.gateProj = new DenseLayer(config.projDim);
@@ -90,14 +90,14 @@ public abstract class Transformer<T extends Transformer<T>> extends Layer {
      *
      * @return the new block
      */
-    protected abstract T getCopy();
+    protected abstract T copyBlock();
 
     /**
      * Create the attention sublayer.
      *
      * @return the attention layer
      */
-    protected abstract Layer getAttention();
+    protected abstract Layer attention();
 
     /**
      * Return the block config.
@@ -298,7 +298,7 @@ public abstract class Transformer<T extends Transformer<T>> extends Layer {
      */
     @Override
     public T copy() {
-        T copy = getCopy();
+        T copy = copyBlock();
 
         copy.norm1 = norm1.copy();
         copy.norm2 = norm2.copy();
@@ -345,7 +345,7 @@ public abstract class Transformer<T extends Transformer<T>> extends Layer {
          * {@inheritDoc}
          */
         @Override
-        protected Encoder getCopy() {
+        protected Encoder copyBlock() {
             return new Encoder(config);
         }
 
@@ -353,7 +353,7 @@ public abstract class Transformer<T extends Transformer<T>> extends Layer {
          * {@inheritDoc}
          */
         @Override
-        protected Layer getAttention() {
+        protected Layer attention() {
             return new MultiHeadAttention(config.heads, config.embedDim);
         }
     }
@@ -389,7 +389,7 @@ public abstract class Transformer<T extends Transformer<T>> extends Layer {
          * {@inheritDoc}
          */
         @Override
-        protected Decoder getCopy() {
+        protected Decoder copyBlock() {
             return new Decoder(config);
         }
 
@@ -397,7 +397,7 @@ public abstract class Transformer<T extends Transformer<T>> extends Layer {
          * {@inheritDoc}
          */
         @Override
-        protected Layer getAttention() {
+        protected Layer attention() {
             return new MaskedMultiHeadAttention(config.heads, config.embedDim);
         }
     }

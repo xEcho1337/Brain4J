@@ -39,7 +39,7 @@ public class Swish implements Activation {
      * {@inheritDoc}
      */
     @Override
-    public String getKernelPrefix() {
+    public String kernelPrefix() {
         return "swish";
     }
 
@@ -47,7 +47,7 @@ public class Swish implements Activation {
      * {@inheritDoc}
      */
     @Override
-    public int getActivationId() {
+    public int activationId() {
         return 5;
     }
 }

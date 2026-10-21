@@ -29,7 +29,7 @@ public class Brain4J {
      *
      * @return the version string
      */
-    public static String getVersion() {
+    public static String version() {
         return "3.0";
     }
 
@@ -83,7 +83,7 @@ public class Brain4J {
      *
      * @return the displayed decimal digits
      */
-    public static int getDecimalDigits() {
+    public static int decimalDigits() {
         return decimalDigits;
     }
 
@@ -99,7 +99,7 @@ public class Brain4J {
      *
      * @return a comma-separated device list, or empty if none
      */
-    public static String getAvailableDevices() {
+    public static String availableDevices() {
         return String.join(", ", DeviceUtils.allDeviceNames());
     }
 
@@ -141,7 +141,7 @@ public class Brain4J {
      *
      * @return the detected devices
      */
-    public static List<Device> getAllDevices() {
+    public static List<Device> allDevices() {
         List<Device> devices = new ArrayList<>();
 
         for (String device : DeviceUtils.allDeviceNames()) {

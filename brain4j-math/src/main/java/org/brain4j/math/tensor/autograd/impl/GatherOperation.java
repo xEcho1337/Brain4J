@@ -43,9 +43,9 @@ public class GatherOperation implements Operation {
 
         try (GpuContext.QueueHandle qh = GpuContext.getOrCreateQueue(device)) {
             KernelFactory.create(device, "gather_forward")
-                .buffer(ids.getDataBuffer())
-                .buffer(table.getDataBuffer())
-                .buffer(output.getDataBuffer())
+                .buffer(ids.dataBuffer())
+                .buffer(table.dataBuffer())
+                .buffer(output.dataBuffer())
                 .intVal(batchSize * seqLength)
                 .intVal(vocabSize)
                 .intVal(embeddingDim)
@@ -108,17 +108,17 @@ public class GatherOperation implements Operation {
 
         try (GpuContext.QueueHandle qh = GpuContext.getOrCreateQueue(device)) {
             KernelFactory.create(device, "fill_const")
-                .buffer(gradTable.getDataBuffer())
+                .buffer(gradTable.dataBuffer())
                 .floatVal(0.0f)
                 .intVal(gradTable.size())
                 .launch(qh.queue(), Math.max(1, gradTable.size()));
 
             KernelFactory.create(device, "gather_backward_grouped")
-                .buffer(go.getDataBuffer())
+                .buffer(go.dataBuffer())
                 .buffer(device.createBuffer(uniqueIds))
                 .buffer(device.createBuffer(rowPtr))
                 .buffer(device.createBuffer(positions))
-                .buffer(gradTable.getDataBuffer())
+                .buffer(gradTable.dataBuffer())
                 .intVal(unique)
                 .intVal(embeddingDim)
                 .launch(qh.queue(), Math.max(1, unique));
@@ -183,7 +183,7 @@ public class GatherOperation implements Operation {
     private Device resolveDevice(Tensor... tensors) {
         for (Tensor tensor : tensors) {
             if (tensor instanceof GpuTensor gpu) {
-                return gpu.getDevice();
+                return gpu.device();
             }
 
         }
@@ -192,7 +192,7 @@ public class GatherOperation implements Operation {
     }
 
     private GpuTensor toGpu(Tensor tensor, Device device) {
-        if (tensor instanceof GpuTensor gpu && gpu.getDevice() == device) {
+        if (tensor instanceof GpuTensor gpu && gpu.device() == device) {
             return gpu;
         }
 

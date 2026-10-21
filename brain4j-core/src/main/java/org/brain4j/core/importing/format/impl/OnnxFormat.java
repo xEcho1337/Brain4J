@@ -250,7 +250,7 @@ public class OnnxFormat implements BinaryFormat<Graph> {
         ModelProto modelProto = ModelProto.newBuilder()
             .setIrVersion(9)
             .setProducerName("Brain4J")
-            .setProducerVersion(Brain4J.getVersion())
+            .setProducerVersion(Brain4J.version())
             .setGraph(graphBuilder)
             .addOpsetImport(opset)
             .build();
@@ -263,7 +263,7 @@ public class OnnxFormat implements BinaryFormat<Graph> {
     }
 
     private void addInitializers(Graph model, GraphProto.Builder graphBuilder, Map<Tensor, String> weightsMap) {
-        List<Layer> layers = model.getLayers();
+        List<Layer> layers = model.layers();
 
         for (int i = 0; i < layers.size(); i++) {
             Layer layer = layers.get(i);
@@ -292,7 +292,7 @@ public class OnnxFormat implements BinaryFormat<Graph> {
 
         while (!queue.isEmpty()) {
             Tensor tensor = queue.poll();
-            AutogradContext ctx = tensor.getAutogradContext();
+            AutogradContext ctx = tensor.autogradContext();
 
             if (ctx == null || ctx.operation() == null) {
                 continue;
@@ -319,7 +319,7 @@ public class OnnxFormat implements BinaryFormat<Graph> {
                     continue;
                 }
 
-                AutogradContext inputCtx = in.getAutogradContext();
+                AutogradContext inputCtx = in.autogradContext();
 
                 if (inputCtx != null && inputCtx.operation() != null) {
                     queue.add(in);

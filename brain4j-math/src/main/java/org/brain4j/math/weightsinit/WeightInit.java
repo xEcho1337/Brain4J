@@ -13,7 +13,7 @@ public interface WeightInit {
      *
      * @return the maximum/minimum bound
      */
-    double getBound(int input, int output);
+    double bound(int input, int output);
 
     /**
      * Generates one weight for the given fan-in and fan-out.

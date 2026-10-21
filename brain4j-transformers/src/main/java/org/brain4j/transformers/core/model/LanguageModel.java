@@ -146,27 +146,27 @@ public class LanguageModel implements InferenceProvider {
         return files.stream().mapToLong(ModelFile::size).sum();
     }
     
-    public String getId() {
+    public String id() {
         return id;
     }
     
-    public ModelInfo getInfo() {
+    public ModelInfo info() {
         return info;
     }
     
-    public List<ModelFile> getFiles() {
+    public List<ModelFile> files() {
         return files;
     }
     
-    public Map<String, Object> getConfig() {
+    public Map<String, Object> config() {
         return config;
     }
     
-    public Model getModel() {
+    public Model model() {
         return model;
     }
     
-    public Tokenizer getTokenizer() {
+    public Tokenizer tokenizer() {
         return tokenizer;
     }
 }

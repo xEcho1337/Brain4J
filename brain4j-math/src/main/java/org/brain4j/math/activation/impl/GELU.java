@@ -40,7 +40,7 @@ public class GELU implements Activation {
      * {@inheritDoc}
      */
     @Override
-    public String getKernelPrefix() {
+    public String kernelPrefix() {
         return "gelu";
     }
 
@@ -48,7 +48,7 @@ public class GELU implements Activation {
      * {@inheritDoc}
      */
     @Override
-    public int getActivationId() {
+    public int activationId() {
         return 7;
     }
 }

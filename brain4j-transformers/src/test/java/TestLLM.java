@@ -13,7 +13,7 @@ public class TestLLM {
         TokenHandler handler = new TokenHandler();
         String prompt = "Hello, my name is";
 
-        languageModel.getModel().summary();
+        languageModel.model().summary();
         languageModel.chat(prompt, config, handler);
         handler.printStats();
     }

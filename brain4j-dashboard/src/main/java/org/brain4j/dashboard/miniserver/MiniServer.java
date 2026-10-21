@@ -20,7 +20,7 @@ public abstract class MiniServer {
     private static final Executor EXECUTOR = Executors.newWorkStealingPool(CORES);
     private final Map<String, RouteInfo> routes = new HashMap<>();
 
-    public abstract List<Object> getServices();
+    public abstract List<Object> services();
     
     public void launch(int port) {
         try {
@@ -96,7 +96,7 @@ public abstract class MiniServer {
     }
 
     private void registerEndpoints() {
-        for (Object service : getServices()) {
+        for (Object service : services()) {
             for (Method method : service.getClass().getDeclaredMethods()) {
                 if (method.isAnnotationPresent(Route.class)) {
                     Route route = method.getAnnotation(Route.class);

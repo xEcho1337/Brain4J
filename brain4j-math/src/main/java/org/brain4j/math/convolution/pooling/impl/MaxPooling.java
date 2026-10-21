@@ -104,7 +104,7 @@ public class MaxPooling extends PoolingProvider {
             outerSize *= shape[i];
         }
 
-        Device device = A.getDevice();
+        Device device = A.device();
 
         GpuTensor result = new GpuTensor(device, composeOutShape(shape, outHeight, outWidth));
 
@@ -124,8 +124,8 @@ public class MaxPooling extends PoolingProvider {
 
         try (GpuContext.QueueHandle qh = GpuContext.getOrCreateQueue(device)) {
             KernelFactory.create(device, "max_pool_forward")
-                .buffer(A.getDataBuffer())
-                .buffer(result.getDataBuffer())
+                .buffer(A.dataBuffer())
+                .buffer(result.dataBuffer())
                 .buffer(xCoordsBuffer)
                 .buffer(yCoordsBuffer)
                 .intVal(outerSize)
@@ -176,7 +176,7 @@ public class MaxPooling extends PoolingProvider {
      */
     @Override
     public Tensor backwardGPU(GpuTensor gradient, GpuTensor input) {
-        Device device = input.getDevice();
+        Device device = input.device();
 
         int[] shape = input.shape();
         int rank = shape.length;
@@ -196,8 +196,8 @@ public class MaxPooling extends PoolingProvider {
 
         try (GpuContext.QueueHandle qh = GpuContext.getOrCreateQueue(device)) {
             KernelFactory.create(device, "max_pool_backward")
-                .buffer(gradient.getDataBuffer())
-                .buffer(gradInput.getDataBuffer())
+                .buffer(gradient.dataBuffer())
+                .buffer(gradInput.dataBuffer())
                 .buffer(xCoordsBuffer)
                 .buffer(yCoordsBuffer)
                 .intVal(outerSize)

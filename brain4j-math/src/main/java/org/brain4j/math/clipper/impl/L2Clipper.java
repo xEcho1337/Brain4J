@@ -44,7 +44,7 @@ public record L2Clipper(double scale) implements GradientClipper {
             return;
         }
 
-        Device device = grad.getDevice();
+        Device device = grad.device();
         ComputeBuffer normBuffer = null;
         ComputeBuffer scaleBuffer = null;
 
@@ -62,7 +62,7 @@ public record L2Clipper(double scale) implements GradientClipper {
                 .launch(queue.queue(), new ComputeSize(1, 1, 1));
 
             KernelFactory.create(device, "l2_clip_from_scale")
-                .buffer(grad.getDataBuffer())
+                .buffer(grad.dataBuffer())
                 .buffer(scaleBuffer)
                 .intVal(length)
                 .launch(queue.queue(), new ComputeSize(length, 1, 1));
@@ -109,7 +109,7 @@ public record L2Clipper(double scale) implements GradientClipper {
             ComputeBuffer result = device.createBuffer(new float[] { 0.0f });
 
             KernelFactory.create(device, "l2_norm_squared_single_block")
-                .buffer(grad.getDataBuffer())
+                .buffer(grad.dataBuffer())
                 .buffer(result)
                 .intVal(length)
                 .launch(queue.queue(), localSize, localSize);
@@ -121,7 +121,7 @@ public record L2Clipper(double scale) implements GradientClipper {
         ComputeBuffer current = device.createBuffer(new float[partialCount]);
 
         KernelFactory.create(device, "l2_norm_squared_reduce")
-            .buffer(grad.getDataBuffer())
+            .buffer(grad.dataBuffer())
             .buffer(current)
             .intVal(length)
             .launch(queue.queue(), new ComputeSize(partialCount * REDUCTION_BLOCK_SIZE, 1, 1), localSize);

@@ -86,7 +86,7 @@ public class TimingMonitor implements Monitor {
      *
      * @return the epoch index
      */
-    public int getCurrentEpoch() {
+    public int currentEpoch() {
         return currentEpoch;
     }
 
@@ -95,7 +95,7 @@ public class TimingMonitor implements Monitor {
      *
      * @return the total epochs
      */
-    public int getTotalEpochs() {
+    public int totalEpochs() {
         return totalEpochs;
     }
 }

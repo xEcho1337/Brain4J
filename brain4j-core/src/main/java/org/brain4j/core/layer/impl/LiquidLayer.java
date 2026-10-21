@@ -135,12 +135,12 @@ public class LiquidLayer extends Layer {
         int timesteps = input.shapeAt(1);
         int hidden = config.hiddenDimension;
 
-        Tensor wIn = getParam("weights_in");
-        Tensor bIn = getParam("bias_in");
-        Tensor wRec = getParam("weights_rec");
-        Tensor bRec = getParam("bias_rec");
-        Tensor wTau = getParam("weights_tau");
-        Tensor bTau = getParam("bias_tau");
+        Tensor wIn = param("weights_in");
+        Tensor bIn = param("bias_in");
+        Tensor wRec = param("weights_rec");
+        Tensor bRec = param("bias_rec");
+        Tensor wTau = param("weights_tau");
+        Tensor bTau = param("bias_tau");
 
         var tanh = Activations.TANH.function();
         var softplus = Activations.SOFTPLUS.function();
@@ -148,7 +148,7 @@ public class LiquidLayer extends Layer {
         Tensor h = Tensors.zeros(batch, hidden).withGrad();
 
         if (input instanceof GpuTensor gpu) {
-            h = h.to(gpu.getDevice()).withGrad();
+            h = h.to(gpu.device()).withGrad();
         }
 
         List<Tensor> states = new ArrayList<>();
@@ -202,7 +202,7 @@ public class LiquidLayer extends Layer {
         Tensor full = Tensors.zeros(batch, hidden);
 
         if (ref instanceof GpuTensor gpu) {
-            full = full.to(gpu.getDevice());
+            full = full.to(gpu.device());
         }
 
         return full.plus(value);

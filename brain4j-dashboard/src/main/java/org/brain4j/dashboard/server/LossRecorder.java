@@ -27,7 +27,7 @@ public class LossRecorder implements Monitor {
     @Override
     public void onEvent(TrainingEvent event, Trainer trainer) {
         if (event instanceof EpochEnd(int epoch, int total)) {
-            EvaluationResult result = evalMonitor.getEvalResult();
+            EvaluationResult result = evalMonitor.evalResult();
 
             if (result == null) return;
 
@@ -37,15 +37,15 @@ public class LossRecorder implements Monitor {
         }
     }
 
-    public Map<Integer, Double> getRecordedLoss() {
+    public Map<Integer, Double> recordedLoss() {
         return recordedLoss;
     }
 
-    public Map<Integer, Double> getRecordedAccuracy() {
+    public Map<Integer, Double> recordedAccuracy() {
         return recordedAccuracy;
     }
 
-    public Map<Integer, Double> getRecordedF1() {
+    public Map<Integer, Double> recordedF1() {
         return recordedF1;
     }
 }

@@ -80,9 +80,9 @@ public record SliceOperation(Range... ranges) implements Operation {
         int[] expectedOutputShape = expectedOutputShape(inputShape, usedRanges);
 
         GpuTensor reshapedGradOutput = (GpuTensor) gradOutput.reshape(expectedOutputShape);
-        Device device = input.getDevice();
+        Device device = input.device();
         GpuTensor gradInput = new GpuTensor(device, inputShape);
-        gradInput.getDataBuffer().write(new float[gradInput.size()]);
+        gradInput.dataBuffer().write(new float[gradInput.size()]);
 
         int[] starts = new int[inputShape.length];
         int[] steps = new int[inputShape.length];
@@ -105,10 +105,10 @@ public record SliceOperation(Range... ranges) implements Operation {
 
         try (GpuContext.QueueHandle queue = GpuContext.getOrCreateQueue(device)) {
             KernelFactory.create(device, "slice_backward_scatter")
-                .buffer(reshapedGradOutput.getDataBuffer())
-                .buffer(gradInput.getDataBuffer())
+                .buffer(reshapedGradOutput.dataBuffer())
+                .buffer(gradInput.dataBuffer())
                 .buffer(device.createBuffer(scatterStrides))
-                .buffer(reshapedGradOutput.getStridesBuffer())
+                .buffer(reshapedGradOutput.stridesBuffer())
                 .buffer(outputShapeBuffer)
                 .buffer(startsBuffer)
                 .buffer(stepsBuffer)

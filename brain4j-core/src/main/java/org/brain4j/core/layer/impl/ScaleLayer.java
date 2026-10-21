@@ -97,7 +97,7 @@ public class ScaleLayer extends Layer {
 
             Tensor result = config.scaler.transform(input);
 
-            AutogradContext context = input.getAutogradContext();
+            AutogradContext context = input.autogradContext();
             result.setAutogradContext(context);
 
             outputs[i] = result;

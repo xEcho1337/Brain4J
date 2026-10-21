@@ -63,7 +63,7 @@ public abstract class Updater {
             stored = persistentStorage.get(weights);
 
             if (stored == null) {
-                stored = GpuTensor.persistent(Tensors.zeros(gradient.shape()), gpuGradient.getDevice());
+                stored = GpuTensor.persistent(Tensors.zeros(gradient.shape()), gpuGradient.device());
                 persistentStorage.put(weights, stored);
             } else {
                 // Reuse the buffer instead of leaking GPU memory.

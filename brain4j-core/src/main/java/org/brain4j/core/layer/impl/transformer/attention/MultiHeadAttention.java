@@ -120,10 +120,10 @@ public class MultiHeadAttention extends Layer {
         int batch = input.shapeAt(0);
         int seqLength = input.shapeAt(1);
 
-        Tensor weights = getParam("weights");
-        Tensor outProj = getParam("out_proj");
-        Tensor bias = getParam("bias");
-        Tensor outBias = getParam("out_bias");
+        Tensor weights = param("weights");
+        Tensor outProj = param("out_proj");
+        Tensor bias = param("bias");
+        Tensor outBias = param("out_bias");
         Tensor qkv = input.matmulGrad(weights);
 
         if (config.qkvBias) {

@@ -51,7 +51,7 @@ public class AdamW extends Adam {
      *
      * @return the decay value
      */
-    public double getWeightDecay() {
+    public double weightDecay() {
         return weightDecay;
     }
 

@@ -36,10 +36,10 @@ public class MaskedMultiHeadAttention extends MultiHeadAttention {
         int batch = input.shapeAt(0);
         int seqLength = input.shapeAt(1);
 
-        Tensor weights = getParam("weights");
-        Tensor outProj = getParam("out_proj");
-        Tensor bias = getParam("bias");
-        Tensor outBias = getParam("out_bias");
+        Tensor weights = param("weights");
+        Tensor outProj = param("out_proj");
+        Tensor bias = param("bias");
+        Tensor outBias = param("out_bias");
 
         Range[] slicingRanges = {
             Range.all(), Range.point(seqLength - 1), Range.all()
@@ -71,7 +71,7 @@ public class MaskedMultiHeadAttention extends MultiHeadAttention {
         Tensor mask = Tensors.triangularMask(seqLength, seqLength);
 
         if (input instanceof GpuTensor gpu) {
-            mask = mask.to(gpu.getDevice());
+            mask = mask.to(gpu.device());
         }
 
         Tensor kT = k.transposeGrad();

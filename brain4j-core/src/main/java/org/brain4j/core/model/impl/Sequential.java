@@ -74,7 +74,7 @@ public record Sequential(Graph graph, ModelLayout layout, Device device, List<La
     @Override
     public Sequential fork(Device device) {
         Graph newGraph = graph.fork(device);
-        List<Layer> newLayers = new ArrayList<>(newGraph.getLayers());
+        List<Layer> newLayers = new ArrayList<>(newGraph.layers());
         return new Sequential(newGraph, layout.copy(), device, newLayers, graph.seed());
     }
 
@@ -149,7 +149,7 @@ public record Sequential(Graph graph, ModelLayout layout, Device device, List<La
     @Override
     public Sequential copy() {
         Graph newGraph = graph.copy();
-        List<Layer> newLayers = new ArrayList<>(newGraph.getLayers());
+        List<Layer> newLayers = new ArrayList<>(newGraph.layers());
         return new Sequential(newGraph, layout.copy(), device, newLayers, graph.seed());
     }
 
@@ -158,14 +158,14 @@ public record Sequential(Graph graph, ModelLayout layout, Device device, List<La
      */
     @Override
     public void appendTo(List<Layer> layers) {
-        layers.addAll(getLayers());
+        layers.addAll(layers());
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public List<Layer> getLayers() {
+    public List<Layer> layers() {
         return Collections.unmodifiableList(layers);
     }
 
@@ -201,7 +201,7 @@ public record Sequential(Graph graph, ModelLayout layout, Device device, List<La
             int total = layer.calculateTotalParameters();
             int trainable = layer.calculateTrainableParams();
 
-            Tensor weightsTensor = layer.getParam("weights");
+            Tensor weightsTensor = layer.param("weights");
 
             String shape = weightsTensor == null ? "N/A" : Arrays.toString(weightsTensor.shape());
             String row = pattern.formatted(i, layerType, shape, format.format(total), layer.activation().name());

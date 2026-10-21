@@ -213,7 +213,7 @@ public class Graph implements Model {
      * {@inheritDoc}
      */
     @Override
-    public List<Layer> getLayers() {
+    public List<Layer> layers() {
         return topology.stream().map(Node::layer).toList();
     }
 

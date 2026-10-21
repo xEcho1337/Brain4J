@@ -78,7 +78,7 @@ public class Lion extends Optimizer {
      *
      * @return the history map
      */
-    public Map<Tensor, Tensor> getMomentumHistory() {
+    public Map<Tensor, Tensor> momentumHistory() {
         return momentumHistory;
     }
 
@@ -98,7 +98,7 @@ public class Lion extends Optimizer {
      *
      * @return the beta1 value
      */
-    public double getBeta1() {
+    public double beta1() {
         return beta1;
     }
 
@@ -118,7 +118,7 @@ public class Lion extends Optimizer {
      *
      * @return the beta2 value
      */
-    public double getBeta2() {
+    public double beta2() {
         return beta2;
     }
 

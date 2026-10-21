@@ -42,7 +42,7 @@ public class Mish implements Activation {
      * {@inheritDoc}
      */
     @Override
-    public String getKernelPrefix() {
+    public String kernelPrefix() {
         return "mish";
     }
 
@@ -50,7 +50,7 @@ public class Mish implements Activation {
      * {@inheritDoc}
      */
     @Override
-    public int getActivationId() {
+    public int activationId() {
         return 8;
     }
 }

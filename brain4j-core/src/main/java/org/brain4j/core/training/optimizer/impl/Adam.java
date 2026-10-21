@@ -72,7 +72,7 @@ public class Adam extends Optimizer {
             second = Tensors.zeros(gradient.shape());
 
             if (gradient instanceof GpuTensor gpuTensor) {
-                Device device = gpuTensor.getDevice();
+                Device device = gpuTensor.device();
                 first = GpuTensor.persistent(first, device);
                 second = GpuTensor.persistent(second, device);
             }

@@ -44,13 +44,13 @@ public class HardClipper implements GradientClipper {
      */
     @Override
     public void clipGpu(GpuTensor grad) {
-        Device device = grad.getDevice();
+        Device device = grad.device();
 
         try (GpuContext.QueueHandle queue = GpuContext.getOrCreateQueue(device)) {
             ComputeSize size = new ComputeSize(grad.size(), 1, 1);
 
             KernelFactory.create(device, kernelName())
-                .buffer(grad.getDataBuffer())
+                .buffer(grad.dataBuffer())
                 .floatVal((float) bound)
                 .intVal(grad.size())
                 .launch(queue.queue(), size);

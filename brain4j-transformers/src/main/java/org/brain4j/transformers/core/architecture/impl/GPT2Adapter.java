@@ -111,7 +111,7 @@ public class GPT2Adapter implements ArchitectureAdapter {
         }
 
         @Override
-        protected Layer getAttention() {
+        protected Layer attention() {
             var attentionConfig = new MultiHeadAttention.Config(
                 config.embedDim(),
                 config.heads(),

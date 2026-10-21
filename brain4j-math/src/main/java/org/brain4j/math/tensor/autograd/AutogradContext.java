@@ -56,7 +56,7 @@ public class AutogradContext {
                 continue;
             }
 
-            input.getAutogradContext().increaseContributes();
+            input.autogradContext().increaseContributes();
         }
 
     }
@@ -82,7 +82,7 @@ public class AutogradContext {
      *
      * @return gradient, or null if absent
      */
-    public Tensor getGrad() {
+    public Tensor grad() {
         return grad;
     }
 

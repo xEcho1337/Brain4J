@@ -230,7 +230,7 @@ public final class DefaultTrainer implements Trainer {
 
     private void runTraining(ListDataSource dataSource, int epochs) {
         totalEpochs = epochs;
-        totalBatches = dataSource.getBatches();
+        totalBatches = dataSource.batches();
 
         for (int i = 0; i < epochs; i++) {
             if (shouldStop()) {
@@ -285,7 +285,7 @@ public final class DefaultTrainer implements Trainer {
         Optimizer optimizer = config.optimizer();
         Updater updater = config.updater();
 
-        updater.postFit(optimizer.getLearningRate(), dataSource.getSize());
+        updater.postFit(optimizer.learningRate(), dataSource.size());
 
         EpochEnd end = new EpochEnd(index, total);
         monitors.forEach((k, x) -> x.onEvent(end, this));
@@ -340,7 +340,7 @@ public final class DefaultTrainer implements Trainer {
      */
     @Override
     public void backward(StatesCache cache, Batch batch, Tensor[] outputs) {
-        List<Layer> layers = model.getLayers();
+        List<Layer> layers = model.layers();
 
         Tensor[] inputs = batch.first();
         Tensor[] targets = batch.second();
@@ -353,7 +353,7 @@ public final class DefaultTrainer implements Trainer {
             Tensor y = outputs[i];
             Tensor t = targets[i];
 
-            AutogradContext context = y.getAutogradContext();
+            AutogradContext context = y.autogradContext();
             Operation operation = context.operation();
 
             Tensor grad = loss.delta(y, t, null);
@@ -378,7 +378,7 @@ public final class DefaultTrainer implements Trainer {
         }
 
         optimizer.postBatch();
-        updater.postBatch(optimizer.getLearningRate(), elements);
+        updater.postBatch(optimizer.learningRate(), elements);
     }
 
     /**
@@ -386,7 +386,7 @@ public final class DefaultTrainer implements Trainer {
      */
     @Override
     public void resetGrad() {
-        model.getLayers().forEach(Layer::resetGrad);
+        model.layers().forEach(Layer::resetGrad);
     }
 
     /**

@@ -161,8 +161,8 @@ public class ConvLayer extends Layer {
             throw Commons.illegalArgument("Expected input with rank 4 but got %s", input.rank());
         }
 
-        Tensor w = getParam("kernel");
-        Tensor b = getParam("bias");
+        Tensor w = param("kernel");
+        Tensor b = param("bias");
 
         Tensor result = input.convolveGrad(w, config.stride)
             .addGrad(b.reshapeGrad(1, config.filters, 1, 1))

@@ -84,8 +84,8 @@ public class NormLayer extends Layer {
     public Tensor[] forward(StatesCache cache, Tensor... inputs) {
         Tensor first = inputs[0];
 
-        Tensor w = getParam("weights");
-        Tensor b = getParam("bias");
+        Tensor w = param("weights");
+        Tensor b = param("bias");
 
         Tensor result = first.layerNormGrad(w, b, config.epsilon);
 

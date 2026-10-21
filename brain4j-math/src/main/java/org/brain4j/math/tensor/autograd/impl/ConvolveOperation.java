@@ -103,9 +103,9 @@ public record ConvolveOperation(int stride) implements Operation {
 
         try (GpuContext.QueueHandle qh = GpuContext.getOrCreateQueue(device)) {
             KernelFactory.create(device, "conv2d_backward_input_nchw")
-                .buffer(gpuGradOutput.getDataBuffer())
-                .buffer(gpuFilter.getDataBuffer())
-                .buffer(gradInput.getDataBuffer())
+                .buffer(gpuGradOutput.dataBuffer())
+                .buffer(gpuFilter.dataBuffer())
+                .buffer(gradInput.dataBuffer())
                 .intVal(batch)
                 .intVal(inChannels)
                 .intVal(inHeight)
@@ -119,9 +119,9 @@ public record ConvolveOperation(int stride) implements Operation {
                 .launch(qh.queue(), gradInputGlobal, local);
 
             KernelFactory.create(device, "conv2d_backward_filter_nchw")
-                .buffer(gpuInput.getDataBuffer())
-                .buffer(gpuGradOutput.getDataBuffer())
-                .buffer(gradFilter.getDataBuffer())
+                .buffer(gpuInput.dataBuffer())
+                .buffer(gpuGradOutput.dataBuffer())
+                .buffer(gradFilter.dataBuffer())
                 .intVal(batch)
                 .intVal(inChannels)
                 .intVal(inHeight)
@@ -186,7 +186,7 @@ public record ConvolveOperation(int stride) implements Operation {
     private Device resolveDevice(Tensor... tensors) {
         for (Tensor tensor : tensors) {
             if (tensor instanceof GpuTensor gpu) {
-                return gpu.getDevice();
+                return gpu.device();
             }
 
         }

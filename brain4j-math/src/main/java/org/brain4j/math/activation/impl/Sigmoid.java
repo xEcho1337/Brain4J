@@ -39,7 +39,7 @@ public class Sigmoid implements Activation {
      * {@inheritDoc}
      */
     @Override
-    public String getKernelPrefix() {
+    public String kernelPrefix() {
         return "sigmoid";
     }
 
@@ -47,7 +47,7 @@ public class Sigmoid implements Activation {
      * {@inheritDoc}
      */
     @Override
-    public int getActivationId() {
+    public int activationId() {
         return 3;
     }
 }

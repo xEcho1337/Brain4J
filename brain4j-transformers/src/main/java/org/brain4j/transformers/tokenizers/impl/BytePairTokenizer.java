@@ -401,19 +401,19 @@ public class BytePairTokenizer implements Tokenizer {
                 .sum();
     }
     
-    public Normalizer getNormalizer() {
+    public Normalizer normalizer() {
         return normalizer;
     }
     
-    public List<AddedToken> getAddedTokens() {
+    public List<AddedToken> addedTokens() {
         return addedTokens;
     }
     
-    public Map<String, Integer> getVocab() {
+    public Map<String, Integer> vocab() {
         return Collections.unmodifiableMap(vocab);
     }
     
-    public Map<String, String[]> getMerges() {
+    public Map<String, String[]> merges() {
         return Collections.unmodifiableMap(merges);
     }
 

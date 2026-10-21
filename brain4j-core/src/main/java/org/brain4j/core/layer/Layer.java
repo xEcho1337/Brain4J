@@ -181,7 +181,7 @@ public abstract class Layer implements Copyable<Layer>, ModelBlock {
 
     private static Tensor copyStable(Tensor tensor) {
         if (tensor instanceof GpuTensor gpuTensor) {
-            return GpuTensor.persistent(tensor, gpuTensor.getDevice());
+            return GpuTensor.persistent(tensor, gpuTensor.device());
         }
 
         return tensor.copy();
@@ -189,7 +189,7 @@ public abstract class Layer implements Copyable<Layer>, ModelBlock {
 
     private static Tensor copyStable(Tensor tensor, Device device) {
         if (tensor instanceof GpuTensor gpuTensor
-            && gpuTensor.getDevice() == device
+            && gpuTensor.device() == device
             && gpuTensor.isPersistent()) {
             return tensor;
         }
@@ -221,7 +221,7 @@ public abstract class Layer implements Copyable<Layer>, ModelBlock {
      *
      * @return the parameter, or {@code null} if missing
      */
-    public Tensor getParam(String name) {
+    public Tensor param(String name) {
         return parameters.get(name);
     }
 

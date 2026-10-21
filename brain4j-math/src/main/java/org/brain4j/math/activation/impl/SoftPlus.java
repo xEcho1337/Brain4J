@@ -53,7 +53,7 @@ public class SoftPlus implements Activation {
      * {@inheritDoc}
      */
     @Override
-    public String getKernelPrefix() {
+    public String kernelPrefix() {
         return "softplus";
     }
 
@@ -61,7 +61,7 @@ public class SoftPlus implements Activation {
      * {@inheritDoc}
      */
     @Override
-    public int getActivationId() {
+    public int activationId() {
         return 6;
     }
 }

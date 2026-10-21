@@ -13,7 +13,7 @@ public class NormalHeInit implements WeightInit {
      * {@inheritDoc}
      */
     @Override
-    public double getBound(int input, int output) {
+    public double bound(int input, int output) {
         return 2.0 / input;
     }
 
@@ -22,6 +22,6 @@ public class NormalHeInit implements WeightInit {
      */
     @Override
     public double generate(RandomGenerator generator, int input, int output) {
-        return randomBetween(generator, 0, getBound(input, output));
+        return randomBetween(generator, 0, bound(input, output));
     }
 }

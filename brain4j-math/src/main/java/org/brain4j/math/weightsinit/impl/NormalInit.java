@@ -13,7 +13,7 @@ public class NormalInit implements WeightInit {
      * {@inheritDoc}
      */
     @Override
-    public double getBound(int input, int output) {
+    public double bound(int input, int output) {
         return 1;
     }
 

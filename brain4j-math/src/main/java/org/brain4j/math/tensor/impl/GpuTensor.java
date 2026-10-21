@@ -59,7 +59,7 @@ public class GpuTensor extends BaseTensor {
         this(device, shape, strides);
 
         if (data.length != 0) {
-            getDataBuffer().write(data);
+            dataBuffer().write(data);
         }
 
     }
@@ -203,15 +203,6 @@ public class GpuTensor extends BaseTensor {
      *
      * @return device
      */
-    public Device getDevice() {
-        return device;
-    }
-
-    /**
-     * Get the owning device.
-     *
-     * @return device
-     */
     public Device device() {
         return device;
     }
@@ -221,7 +212,7 @@ public class GpuTensor extends BaseTensor {
      *
      * @return data buffer
      */
-    public ComputeBuffer getDataBuffer() {
+    public ComputeBuffer dataBuffer() {
         return dataBuffer;
     }
 
@@ -230,7 +221,7 @@ public class GpuTensor extends BaseTensor {
      *
      * @return strides buffer
      */
-    public ComputeBuffer getStridesBuffer() {
+    public ComputeBuffer stridesBuffer() {
         return stridesBuffer;
     }
 

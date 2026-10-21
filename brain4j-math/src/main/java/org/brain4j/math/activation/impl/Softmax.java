@@ -53,7 +53,7 @@ public record Softmax(double temperature) implements Activation {
      * {@inheritDoc}
      */
     @Override
-    public String getKernelPrefix() {
+    public String kernelPrefix() {
         return "";
     }
 
@@ -75,7 +75,7 @@ public record Softmax(double temperature) implements Activation {
      * {@inheritDoc}
      */
     @Override
-    public int getActivationId() {
+    public int activationId() {
         // Softmax runs on a dedicated kernel, so no scalar id applies.
         return -1;
     }

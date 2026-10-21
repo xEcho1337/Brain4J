@@ -77,7 +77,7 @@ public class EvalMonitor implements Monitor {
         double f1 = result.f1Score() * 100.0;
         double accuracy = result.accuracy() * 100.0;
 
-        String lossMsg = Colored.renderText("Loss: <magenta>%." + Brain4J.getDecimalDigits() + "f<reset>", result.loss());
+        String lossMsg = Colored.renderText("Loss: <magenta>%." + Brain4J.decimalDigits() + "f<reset>", result.loss());
         String firstMetric = regression
             ? Colored.renderText(" | R^2 Score: <blue>%.2f<reset>", r2)
             : Colored.renderText(" | Accuracy: <blue>%.2f%%<reset>", accuracy);
@@ -93,7 +93,7 @@ public class EvalMonitor implements Monitor {
      *
      * @return the result, or {@code null} if never evaluated
      */
-    public EvaluationResult getEvalResult() {
+    public EvaluationResult evalResult() {
         return lastRecordedEvaluation;
     }
 }

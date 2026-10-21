@@ -13,7 +13,7 @@ public class UniformHeInit implements WeightInit {
      * {@inheritDoc}
      */
     @Override
-    public double getBound(int input, int output) {
+    public double bound(int input, int output) {
         return Math.sqrt(6.0 / input);
     }
 
@@ -22,7 +22,7 @@ public class UniformHeInit implements WeightInit {
      */
     @Override
     public double generate(RandomGenerator generator, int input, int output) {
-        double bound = getBound(input, output);
+        double bound = bound(input, output);
 
         return randomBetween(generator, -bound, bound);
     }

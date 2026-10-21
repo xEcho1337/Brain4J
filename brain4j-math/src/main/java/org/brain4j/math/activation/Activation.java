@@ -43,14 +43,14 @@ public interface Activation {
      *
      * @return the kernel prefix
      */
-    String getKernelPrefix();
+    String kernelPrefix();
 
     /**
      * Returns the numeric identifier of this activation.
      *
      * @return the activation id
      */
-    int getActivationId();
+    int activationId();
 
     /**
      * Returns the display name of this activation.
@@ -73,11 +73,11 @@ public interface Activation {
     ) {
         return KernelFactory
             .create(kernel)
-            .intVal(getActivationId())
+            .intVal(activationId())
             .floatVal(0f)
             .intVal(input.size())
-            .buffer(input.getDataBuffer())
-            .buffer(output.getDataBuffer());
+            .buffer(input.dataBuffer())
+            .buffer(output.dataBuffer());
     }
 
     /**
@@ -130,7 +130,7 @@ public interface Activation {
     }
 
     private GpuTensor computeGpu(GpuTensor input, String suffix) {
-        Device device = input.getDevice();
+        Device device = input.device();
         GpuTensor result = new GpuTensor(device, input.shape());
 
         try (GpuContext.QueueHandle queue = GpuContext.getOrCreateQueue(device)) {

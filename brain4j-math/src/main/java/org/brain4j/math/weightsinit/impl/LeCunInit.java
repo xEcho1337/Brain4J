@@ -15,7 +15,7 @@ public class LeCunInit implements WeightInit {
      * {@inheritDoc}
      */
     @Override
-    public double getBound(int input, int output) {
+    public double bound(int input, int output) {
         return SQRT3 / Math.sqrt(input);
     }
 
@@ -24,7 +24,7 @@ public class LeCunInit implements WeightInit {
      */
     @Override
     public double generate(RandomGenerator generator, int input, int output) {
-        double bound = getBound(input, output);
+        double bound = bound(input, output);
 
         return randomBetween(generator, -bound, bound);
     }

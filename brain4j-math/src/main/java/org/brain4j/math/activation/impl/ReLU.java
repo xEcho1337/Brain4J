@@ -37,7 +37,7 @@ public class ReLU implements Activation {
      * {@inheritDoc}
      */
     @Override
-    public String getKernelPrefix() {
+    public String kernelPrefix() {
         return "relu";
     }
 
@@ -45,7 +45,7 @@ public class ReLU implements Activation {
      * {@inheritDoc}
      */
     @Override
-    public int getActivationId() {
+    public int activationId() {
         return 0;
     }
 }

@@ -655,7 +655,7 @@ public interface Tensor extends Iterable<Float>, Copyable<Tensor> {
      * Gets the autograd context for this tensor.
      * @return the autograd context instance
      */
-    AutogradContext getAutogradContext();
+    AutogradContext autogradContext();
 
     /**
      * Updates the autograd context instance for this tensor.

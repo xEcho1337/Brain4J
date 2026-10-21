@@ -42,7 +42,7 @@ public class BrainServer extends MiniServer {
     }
 
     @Override
-    public List<Object> getServices() {
+    public List<Object> services() {
         return List.of(this);
     }
     
@@ -69,7 +69,7 @@ public class BrainServer extends MiniServer {
             return Response.json(400, Map.of("message", "Already training"));
         }
 
-        lossRecorder.getRecordedLoss().clear();
+        lossRecorder.recordedLoss().clear();
         trainer.start(trainSet, epochs);
 
         return Response.ok();
@@ -114,7 +114,7 @@ public class BrainServer extends MiniServer {
     @Route("/api/training/info")
     public Response info(Request request) {
         Trainer trainer = dashboard.trainer();
-        EvaluationResult result = evalMonitor.getEvalResult();
+        EvaluationResult result = evalMonitor.evalResult();
 
         double loss = result == null ? 0.0 : result.loss();
         double accuracy = result == null ? 0.0 : result.accuracy();
@@ -133,9 +133,9 @@ public class BrainServer extends MiniServer {
             )
         );
         
-        info.put("loss_table", lossRecorder.getRecordedLoss());
-        info.put("accuracy_table", lossRecorder.getRecordedAccuracy());
-        info.put("f1_table", lossRecorder.getRecordedF1());
+        info.put("loss_table", lossRecorder.recordedLoss());
+        info.put("accuracy_table", lossRecorder.recordedAccuracy());
+        info.put("f1_table", lossRecorder.recordedF1());
 
         return Response.json(200, info);
     }

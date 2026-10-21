@@ -173,7 +173,7 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
     }
 
     private void computeBatches() {
-        int size = getSize();
+        int size = size();
         int index = 0;
 
         while (index < size) {
@@ -273,7 +273,7 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
      *
      * @return the number of samples
      */
-    public int getSize() {
+    public int size() {
         return samples.size();
     }
 
@@ -282,7 +282,7 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
      *
      * @return the samples list
      */
-    public List<Sample> getSamples() {
+    public List<Sample> samples() {
         return samples;
     }
 
@@ -291,7 +291,7 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
      *
      * @return the input batches
      */
-    public List<Tensor[]> getBatchedInputs() {
+    public List<Tensor[]> batchedInputs() {
         return batchedInputs;
     }
 
@@ -300,7 +300,7 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
      *
      * @return the label batches
      */
-    public List<Tensor[]> getBatchedLabels() {
+    public List<Tensor[]> batchedLabels() {
         return batchedLabels;
     }
 
@@ -309,7 +309,7 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
      *
      * @return the batch size
      */
-    public int getBatchSize() {
+    public int batchSize() {
         return batchSize;
     }
 
@@ -318,7 +318,7 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
      *
      * @return the number of batches
      */
-    public int getBatches() {
+    public int batches() {
         return batches;
     }
 
@@ -327,7 +327,7 @@ public class ListDataSource implements Cloneable, Iterable<Sample> {
      *
      * @return the cursor position
      */
-    public int getCursor() {
+    public int cursor() {
         return cursor;
     }
 

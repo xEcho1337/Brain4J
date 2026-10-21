@@ -48,7 +48,7 @@ public record ELU(double alpha) implements Activation {
      * {@inheritDoc}
      */
     @Override
-    public String getKernelPrefix() {
+    public String kernelPrefix() {
         return "elu";
     }
 
@@ -56,7 +56,7 @@ public record ELU(double alpha) implements Activation {
      * {@inheritDoc}
      */
     @Override
-    public int getActivationId() {
+    public int activationId() {
         return 2;
     }
 
@@ -67,10 +67,10 @@ public record ELU(double alpha) implements Activation {
     public KernelFactory createKernel(ComputeFunction kernel, GpuTensor input, GpuTensor output) {
         return KernelFactory
             .create(kernel)
-            .intVal(getActivationId())
+            .intVal(activationId())
             .floatVal((float) alpha)
             .intVal(input.size())
-            .buffer(input.getDataBuffer())
-            .buffer(output.getDataBuffer());
+            .buffer(input.dataBuffer())
+            .buffer(output.dataBuffer());
     }
 }

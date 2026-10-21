@@ -55,7 +55,7 @@ public final class FlashAttention {
         boolean causal
     ) {
         ShapeInfo shape = validateForwardInputs(query, key, value);
-        GpuTensor output = new GpuTensor(query.getDevice(), query.shape());
+        GpuTensor output = new GpuTensor(query.device(), query.shape());
 
         dispatchForward("flash_attention_forward", query, key, value, output, null, shape, scale, causal);
         return output;
@@ -79,8 +79,8 @@ public final class FlashAttention {
         boolean causal
     ) {
         ShapeInfo shape = validateForwardInputs(query, key, value);
-        GpuTensor output = new GpuTensor(query.getDevice(), query.shape());
-        GpuTensor lse = new GpuTensor(query.getDevice(), new int[] { shape.batchSize, shape.numHeads, shape.seqLen });
+        GpuTensor output = new GpuTensor(query.device(), query.shape());
+        GpuTensor lse = new GpuTensor(query.device(), new int[] { shape.batchSize, shape.numHeads, shape.seqLen });
 
         dispatchForward("flash_attention_forward_with_lse", query, key, value, output, lse, shape, scale, causal);
         return new ForwardResult(output, lse);
@@ -109,8 +109,8 @@ public final class FlashAttention {
             throw new IllegalArgumentException("Tiled FlashAttention supports headDim <= 64, got " + shape.headDim);
         }
 
-        GpuTensor output = new GpuTensor(query.getDevice(), query.shape());
-        GpuTensor lse = new GpuTensor(query.getDevice(), new int[] { shape.batchSize, shape.numHeads, shape.seqLen });
+        GpuTensor output = new GpuTensor(query.device(), query.shape());
+        GpuTensor lse = new GpuTensor(query.device(), new int[] { shape.batchSize, shape.numHeads, shape.seqLen });
 
         dispatchForward("flash_attention_forward_tiled", query, key, value, output, lse, shape, scale, causal);
         return new ForwardResult(output, lse);
@@ -140,7 +140,7 @@ public final class FlashAttention {
         boolean causal
     ) {
         ShapeInfo shape = validateBackwardInputs(query, key, value, output, gradOutput, lse);
-        Device device = query.getDevice();
+        Device device = query.device();
         GpuTensor dQ = new GpuTensor(device, query.shape());
         GpuTensor dK = new GpuTensor(device, key.shape());
         GpuTensor dV = new GpuTensor(device, value.shape());
@@ -175,33 +175,33 @@ public final class FlashAttention {
         boolean causal
     ) {
         ShapeInfo shape = validateBackwardInputs(query, key, value, output, gradOutput, lse);
-        Device device = query.getDevice();
+        Device device = query.device();
         GpuTensor dQ = new GpuTensor(device, query.shape());
         GpuTensor dK = new GpuTensor(device, key.shape());
         GpuTensor dV = new GpuTensor(device, value.shape());
 
-        dK.getDataBuffer().write(new float[dK.size()]);
-        dV.getDataBuffer().write(new float[dV.size()]);
+        dK.dataBuffer().write(new float[dK.size()]);
+        dV.dataBuffer().write(new float[dV.size()]);
 
         try (GpuContext.QueueHandle queue = GpuContext.getOrCreateQueue(device)) {
             KernelFactory.create(device, "flash_attention_backward_tiled")
-                .buffer(query.getDataBuffer())
-                .buffer(key.getDataBuffer())
-                .buffer(value.getDataBuffer())
-                .buffer(output.getDataBuffer())
-                .buffer(gradOutput.getDataBuffer())
-                .buffer(lse.getDataBuffer())
-                .buffer(dQ.getDataBuffer())
-                .buffer(dK.getDataBuffer())
-                .buffer(dV.getDataBuffer())
-                .buffer(query.getStridesBuffer())
-                .buffer(key.getStridesBuffer())
-                .buffer(value.getStridesBuffer())
-                .buffer(output.getStridesBuffer())
-                .buffer(gradOutput.getStridesBuffer())
-                .buffer(dQ.getStridesBuffer())
-                .buffer(dK.getStridesBuffer())
-                .buffer(dV.getStridesBuffer())
+                .buffer(query.dataBuffer())
+                .buffer(key.dataBuffer())
+                .buffer(value.dataBuffer())
+                .buffer(output.dataBuffer())
+                .buffer(gradOutput.dataBuffer())
+                .buffer(lse.dataBuffer())
+                .buffer(dQ.dataBuffer())
+                .buffer(dK.dataBuffer())
+                .buffer(dV.dataBuffer())
+                .buffer(query.stridesBuffer())
+                .buffer(key.stridesBuffer())
+                .buffer(value.stridesBuffer())
+                .buffer(output.stridesBuffer())
+                .buffer(gradOutput.stridesBuffer())
+                .buffer(dQ.stridesBuffer())
+                .buffer(dK.stridesBuffer())
+                .buffer(dV.stridesBuffer())
                 .intVal(shape.batchSize)
                 .intVal(shape.numHeads)
                 .intVal(shape.seqLen)
@@ -225,23 +225,23 @@ public final class FlashAttention {
         float scale,
         boolean causal
     ) {
-        Device device = query.getDevice();
+        Device device = query.device();
 
         try (GpuContext.QueueHandle queue = GpuContext.getOrCreateQueue(device)) {
             KernelFactory kernel = KernelFactory.create(device, kernelName)
-                .buffer(query.getDataBuffer())
-                .buffer(key.getDataBuffer())
-                .buffer(value.getDataBuffer())
-                .buffer(output.getDataBuffer());
+                .buffer(query.dataBuffer())
+                .buffer(key.dataBuffer())
+                .buffer(value.dataBuffer())
+                .buffer(output.dataBuffer());
 
             if (lse != null) {
-                kernel.buffer(lse.getDataBuffer());
+                kernel.buffer(lse.dataBuffer());
             }
 
-            kernel.buffer(query.getStridesBuffer())
-                .buffer(key.getStridesBuffer())
-                .buffer(value.getStridesBuffer())
-                .buffer(output.getStridesBuffer())
+            kernel.buffer(query.stridesBuffer())
+                .buffer(key.stridesBuffer())
+                .buffer(value.stridesBuffer())
+                .buffer(output.stridesBuffer())
                 .intVal(shape.batchSize)
                 .intVal(shape.numHeads)
                 .intVal(shape.seqLen)
@@ -272,25 +272,25 @@ public final class FlashAttention {
         float scale,
         boolean causal
     ) {
-        Device device = query.getDevice();
+        Device device = query.device();
 
         try (GpuContext.QueueHandle queue = GpuContext.getOrCreateQueue(device)) {
             KernelFactory.create(device, kernelName)
-                .buffer(query.getDataBuffer())
-                .buffer(key.getDataBuffer())
-                .buffer(value.getDataBuffer())
-                .buffer(output.getDataBuffer())
-                .buffer(gradOutput.getDataBuffer())
-                .buffer(lse.getDataBuffer())
-                .buffer(dK.getDataBuffer())
-                .buffer(dV.getDataBuffer())
-                .buffer(query.getStridesBuffer())
-                .buffer(key.getStridesBuffer())
-                .buffer(value.getStridesBuffer())
-                .buffer(output.getStridesBuffer())
-                .buffer(gradOutput.getStridesBuffer())
-                .buffer(dK.getStridesBuffer())
-                .buffer(dV.getStridesBuffer())
+                .buffer(query.dataBuffer())
+                .buffer(key.dataBuffer())
+                .buffer(value.dataBuffer())
+                .buffer(output.dataBuffer())
+                .buffer(gradOutput.dataBuffer())
+                .buffer(lse.dataBuffer())
+                .buffer(dK.dataBuffer())
+                .buffer(dV.dataBuffer())
+                .buffer(query.stridesBuffer())
+                .buffer(key.stridesBuffer())
+                .buffer(value.stridesBuffer())
+                .buffer(output.stridesBuffer())
+                .buffer(gradOutput.stridesBuffer())
+                .buffer(dK.stridesBuffer())
+                .buffer(dV.stridesBuffer())
                 .intVal(shape.batchSize)
                 .intVal(shape.numHeads)
                 .intVal(shape.seqLen)
@@ -314,23 +314,23 @@ public final class FlashAttention {
         float scale,
         boolean causal
     ) {
-        Device device = query.getDevice();
+        Device device = query.device();
 
         try (GpuContext.QueueHandle queue = GpuContext.getOrCreateQueue(device)) {
             KernelFactory.create(device, kernelName)
-                .buffer(query.getDataBuffer())
-                .buffer(key.getDataBuffer())
-                .buffer(value.getDataBuffer())
-                .buffer(output.getDataBuffer())
-                .buffer(gradOutput.getDataBuffer())
-                .buffer(lse.getDataBuffer())
-                .buffer(dQ.getDataBuffer())
-                .buffer(query.getStridesBuffer())
-                .buffer(key.getStridesBuffer())
-                .buffer(value.getStridesBuffer())
-                .buffer(output.getStridesBuffer())
-                .buffer(gradOutput.getStridesBuffer())
-                .buffer(dQ.getStridesBuffer())
+                .buffer(query.dataBuffer())
+                .buffer(key.dataBuffer())
+                .buffer(value.dataBuffer())
+                .buffer(output.dataBuffer())
+                .buffer(gradOutput.dataBuffer())
+                .buffer(lse.dataBuffer())
+                .buffer(dQ.dataBuffer())
+                .buffer(query.stridesBuffer())
+                .buffer(key.stridesBuffer())
+                .buffer(value.stridesBuffer())
+                .buffer(output.stridesBuffer())
+                .buffer(gradOutput.stridesBuffer())
+                .buffer(dQ.stridesBuffer())
                 .intVal(shape.batchSize)
                 .intVal(shape.numHeads)
                 .intVal(shape.seqLen)
@@ -405,7 +405,7 @@ public final class FlashAttention {
 
     private static void requireSameDevice(GpuTensor first, GpuTensor... others) {
         for (GpuTensor other : others) {
-            if (!first.getDevice().equals(other.getDevice())) {
+            if (!first.device().equals(other.device())) {
                 throw new IllegalArgumentException("All FlashAttention tensors must be on the same GPU device");
             }
 

@@ -1104,7 +1104,7 @@ public abstract class BaseTensor implements Tensor {
      * {@inheritDoc}
      */
     @Override
-    public AutogradContext getAutogradContext() {
+    public AutogradContext autogradContext() {
         return autogradContext;
     }
 
@@ -1158,7 +1158,7 @@ public abstract class BaseTensor implements Tensor {
     @Override
     public Tensor grad() {
         if (autogradContext != null) {
-            return autogradContext.getGrad();
+            return autogradContext.grad();
         }
 
         return null;
@@ -1194,11 +1194,11 @@ public abstract class BaseTensor implements Tensor {
 
         Tensor result = operation.compute(this);
 
-        if (result.getAutogradContext() == null) {
+        if (result.autogradContext() == null) {
             result.setAutogradContext(new AutogradContext(result, true));
         }
 
-        result.getAutogradContext().setOperation(operation, this);
+        result.autogradContext().setOperation(operation, this);
         return result;
     }
 
@@ -1215,11 +1215,11 @@ public abstract class BaseTensor implements Tensor {
 
         Tensor result = operation.compute(this, other);
 
-        if (result.getAutogradContext() == null) {
+        if (result.autogradContext() == null) {
             result.setAutogradContext(new AutogradContext(result, true));
         }
 
-        result.getAutogradContext().setOperation(operation, this, other);
+        result.autogradContext().setOperation(operation, this, other);
         return result;
     }
 
@@ -1241,11 +1241,11 @@ public abstract class BaseTensor implements Tensor {
         Tensor[] allInputsArray = allInputs.toArray(new Tensor[0]);
         Tensor result = operation.compute(allInputsArray);
 
-        if (result.getAutogradContext() == null) {
+        if (result.autogradContext() == null) {
             result.setAutogradContext(new AutogradContext(result, true));
         }
 
-        result.getAutogradContext().setOperation(operation, allInputsArray);
+        result.autogradContext().setOperation(operation, allInputsArray);
         return result;
     }
 

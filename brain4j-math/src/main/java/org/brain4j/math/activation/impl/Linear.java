@@ -37,7 +37,7 @@ public class Linear implements Activation {
      * {@inheritDoc}
      */
     @Override
-    public String getKernelPrefix() {
+    public String kernelPrefix() {
         return "linear";
     }
 
@@ -45,7 +45,7 @@ public class Linear implements Activation {
      * {@inheritDoc}
      */
     @Override
-    public int getActivationId() {
+    public int activationId() {
         return 9;
     }
 }

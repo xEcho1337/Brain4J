@@ -69,7 +69,7 @@ public class LSTMLayer extends Layer {
     @Override
     public void initWeights(List<Shape> inputShapes, RandomGenerator rng) {
         int inDim = inputShapes.getFirst().last();
-        Tensor bias = getParam("bias");
+        Tensor bias = param("bias");
 
         generateWeights("hidden_weights", rng, inDim, config.hiddenDimension);
         generateWeights("weights", rng, inDim, config.hiddenDimension);
@@ -119,9 +119,9 @@ public class LSTMLayer extends Layer {
         int batch = input.shapeAt(0);
         int timesteps = input.shapeAt(1);
 
-        Tensor weights = getParam("weights");
-        Tensor hiddenWeights = getParam("hidden_weights");
-        Tensor bias = getParam("bias");
+        Tensor weights = param("weights");
+        Tensor hiddenWeights = param("hidden_weights");
+        Tensor bias = param("bias");
 
         Tensor projection = input.matmulGrad(weights);
 

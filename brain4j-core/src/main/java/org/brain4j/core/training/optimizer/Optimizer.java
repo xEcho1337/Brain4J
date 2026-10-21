@@ -59,7 +59,7 @@ public abstract class Optimizer {
      *
      * @return the current learning rate
      */
-    public double getLearningRate() {
+    public double learningRate() {
         return learningRate;
     }
 

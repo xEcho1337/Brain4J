@@ -14,7 +14,7 @@ public interface Tokenizer {
     Tensor encode(List<String> tokens);
     String decode(int index);
     
-    Map<String, Integer> getVocab();
+    Map<String, Integer> vocab();
     int vocabSize();
     int bosTokenId();
     int eosTokenId();

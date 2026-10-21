@@ -129,7 +129,7 @@ public class BrainFormat implements BinaryFormat<Sequential> {
 
             Layer[] layers = architectureMap.values().toArray(new Layer[0]);
             Sequential model = ModelLayout.of(Shape.of(dims), layers).compile();
-            List<Layer> compiledLayers = model.getLayers();
+            List<Layer> compiledLayers = model.layers();
 
             for (int i = 0; i < compiledLayers.size(); i++) {
                 Layer layer = compiledLayers.get(i);
@@ -175,7 +175,7 @@ public class BrainFormat implements BinaryFormat<Sequential> {
             root.set("input_shape", inputShape);
 
             ArrayNode architecture = MAPPER.createArrayNode();
-            List<Layer> layers = model.getLayers();
+            List<Layer> layers = model.layers();
 
             for (int i = 0; i < layers.size(); i++) {
                 Layer layer = layers.get(i);

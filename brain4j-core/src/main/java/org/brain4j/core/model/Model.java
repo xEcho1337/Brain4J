@@ -55,7 +55,7 @@ public interface Model extends Copyable<Model> {
      * @return an {@link EvaluationResult} containing loss and metrics
      */
     default EvaluationResult evaluate(ListDataSource dataSource, LossFunction lossFunction) {
-        int classes = Math.max(2, dataSource.getSamples().getFirst().getLabel(0).elements());
+        int classes = Math.max(2, dataSource.samples().getFirst().label(0).elements());
         Map<Integer, Tensor> classifications = new HashMap<>();
 
         if (!lossFunction.isRegression()) {
@@ -73,7 +73,7 @@ public interface Model extends Copyable<Model> {
             makeEvaluation(batch, classifications, totalLoss, lossFunction);
         }
 
-        return new EvaluationResult(totalLoss.get() / dataSource.getSize(), classes, classifications);
+        return new EvaluationResult(totalLoss.get() / dataSource.size(), classes, classifications);
     }
 
     /**
@@ -92,7 +92,7 @@ public interface Model extends Copyable<Model> {
             makeEvaluation(batch, classifications, totalLoss, lossFunction);
         }
 
-        return totalLoss.get() / dataSource.getSize();
+        return totalLoss.get() / dataSource.size();
     }
 
     /**
@@ -123,7 +123,7 @@ public interface Model extends Copyable<Model> {
      *
      * @return an unmodifiable list of layers
      */
-    List<Layer> getLayers();
+    List<Layer> layers();
 
     private void makeEvaluation(
         Batch batch,

@@ -100,8 +100,8 @@ public class DenseLayer extends Layer {
             throw Commons.illegalArgument("Dense requires tensors to be rank 2 or higher");
         }
 
-        Tensor w = getParam("weights");
-        Tensor b = getParam("bias");
+        Tensor w = param("weights");
+        Tensor b = param("bias");
 
         Tensor proj = input.matmulGrad(w).addGrad(b);
 
