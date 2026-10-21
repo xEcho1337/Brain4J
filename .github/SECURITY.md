@@ -7,7 +7,7 @@ The brain4j team takes security vulnerabilities seriously. We appreciate your ef
 If you believe you've found a security vulnerability in brain4j, please follow these steps:
 
 1. **Do not disclose the vulnerability publicly**
-2. **Contact us directly** at https://t.me/xecho1337 with details about the vulnerability
+2. **Contact us directly** on [Discord](https://discord.gg/SMKrxNjXBz) with details about the vulnerability
 3. Include the following information in your report:
    - Description of the vulnerability
    - Steps to reproduce
@@ -23,8 +23,8 @@ If you believe you've found a security vulnerability in brain4j, please follow t
 ## Supported Versions
 | Version | Supported          |
 |---------|--------------------|
-| ≥ 2.5.3 | :white_check_mark: |
-| < 2.5.3 | :x:                |
+| ≥ 3.0.0 | :white_check_mark: |
+| < 3.0.0 | :x:                |
 
 ## Security Best Practices for Using brain4j
 
@@ -55,6 +55,6 @@ The brain4j team follows these practices to minimize security risks:
 
 ----
 
-For non-security related issues, please use the [GitHub Issues](https://github.com/xEcho1337/brain4j/issues) page.
+For non-security related issues, please use the [GitHub Issues](https://github.com/brain4j-org/brain4j/issues) page.
 <br>
 Last updated: 2025-03-30
