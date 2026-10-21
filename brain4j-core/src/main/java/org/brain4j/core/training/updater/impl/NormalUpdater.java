@@ -12,8 +12,8 @@ public class NormalUpdater extends Updater {
      * {@inheritDoc}
      */
     @Override
-    public void postFit(double learningRate, int samples) {
-        updateWeights(learningRate, samples);
+    public void postFit() {
+        updateWeights();
         initialize();
     }
 }

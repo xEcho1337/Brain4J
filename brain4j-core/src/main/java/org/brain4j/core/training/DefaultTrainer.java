@@ -282,10 +282,9 @@ public final class DefaultTrainer implements Trainer {
             monitors.forEach((k, x) -> x.onEvent(end, this));
         }
 
-        Optimizer optimizer = config.optimizer();
         Updater updater = config.updater();
 
-        updater.postFit(optimizer.learningRate(), dataSource.size());
+        updater.postFit();
 
         EpochEnd end = new EpochEnd(index, total);
         monitors.forEach((k, x) -> x.onEvent(end, this));
@@ -345,6 +344,22 @@ public final class DefaultTrainer implements Trainer {
         Tensor[] inputs = batch.first();
         Tensor[] targets = batch.second();
 
+        if (inputs.length == 0) {
+            throw new IllegalArgumentException("Batch must contain at least one input.");
+        }
+
+        int batchSize = inputs[0].shapeAt(0);
+
+        if (batchSize <= 0) {
+            throw new IllegalArgumentException("Batch size must be greater than 0.");
+        }
+
+        for (int i = 1; i < inputs.length; i++) {
+            if (inputs[i].shapeAt(0) != batchSize) {
+                throw new IllegalArgumentException("All inputs must have the same batch size.");
+            }
+        }
+
         Updater updater = config.updater();
         Optimizer optimizer = config.optimizer();
         LossFunction loss = config.loss();
@@ -369,16 +384,10 @@ public final class DefaultTrainer implements Trainer {
             target.backward(grad);
         }
 
-        layers.forEach(x -> x.backward(updater, optimizer));
-
-        int elements = 0;
-
-        for (Tensor input : inputs) {
-            elements += input.shapeAt(0);
-        }
+        layers.forEach(layer -> layer.backward(updater, optimizer, batchSize));
 
         optimizer.postBatch();
-        updater.postBatch(optimizer.learningRate(), elements);
+        updater.postBatch();
     }
 
     /**

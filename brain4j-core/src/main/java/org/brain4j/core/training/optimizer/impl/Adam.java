@@ -13,23 +13,18 @@ import org.brain4j.math.tensor.impl.GpuTensor;
  * Applies adaptive updates with first and second moment estimates.
  * Use it as the default optimizer for fast, stable convergence.
  */
-public class Adam extends Optimizer {
+public class Adam implements Optimizer {
 
-    protected Map<Tensor, Tensor> firstMomentum;
-    protected Map<Tensor, Tensor> secondMomentum;
+    public record Config(double beta1, double beta2, double epsilon) {}
+
+    protected final Adam.Config config;
+    protected final Map<Tensor, Tensor> firstMomentum;
+    protected final Map<Tensor, Tensor> secondMomentum;
 
     protected double beta1Timestep;
     protected double beta2Timestep;
-
-    protected float beta1;
-    protected float beta2;
-    protected float epsilon;
-
+    protected double learningRate;
     protected int timestep = 1;
-
-    protected Adam() {
-        super(0);
-    }
 
     /**
      * Create an optimizer with default betas and epsilon.
@@ -42,10 +37,12 @@ public class Adam extends Optimizer {
      * Create an optimizer with the given hyperparameters.
      */
     public Adam(double learningRate, double beta1, double beta2, double epsilon) {
-        super(learningRate);
-        this.beta1 = (float) beta1;
-        this.beta2 = (float) beta2;
-        this.epsilon = (float) epsilon;
+        this.learningRate = learningRate;
+        this.config = new Adam.Config(beta1, beta2, epsilon);
+        this.firstMomentum = new HashMap<>();
+        this.secondMomentum = new HashMap<>();
+
+        resetState();
     }
 
     /**
@@ -53,38 +50,44 @@ public class Adam extends Optimizer {
      */
     @Override
     public void initialize() {
-        this.beta1Timestep = Math.pow(beta1, timestep);
-        this.beta2Timestep = Math.pow(beta2, timestep);
-        this.firstMomentum = new HashMap<>();
-        this.secondMomentum = new HashMap<>();
+        resetState();
+    }
+
+    private void resetState() {
+        this.timestep = 1;
+        this.beta1Timestep = config.beta1();
+        this.beta2Timestep = config.beta2();
+        this.firstMomentum.clear();
+        this.secondMomentum.clear();
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public Tensor step(Tensor weights, Tensor gradient) {
+    public Tensor step(Tensor weights, Tensor gradient, int samples) {
+        Tensor normalized = gradient.divide(samples);
         Tensor first = firstMomentum.get(weights);
         Tensor second = secondMomentum.get(weights);
 
         if (first == null || second == null) {
-            first = Tensors.zeros(gradient.shape());
-            second = Tensors.zeros(gradient.shape());
+            first = Tensors.zeros(normalized.shape());
+            second = Tensors.zeros(normalized.shape());
 
-            if (gradient instanceof GpuTensor gpuTensor) {
+            if (normalized instanceof GpuTensor gpuTensor) {
                 Device device = gpuTensor.device();
                 first = GpuTensor.persistent(first, device);
                 second = GpuTensor.persistent(second, device);
             }
         }
 
-        Tensor gradSquared = gradient.times(gradient);
+        Tensor gradSquared = normalized.times(normalized);
 
-        first.mul(beta1);
-        second.mul(beta2);
+        first.mul(config.beta1());
+        second.mul(config.beta2());
 
-        Tensor gradBeta1 = gradient.mul(1 - beta1);
-        Tensor gradBeta2 = gradSquared.mul(1 - beta2);
+        Tensor gradBeta1 = normalized.times(1 - config.beta1());
+        Tensor gradBeta2 = gradSquared.times(1 - config.beta2());
 
         first.add(gradBeta1.broadcastLike(first));
         second.add(gradBeta2.broadcastLike(second));
@@ -98,7 +101,7 @@ public class Adam extends Optimizer {
         Tensor mHat = first.divide(biasCorrection1);
         Tensor vHat = second.divide(biasCorrection2);
 
-        return mHat.div(vHat.sqrt().add(epsilon));
+        return mHat.div(vHat.sqrt().add(config.epsilon())).mul(learningRate);
     }
 
     /**
@@ -107,55 +110,24 @@ public class Adam extends Optimizer {
     @Override
     public void postBatch() {
         this.timestep++;
-        this.beta1Timestep *= beta1;
-        this.beta2Timestep *= beta2;
+        this.beta1Timestep *= config.beta1();
+        this.beta2Timestep *= config.beta2();
     }
 
     /**
-     * Return the first-moment decay.
+     * {@inheritDoc}
+     */
+    @Override
+    public double learningRate() {
+        return learningRate;
+    }
+
+    /**
+     * Returns the Adam configuration.
      *
-     * @return the beta1 value
+     * @return the configuration
      */
-    public double beta1() {
-        return beta1;
-    }
-
-    /**
-     * Replace the first-moment decay.
-     */
-    public void setBeta1(double beta1) {
-        this.beta1 = (float) beta1;
-    }
-
-    /**
-     * Return the second-moment decay.
-     *
-     * @return the beta2 value
-     */
-    public double beta2() {
-        return beta2;
-    }
-
-    /**
-     * Replace the second-moment decay.
-     */
-    public void setBeta2(double beta2) {
-        this.beta2 = (float) beta2;
-    }
-
-    /**
-     * Return the numerical stability term.
-     *
-     * @return the epsilon value
-     */
-    public double epsilon() {
-        return epsilon;
-    }
-
-    /**
-     * Replace the numerical stability term.
-     */
-    public void setEpsilon(double epsilon) {
-        this.epsilon = (float) epsilon;
+    public Config config() {
+        return config;
     }
 }

@@ -229,15 +229,15 @@ public abstract class Transformer<T extends Transformer<T>> extends Layer {
      * {@inheritDoc}
      */
     @Override
-    public void backward(Updater updater, Optimizer optimizer) {
-        norm2.backward(updater, optimizer);
-        downProj.backward(updater, optimizer);
-        upProj.backward(updater, optimizer);
-        norm1.backward(updater, optimizer);
-        attention.backward(updater, optimizer);
+    public void backward(Updater updater, Optimizer optimizer, int samples) {
+        norm2.backward(updater, optimizer, samples);
+        downProj.backward(updater, optimizer, samples);
+        upProj.backward(updater, optimizer, samples);
+        norm1.backward(updater, optimizer, samples);
+        attention.backward(updater, optimizer, samples);
 
         if (gateProj != null) {
-            gateProj.backward(updater, optimizer);
+            gateProj.backward(updater, optimizer, samples);
         }
     }
 

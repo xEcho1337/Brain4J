@@ -7,24 +7,19 @@ import org.brain4j.core.training.optimizer.Optimizer;
  * Applies plain gradient steps without momentum.
  * Use it as a baseline or when full control over updates is needed.
  */
-public class GradientDescent extends Optimizer {
-
-    protected GradientDescent() {
-        super(0);
-    }
+public record GradientDescent(double learningRate) implements Optimizer {
 
     /**
      * Create an optimizer with the given learning rate.
      */
-    public GradientDescent(double learningRate) {
-        super(learningRate);
+    public GradientDescent {
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public Tensor step(Tensor weights, Tensor gradient) {
-        return gradient;
+    public Tensor step(Tensor weights, Tensor gradient, int samples) {
+        return gradient.divide(samples).mul(learningRate);
     }
 }

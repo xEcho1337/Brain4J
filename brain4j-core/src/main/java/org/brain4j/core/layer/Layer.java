@@ -359,9 +359,18 @@ public abstract class Layer implements Copyable<Layer>, ModelBlock {
     }
 
     /**
-     * Applies optimizer and updater steps to parameter gradients.
+     * Applies optimizer and updater steps to parameter gradients using a single sample.
      */
     public void backward(Updater updater, Optimizer optimizer) {
+        backward(updater, optimizer, 1);
+    }
+
+    /**
+     * Applies optimizer and updater steps to parameter gradients.
+     *
+     * @param samples number of samples in the current batch
+     */
+    public void backward(Updater updater, Optimizer optimizer, int samples) {
         for (Tensor parameter : parameters.values()) {
             Tensor grad = parameter.grad();
 
@@ -369,15 +378,11 @@ public abstract class Layer implements Copyable<Layer>, ModelBlock {
                 continue;
             }
 
-            Tensor optimized = grad;
-
-            if (optimized.rank() > parameter.rank()) {
-                while (optimized.rank() > parameter.rank()) {
-                    optimized = optimized.sum(0, false);
-                }
-            } else {
-                optimized = optimizer.step(parameter, grad);
+            while (grad.rank() > parameter.rank()) {
+                grad = grad.sum(0, false);
             }
+
+            Tensor optimized = optimizer.step(parameter, grad, samples);
 
             clipper.clip(optimized);
             updater.change(parameter, optimized);

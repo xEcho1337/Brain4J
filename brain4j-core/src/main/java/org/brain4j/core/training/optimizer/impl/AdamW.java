@@ -8,10 +8,7 @@ import org.brain4j.math.tensor.Tensor;
  */
 public class AdamW extends Adam {
 
-    private double weightDecay;
-
-    protected AdamW() {
-    }
+    private final double weightDecay;
 
     /**
      * Create an optimizer with default weight decay.
@@ -39,26 +36,19 @@ public class AdamW extends Adam {
      * {@inheritDoc}
      */
     @Override
-    public Tensor step(Tensor weights, Tensor gradient) {
-        Tensor adamValue = super.step(weights, gradient);
-        Tensor weightDecayTerm = weights.times(weightDecay);
+    public Tensor step(Tensor weights, Tensor gradient, int samples) {
+        Tensor adamValue = super.step(weights, gradient, samples);
+        Tensor weightDecayTerm = weights.times(learningRate * weightDecay);
 
         return adamValue.add(weightDecayTerm);
     }
 
     /**
-     * Return the weight decay coefficient.
+     * Returns the weight decay coefficient.
      *
      * @return the decay value
      */
     public double weightDecay() {
         return weightDecay;
-    }
-
-    /**
-     * Replace the weight decay coefficient.
-     */
-    public void setWeightDecay(double weightDecay) {
-        this.weightDecay = weightDecay;
     }
 }

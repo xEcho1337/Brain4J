@@ -10,15 +10,15 @@ import org.brain4j.math.tensor.Tensor;
 import org.brain4j.math.tensor.impl.GpuTensor;
 
 /**
- * Accumulates gradients and applies them to weights.
- * Use it to define when batched gradients update the model.
+ * Accumulates updates and applies them to weights.
+ * Use it to define when batched updates modify the model.
  *
  * @see StochasticUpdater
  * @see NormalUpdater
  */
 public abstract class Updater {
 
-    protected final Map<Tensor, Tensor> weightsGradients = new HashMap<>();
+    protected final Map<Tensor, Tensor> weightsUpdates = new HashMap<>();
 
     /**
      * Persistent GPU accumulation buffers reused across batches.
@@ -26,44 +26,41 @@ public abstract class Updater {
     protected final Map<Tensor, Tensor> persistentStorage = new HashMap<>();
 
     /**
-     * Applies accumulated gradients to weights in place.
-     *
-     * @param learningRate the step size
-     * @param samples the sample count used to normalize gradients
+     * Applies accumulated updates to weights in place.
      */
-    public void updateWeights(double learningRate, int samples) {
-        for (Map.Entry<Tensor, Tensor> entry : weightsGradients.entrySet()) {
+    public void updateWeights() {
+        for (Map.Entry<Tensor, Tensor> entry : weightsUpdates.entrySet()) {
             Tensor weights = entry.getKey();
-            Tensor gradient = entry.getValue();
+            Tensor update = entry.getValue();
 
-            if (gradient == null || weights == null) {
+            if (update == null || weights == null) {
                 continue;
             }
 
-            while (gradient.rank() > weights.rank()) {
-                gradient = gradient.sum(0, false);
+            while (update.rank() > weights.rank()) {
+                update = update.sum(0, false);
             }
 
-            weights.sub(gradient.div(samples).mul(learningRate));
+            weights.sub(update);
         }
     }
 
     /**
-     * Accumulates a gradient for the given weights.
+     * Accumulates an update for the given weights.
      */
-    public void change(Tensor weights, Tensor gradient) {
-        if (!(gradient instanceof GpuTensor gpuGradient)) {
-            weightsGradients.merge(weights, gradient, Tensor::add);
+    public void change(Tensor weights, Tensor update) {
+        if (!(update instanceof GpuTensor gpuUpdate)) {
+            weightsUpdates.merge(weights, update, Tensor::add);
             return;
         }
 
-        Tensor stored = weightsGradients.get(weights);
+        Tensor stored = weightsUpdates.get(weights);
 
         if (stored == null) {
             stored = persistentStorage.get(weights);
 
             if (stored == null) {
-                stored = GpuTensor.persistent(Tensors.zeros(gradient.shape()), gpuGradient.device());
+                stored = GpuTensor.persistent(Tensors.zeros(update.shape()), gpuUpdate.device());
                 persistentStorage.put(weights, stored);
             } else {
                 // Reuse the buffer instead of leaking GPU memory.
@@ -71,32 +68,26 @@ public abstract class Updater {
             }
         }
 
-        stored.add(gradient);
-        weightsGradients.put(weights, stored);
+        stored.add(update);
+        weightsUpdates.put(weights, stored);
     }
 
     /**
-     * Clears all accumulated gradients.
+     * Clears all accumulated updates.
      */
     public void initialize() {
-        weightsGradients.clear();
+        weightsUpdates.clear();
     }
 
     /**
      * Runs a hook after training over the dataset.
-     *
-     * @param learningRate the step size
-     * @param samples the training sample count
      */
-    public void postFit(double learningRate, int samples) {
+    public void postFit() {
     }
 
     /**
      * Runs a hook after each mini-batch.
-     *
-     * @param learningRate the step size
-     * @param samples the batch sample count
      */
-    public void postBatch(double learningRate, int samples) {
+    public void postBatch() {
     }
 }

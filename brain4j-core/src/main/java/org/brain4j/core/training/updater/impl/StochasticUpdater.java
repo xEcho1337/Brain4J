@@ -12,8 +12,8 @@ public class StochasticUpdater extends Updater {
      * {@inheritDoc}
      */
     @Override
-    public void postBatch(double learningRate, int samples) {
-        updateWeights(learningRate, samples);
+    public void postBatch() {
+        updateWeights();
         initialize();
     }
 }

@@ -8,50 +8,51 @@ import org.brain4j.math.tensor.Tensor;
 
 /**
  * Computes parameter updates from gradients.
- * Use it to control convergence speed and stability during training.
+ * Implementations return the final update, including learning rate and sample normalization.
  *
  * @see GradientDescent
  * @see Adam
  * @see AdamW
  * @see Lion
  */
-public abstract class Optimizer {
-
-    private double learningRate;
+public interface Optimizer {
 
     /**
-     * Creates an optimizer with the given learning rate.
+     * Computes an update using the stored gradient and a single sample.
+     *
+     * @return the update to subtract from the weights
      */
-    public Optimizer(double learningRate) {
-        this.learningRate = learningRate;
+    default Tensor step(Tensor weights) {
+        return step(weights, weights.grad(), 1);
     }
 
     /**
-     * Applies one optimization step using the stored gradient.
+     * Computes an update using the given gradient and a single sample.
      *
-     * @return the optimized weights
+     * @return the update to subtract from the weights
      */
-    public Tensor step(Tensor weights) {
-        return step(weights, weights.grad());
+    default Tensor step(Tensor weights, Tensor gradient) {
+        return step(weights, gradient, 1);
     }
 
     /**
-     * Applies one optimization step using the given gradient.
+     * Computes an update using the given gradient.
      *
-     * @return the optimized weights
+     * @param samples number of samples in the current batch (must be positive)
+     * @return the update to subtract from the weights
      */
-    public abstract Tensor step(Tensor weights, Tensor gradient);
+    Tensor step(Tensor weights, Tensor gradient, int samples);
 
     /**
      * Initializes internal optimizer state.
      */
-    public void initialize() {
+    default void initialize() {
     }
 
     /**
      * Runs a hook after each training batch.
      */
-    public void postBatch() {
+    default void postBatch() {
     }
 
     /**
@@ -59,14 +60,5 @@ public abstract class Optimizer {
      *
      * @return the current learning rate
      */
-    public double learningRate() {
-        return learningRate;
-    }
-
-    /**
-     * Replaces the learning rate.
-     */
-    public void setLearningRate(double learningRate) {
-        this.learningRate = learningRate;
-    }
+    double learningRate();
 }
