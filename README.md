@@ -16,7 +16,7 @@ to implement efficient and portable machine learning solutions in pure Java.
 
 Brain4J is available on the [official repository](https://repo.brain4j.org/).
 
-![Latest Release](https://img.shields.io/badge/dynamic/xml?url=https://repo.brain4j.org/snapshots/org/brain4j/brain4j-core/maven-metadata.xml&query=/metadata/versioning/latest&label=Latest&color=blue&width=300&dpr=3&quality=100&sign=d974fb0d3aaf9afef9fcb212977ea237&sv=3)
+[![Latest Release](https://img.shields.io/badge/dynamic/xml?url=https://repo.brain4j.org/snapshots/org/brain4j/brain4j-core/maven-metadata.xml&query=/metadata/versioning/latest&label=Latest&color=blue&width=300&dpr=3&quality=100&sign=d974fb0d3aaf9afef9fcb212977ea237&sv=3)](https://repo.brain4j.org/#/snapshots/org/brain4j)
 
 ```groovy
 repositories {
